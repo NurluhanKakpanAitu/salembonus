@@ -6,11 +6,12 @@ import { PageTitle } from '../components/PageTitle'
 import { IconButton } from '../components/IconButton'
 import { StoreCard } from '../components/cards/StoreCard'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
-import { useCards } from '../lib/queries'
+import { useCards, useUnreadCount } from '../lib/queries'
 
 export function CardsPage() {
   const cards = useCards()
   const navigate = useNavigate()
+  const hasUnread = (useUnreadCount().data ?? 0) > 0
   const [promoOpen, setPromoOpen] = useState(true)
 
   return (
@@ -18,7 +19,7 @@ export function CardsPage() {
       <PageHeader
         right={
           <div className="flex items-center gap-2.5">
-            <IconButton icon={Bell} dot label="Хабарламалар" onClick={() => navigate('/notifications')} />
+            <IconButton icon={Bell} dot={hasUnread} label="Хабарламалар" onClick={() => navigate('/notifications')} />
             <Avatar />
           </div>
         }

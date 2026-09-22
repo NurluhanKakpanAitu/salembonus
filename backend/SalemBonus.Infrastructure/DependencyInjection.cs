@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IBonusCardRepository, BonusCardRepository>();
         services.AddScoped<IBonusTransactionRepository, BonusTransactionRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<ICurrentUser, DemoCurrentUser>();
         return services;
     }

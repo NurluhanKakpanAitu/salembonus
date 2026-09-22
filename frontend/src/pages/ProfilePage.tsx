@@ -7,13 +7,14 @@ import { ProfileCard } from '../components/profile/ProfileCard'
 import { MenuList, type MenuItem } from '../components/profile/MenuList'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { formatDate } from '../lib/format'
-import { useMe } from '../lib/queries'
+import { useMe, useUnreadCount } from '../lib/queries'
 
 const APP_VERSION = '1.0.0'
 
 export function ProfilePage() {
   const me = useMe()
   const navigate = useNavigate()
+  const hasUnread = (useUnreadCount().data ?? 0) > 0
 
   const menu: MenuItem[] = [
     { icon: User, title: 'Жеке деректер', subtitle: 'Аты-жөні, телефон, туған күні', to: '/profile/edit' },
@@ -30,7 +31,7 @@ export function ProfilePage() {
       <PageHeader
         right={
           <div className="flex items-center gap-2.5">
-            <IconButton icon={Bell} dot label="Хабарламалар" onClick={() => navigate('/notifications')} />
+            <IconButton icon={Bell} dot={hasUnread} label="Хабарламалар" onClick={() => navigate('/notifications')} />
             <IconButton icon={Settings} label="Баптаулар" />
           </div>
         }

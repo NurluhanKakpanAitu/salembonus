@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Bell, CirclePlus, CreditCard, House, User } from 'lucide-react'
+import { useUnreadCount } from '../lib/queries'
 
 const tabs = [
   { to: '/', label: 'Басты бет', icon: House, end: true },
@@ -10,6 +11,9 @@ const tabs = [
 ]
 
 export function TabBar() {
+  const unread = useUnreadCount()
+  const hasUnread = (unread.data ?? 0) > 0
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-[480px] border-t border-line bg-surface px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2.5">
       <ul className="flex justify-between">
@@ -26,7 +30,7 @@ export function TabBar() {
             >
               <span className="relative">
                 <Icon size={24} strokeWidth={1.8} />
-                {badge && <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand" />}
+                {badge && hasUnread && <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand" />}
               </span>
               {label}
             </NavLink>

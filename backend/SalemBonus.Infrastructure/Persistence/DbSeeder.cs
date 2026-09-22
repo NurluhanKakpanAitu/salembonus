@@ -48,10 +48,21 @@ public static class DbSeeder
             Tx(cards[0], BonusTransactionType.Birthday, 3000, null, now.AddDays(-5)),
         };
 
+        var notifications = new List<Notification>
+        {
+            N(NotificationType.BonusAccrued, stores[0], "Бонус есептелді!", "MKM AUTO — Сізге 1 250 Б бонус есептелді.", "Сатып алу сомасы: 25 000 ₸", now.AddHours(-2), false),
+            N(NotificationType.BonusRedeemed, stores[1], "Бонус жұмсалды", "Coffee House — 5 000 Б бонус шегерілді.", "Сатып алу сомасы: 12 000 ₸", now.AddHours(-5), false),
+            N(NotificationType.Birthday, stores[2], "Туған күн бонусы!", "Beauty Shop — Туған күніңізге 3 000 Б бонус берілді!", "Бонус 3 күн ішінде жарамды.", now.AddHours(-7), false),
+            N(NotificationType.Promo, stores[3], "Акция басталды!", "SportLife — Барлық кроссовкаларға 2x бонус!", "Акция 30 қыркүйекке дейін.", now.AddHours(-8), true),
+            N(NotificationType.StoreAdded, stores[1], "Жаңа дүкен қосылды", "Coffee House дүкені сіздің карталарыңызға қосылды.", "Енді бұл дүкенде де бонус жинай аласыз!", now.AddDays(-1).AddHours(-3), true),
+            N(NotificationType.ProfileUpdated, null, "Профиль жаңартылды", "Жеке деректеріңіз сәтті жаңартылды.", null, now.AddDays(-2).AddHours(-6), true),
+        };
+
         db.Stores.AddRange(stores);
         db.Customers.Add(customer);
         db.BonusCards.AddRange(cards);
         db.BonusTransactions.AddRange(transactions);
+        db.Notifications.AddRange(notifications);
         await db.SaveChangesAsync(ct);
     }
 
@@ -63,6 +74,19 @@ public static class DbSeeder
         Balance = balance,
         TotalSpent = spent,
         Level = level,
+    };
+
+    private static Notification N(NotificationType type, Store? store, string title, string body, string? detail, DateTime at, bool read) => new()
+    {
+        Id = Guid.NewGuid(),
+        CustomerId = DemoCustomerId,
+        StoreId = store?.Id,
+        Type = type,
+        Title = title,
+        Body = body,
+        Detail = detail,
+        IsRead = read,
+        CreatedAt = at,
     };
 
     private static BonusTransaction Tx(BonusCard card, BonusTransactionType type, int amount, decimal? purchase, DateTime at) => new()

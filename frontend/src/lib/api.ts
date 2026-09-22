@@ -7,6 +7,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     ...init,
   })
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -57,4 +58,35 @@ export const transactionsApi = {
 
 export const meApi = {
   get: () => api<Customer>('/me'),
+}
+
+export type NotificationType =
+  | 'BonusAccrued' | 'BonusRedeemed' | 'Birthday' | 'Promo' | 'StoreAdded' | 'ProfileUpdated' | 'System'
+export type NotificationCategory = 'Bonus' | 'Promo' | 'System' | 'Store'
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  category: NotificationCategory
+  title: string
+  body: string
+  detail: string | null
+  storeName: string | null
+  storeIcon: string | null
+  storeThemeColor: string | null
+  isRead: boolean
+  createdAt: string
+}
+
+export interface NotificationPage {
+  items: Notification[]
+  hasMore: boolean
+}
+
+export const notificationsApi = {
+  list: (category: NotificationCategory | null, skip: number, take: number) =>
+    api<NotificationPage>(`/notifications?${category ? `category=${category}&` : ''}skip=${skip}&take=${take}`),
+  unreadCount: () => api<number>('/notifications/unread-count'),
+  markRead: (id: string) => api<void>(`/notifications/${id}/read`, { method: 'POST' }),
+  markAllRead: () => api<void>('/notifications/read-all', { method: 'POST' }),
 }
