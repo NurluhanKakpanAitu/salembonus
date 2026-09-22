@@ -1,4 +1,5 @@
 using SalemBonus.Application.BonusCards;
+using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Customers.Dtos;
 using SalemBonus.Domain.Enums;
@@ -10,6 +11,8 @@ public class CustomerService(
     IBonusCardRepository cards,
     ICurrentUser currentUser) : ICustomerService
 {
+    public const string QrPrefix = "SB:";
+
     public async Task<CustomerDto?> GetMeAsync(CancellationToken ct = default)
     {
         var customer = await customers.GetByIdAsync(currentUser.CustomerId, ct);
@@ -31,5 +34,12 @@ public class CustomerService(
             CustomerLevels.Name(topLevel),
             myCards.Sum(c => c.Balance),
             myCards.Count);
+    }
+
+    public async Task<QrCodeDto> GetMyQrAsync(CancellationToken ct = default)
+    {
+        var customer = await customers.GetByIdAsync(currentUser.CustomerId, ct)
+            ?? throw new NotFoundException("Тұтынушы табылмады");
+        return new QrCodeDto(customer.QrCode, QrPrefix + customer.QrCode);
     }
 }

@@ -1,16 +1,85 @@
-@SalemBonus.Api_HostAddress = http://localhost:5113
+@host = http://localhost:5113
+@mkmKey = sk_test_mkm_auto_11111111
+@coffeeKey = sk_test_coffee_house_2222
 
-GET {{SalemBonus.Api_HostAddress}}/api/cards
+### ===== Тұтынушы қосымшасы =====
+
+### Профиль
+GET {{host}}/api/me
 Accept: application/json
 
-###
-
-GET {{SalemBonus.Api_HostAddress}}/api/cards/11111111-1111-1111-1111-111111111111
+### QR коды
+GET {{host}}/api/me/qr
 Accept: application/json
 
-###
-
-GET {{SalemBonus.Api_HostAddress}}/api/transactions/recent?take=10
+### Карталар
+GET {{host}}/api/cards
 Accept: application/json
 
-###
+### Бір дүкендегі карта
+GET {{host}}/api/cards/11111111-1111-1111-1111-111111111111
+Accept: application/json
+
+### Соңғы операциялар
+GET {{host}}/api/transactions/recent?take=10
+Accept: application/json
+
+### Барлық операциялар (беттеп), storeId міндетті емес
+GET {{host}}/api/transactions?skip=0&take=20&storeId=11111111-1111-1111-1111-111111111111
+Accept: application/json
+
+### Хабарламалар (category: Bonus | Promo | System | Store)
+GET {{host}}/api/notifications?skip=0&take=20
+Accept: application/json
+
+### Оқылмаған саны
+GET {{host}}/api/notifications/unread-count
+
+### Барлығын оқылды деп белгілеу
+POST {{host}}/api/notifications/read-all
+
+### ===== SalemPos / касса (X-Store-Api-Key) =====
+
+### Кілт бойынша дүкен
+GET {{host}}/api/pos/store
+X-Store-Api-Key: {{mkmKey}}
+
+### Тұтынушыны QR бойынша табу
+GET {{host}}/api/pos/customers/SB:SALEM2025X
+X-Store-Api-Key: {{mkmKey}}
+
+### Тұтынушыны телефон бойынша табу
+GET {{host}}/api/pos/customers/+77011234567
+X-Store-Api-Key: {{mkmKey}}
+
+### Сатып алу: 20 000 ₸, оның 3 000 Б бонуспен төленеді, қалған 17 000 ₸-ге 5% бонус
+POST {{host}}/api/pos/purchases
+X-Store-Api-Key: {{mkmKey}}
+Content-Type: application/json
+
+{
+  "customerCode": "SB:SALEM2025X",
+  "purchaseAmount": 20000,
+  "redeemAmount": 3000,
+  "comment": "Чек №1042"
+}
+
+### Сатып алу бонус шегерусіз
+POST {{host}}/api/pos/purchases
+X-Store-Api-Key: {{mkmKey}}
+Content-Type: application/json
+
+{
+  "customerCode": "+77011234567",
+  "purchaseAmount": 8500
+}
+
+### Жаңа тұтынушы телефонмен (автотіркеледі, карта ашылады)
+POST {{host}}/api/pos/purchases
+X-Store-Api-Key: {{coffeeKey}}
+Content-Type: application/json
+
+{
+  "customerCode": "+77005550011",
+  "purchaseAmount": 4500
+}

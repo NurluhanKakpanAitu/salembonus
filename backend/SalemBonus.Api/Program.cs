@@ -1,3 +1,4 @@
+using SalemBonus.Api.Middleware;
 using SalemBonus.Application;
 using SalemBonus.Infrastructure;
 
@@ -8,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddCors(options =>
 {
@@ -33,6 +36,7 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseExceptionHandler();
 app.UseCors(FrontendCors);
 app.UseAuthorization();
 app.MapControllers();

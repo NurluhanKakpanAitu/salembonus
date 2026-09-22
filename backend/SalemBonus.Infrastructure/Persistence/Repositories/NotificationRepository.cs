@@ -39,4 +39,6 @@ public class NotificationRepository(AppDbContext db) : INotificationRepository
         if (id is { } i) q = q.Where(n => n.Id == i);
         return q.ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
     }
+
+    public void Add(Notification notification) => db.Notifications.Add(notification);
 }

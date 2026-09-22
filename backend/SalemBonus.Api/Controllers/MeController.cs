@@ -14,4 +14,9 @@ public class MeController(ICustomerService service) : ControllerBase
         var me = await service.GetMeAsync(ct);
         return me is null ? NotFound() : Ok(me);
     }
+
+    /// <summary>Кассада көрсетілетін QR коды.</summary>
+    [HttpGet("qr")]
+    public async Task<ActionResult<QrCodeDto>> GetQr(CancellationToken ct) =>
+        Ok(await service.GetMyQrAsync(ct));
 }

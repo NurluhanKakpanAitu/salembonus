@@ -5,4 +5,5 @@ namespace SalemBonus.Application.Customers;
 public interface ICustomerService
 {
     Task<CustomerDto?> GetMeAsync(CancellationToken ct = default);
+    Task<QrCodeDto> GetMyQrAsync(CancellationToken ct = default);
 }

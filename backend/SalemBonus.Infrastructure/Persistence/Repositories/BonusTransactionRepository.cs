@@ -6,14 +6,22 @@ namespace SalemBonus.Infrastructure.Persistence.Repositories;
 
 public class BonusTransactionRepository(AppDbContext db) : IBonusTransactionRepository
 {
-    public async Task<IReadOnlyList<BonusTransaction>> GetRecentByCustomerAsync(Guid customerId, int take, CancellationToken ct = default)
+    public Task<IReadOnlyList<BonusTransaction>> GetRecentByCustomerAsync(Guid customerId, int take, CancellationToken ct = default) =>
+        GetByCustomerAsync(customerId, null, 0, take, ct);
+
+    public async Task<IReadOnlyList<BonusTransaction>> GetByCustomerAsync(Guid customerId, Guid? storeId, int skip, int take, CancellationToken ct = default)
     {
-        var cardIds = db.BonusCards.Where(c => c.CustomerId == customerId).Select(c => c.Id);
+        var cardIds = db.BonusCards.Where(c => c.CustomerId == customerId);
+        if (storeId is { } s) cardIds = cardIds.Where(c => c.StoreId == s);
+        var ids = cardIds.Select(c => c.Id);
         return await db.BonusTransactions
             .AsNoTracking()
-            .Where(t => cardIds.Contains(t.BonusCardId))
+            .Where(t => ids.Contains(t.BonusCardId))
             .OrderByDescending(t => t.CreatedAt)
+            .Skip(skip)
             .Take(take)
             .ToListAsync(ct);
     }
+
+    public void Add(BonusTransaction transaction) => db.BonusTransactions.Add(transaction);
 }

@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Avatar, PageHeader } from '../components/PageHeader'
+import { QrSheet } from '../components/QrSheet'
 import { CardCarousel } from '../components/home/CardCarousel'
 import { LevelCard } from '../components/home/LevelCard'
 import { TransactionList } from '../components/home/TransactionList'
@@ -10,6 +12,7 @@ export function HomePage() {
   const me = useMe()
   const cards = useCards()
   const transactions = useRecentTransactions(4)
+  const [qrStore, setQrStore] = useState<string | null>(null)
 
   const primaryCard = cards.data?.[0]
 
@@ -30,7 +33,7 @@ export function HomePage() {
       <div className="mt-3 flex flex-col gap-5">
         {cards.isPending && <Skeleton className="h-[290px] rounded-[22px]" />}
         {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
-        {cards.data && cards.data.length > 0 && <CardCarousel cards={cards.data} />}
+        {cards.data && cards.data.length > 0 && <CardCarousel cards={cards.data} onShowQr={(c) => setQrStore(c.storeName)} />}
         {cards.data && cards.data.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">
             Әзірге бонус картаңыз жоқ. Дүкенде телефон нөміріңізді айтыңыз.
@@ -44,6 +47,7 @@ export function HomePage() {
 
         {me.data?.isBirthdayToday && <BirthdayBanner />}
       </div>
+      <QrSheet open={qrStore !== null} onClose={() => setQrStore(null)} storeName={qrStore ?? undefined} />
     </>
   )
 }

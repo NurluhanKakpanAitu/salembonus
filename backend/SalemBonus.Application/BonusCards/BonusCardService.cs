@@ -1,7 +1,6 @@
 using SalemBonus.Application.BonusCards.Dtos;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Entities;
-using SalemBonus.Domain.Enums;
 
 namespace SalemBonus.Application.BonusCards;
 
@@ -24,9 +23,21 @@ public class BonusCardService(
 
     public async Task<IReadOnlyList<BonusTransactionDto>> GetMyRecentTransactionsAsync(int take = 20, CancellationToken ct = default)
     {
+        var list = await transactions.GetRecentByCustomerAsync(currentUser.CustomerId, take, ct);
+        return await MapAsync(list, ct);
+    }
+
+    public async Task<TransactionPageDto> GetMyTransactionsAsync(Guid? storeId, int skip, int take, CancellationToken ct = default)
+    {
+        var list = await transactions.GetByCustomerAsync(currentUser.CustomerId, storeId, skip, take + 1, ct);
+        var hasMore = list.Count > take;
+        return new TransactionPageDto(await MapAsync(list.Take(take).ToList(), ct), hasMore);
+    }
+
+    private async Task<IReadOnlyList<BonusTransactionDto>> MapAsync(IReadOnlyList<BonusTransaction> list, CancellationToken ct)
+    {
         var myCards = await cards.GetByCustomerAsync(currentUser.CustomerId, ct);
         var storeNames = myCards.ToDictionary(c => c.Id, c => c.Store?.Name ?? string.Empty);
-        var list = await transactions.GetRecentByCustomerAsync(currentUser.CustomerId, take, ct);
         return list.Select(t => new BonusTransactionDto(
             t.Id,
             storeNames.GetValueOrDefault(t.BonusCardId, string.Empty),
@@ -36,7 +47,7 @@ public class BonusCardService(
             t.CreatedAt)).ToList();
     }
 
-    private static BonusCardDto ToDto(BonusCard card) => new(
+    public static BonusCardDto ToDto(BonusCard card) => new(
         card.StoreId,
         card.Store?.Name ?? string.Empty,
         card.Store?.Category ?? string.Empty,
@@ -45,17 +56,5 @@ public class BonusCardService(
         card.Balance,
         CustomerLevels.Name(card.Level),
         card.Store?.CashbackPercent ?? 0,
-        AmountToNextLevel(card));
-
-    private static decimal AmountToNextLevel(BonusCard card)
-    {
-        var threshold = card.Level switch
-        {
-            CustomerLevel.New => LevelThresholds.Regular,
-            CustomerLevel.Regular => LevelThresholds.Favorite,
-            CustomerLevel.Favorite => LevelThresholds.Vip,
-            _ => LevelThresholds.Vip,
-        };
-        return Math.Max(0, threshold - card.TotalSpent);
-    }
+        BonusRules.AmountToNextLevel(card));
 }

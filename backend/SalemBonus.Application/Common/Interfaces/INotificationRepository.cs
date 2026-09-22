@@ -10,4 +10,5 @@ public interface INotificationRepository
     Task<int> CountUnreadAsync(Guid customerId, CancellationToken ct = default);
     Task<Notification?> GetAsync(Guid customerId, Guid id, CancellationToken ct = default);
     Task MarkReadAsync(Guid customerId, Guid? id, CancellationToken ct = default);
+    void Add(Notification notification);
 }

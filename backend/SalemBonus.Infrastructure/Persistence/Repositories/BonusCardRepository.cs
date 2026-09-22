@@ -19,4 +19,11 @@ public class BonusCardRepository(AppDbContext db) : IBonusCardRepository
             .AsNoTracking()
             .Include(c => c.Store)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
+
+    public Task<BonusCard?> GetForUpdateAsync(Guid customerId, Guid storeId, CancellationToken ct = default) =>
+        db.BonusCards
+            .Include(c => c.Store)
+            .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
+
+    public void Add(BonusCard card) => db.BonusCards.Add(card);
 }

@@ -90,3 +90,22 @@ export const notificationsApi = {
   markRead: (id: string) => api<void>(`/notifications/${id}/read`, { method: 'POST' }),
   markAllRead: () => api<void>('/notifications/read-all', { method: 'POST' }),
 }
+
+export interface QrCode {
+  code: string
+  payload: string
+}
+
+export interface TransactionPage {
+  items: BonusTransaction[]
+  hasMore: boolean
+}
+
+export const qrApi = {
+  get: () => api<QrCode>('/me/qr'),
+}
+
+export const transactionsPageApi = {
+  list: (storeId: string | null, skip: number, take: number) =>
+    api<TransactionPage>(`/transactions?${storeId ? `storeId=${storeId}&` : ''}skip=${skip}&take=${take}`),
+}

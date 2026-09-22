@@ -7,3 +7,5 @@ public record BonusTransactionDto(
     int Amount,
     decimal? PurchaseAmount,
     DateTime CreatedAt);
+
+public record TransactionPageDto(IReadOnlyList<BonusTransactionDto> Items, bool HasMore);
