@@ -8,6 +8,5 @@ public record CustomerDto(
     string? Email,
     DateOnly? BirthDate,
     bool IsBirthdayToday,
-    string TopLevel,
     int TotalBalance,
     int StoreCount);

@@ -1,4 +1,4 @@
-import { Calendar, Camera, Coins, Crown, Pencil, Store } from 'lucide-react'
+import { Calendar, Camera, Coins, Pencil, Store } from 'lucide-react'
 import type { Customer } from '../../lib/api'
 import { formatBonus, formatDate, initials } from '../../lib/format'
 
@@ -37,8 +37,7 @@ export function ProfileCard({ me }: { me: Customer }) {
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <Stat icon={<Crown size={18} className="text-gold" />} iconBg="#FFF6DB" value={me.topLevel} label="Менің деңгейім" />
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <Stat icon={<Coins size={18} className="text-violet" />} iconBg="#EEEBFF" value={formatBonus(me.totalBalance)} label="Барлық бонус" />
         <Stat icon={<Store size={18} className="text-violet" />} iconBg="#EEEBFF" value={String(me.storeCount)} label="Дүкендер" />
       </div>
