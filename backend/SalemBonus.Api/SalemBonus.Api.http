@@ -1,0 +1,16 @@
+@SalemBonus.Api_HostAddress = http://localhost:5113
+
+GET {{SalemBonus.Api_HostAddress}}/api/cards
+Accept: application/json
+
+###
+
+GET {{SalemBonus.Api_HostAddress}}/api/cards/11111111-1111-1111-1111-111111111111
+Accept: application/json
+
+###
+
+GET {{SalemBonus.Api_HostAddress}}/api/transactions/recent?take=10
+Accept: application/json
+
+###

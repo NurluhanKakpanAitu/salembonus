@@ -1,0 +1,26 @@
+export function LogoMark({ size = 44 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 400 400" aria-hidden="true">
+      <circle cx="200" cy="200" r="176" fill="#E31E24" />
+      <path
+        transform="translate(98 75.5)"
+        fill="#fff"
+        d="M113.44 0c-57.76 0-106.64 31.52-106.64 70.24 0 32.72 28.72 53.52 72.72 63.12 39.68 8.48 78.96 19.28 78.96 37.6 0 17.04-29.44 27.44-53.84 27.44-23.6 0-49.52-11.44-62-23.28-5.6-5.2-12.48-7.92-18.88-7.92-13.44 0-23.76 9.44-23.76 22.72 0 26.4 52.56 51.6 101.92 51.6 60.8 0 104.96-29.76 104.96-70.56 0-40.88-33.2-64.32-94.32-77.2-37.28-8-55.92-15.12-55.92-27.92 0-15.28 32.8-22.4 52.72-22.4 17.44 0 34.4 4.88 43.6 10.4 5.28 2.88 10.56 4.32 14.96 4.32 12 0 22.32-8.96 22.32-21.36 0-10.8-7.76-20.56-20.4-25.52-16.64-7.04-37.68-11.28-56.4-11.28z"
+      />
+    </svg>
+  )
+}
+
+export function Brand() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <LogoMark />
+      <div>
+        <div className="text-[22px] font-extrabold leading-none tracking-tight">
+          Salem<span className="text-brand">Bonus</span>
+        </div>
+        <div className="mt-0.5 text-[11px] text-ink-2">Бір аккаунт — көп мүмкіндіктер</div>
+      </div>
+    </div>
+  )
+}
