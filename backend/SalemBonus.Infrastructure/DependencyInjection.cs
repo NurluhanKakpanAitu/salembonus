@@ -15,6 +15,7 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("Default") ?? "Data Source=salembonus.db";
         services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IBonusCardRepository, BonusCardRepository>();
         services.AddScoped<IBonusTransactionRepository, BonusTransactionRepository>();
         services.AddScoped<ICurrentUser, DemoCurrentUser>();

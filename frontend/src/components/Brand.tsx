@@ -13,13 +13,13 @@ export function LogoMark({ size = 44 }: { size?: number }) {
 
 export function Brand() {
   return (
-    <div className="flex items-center gap-2.5">
-      <LogoMark />
-      <div>
-        <div className="text-[22px] font-extrabold leading-none tracking-tight">
+    <div className="flex items-center gap-2">
+      <LogoMark size={40} />
+      <div className="min-w-0">
+        <div className="text-[21px] font-extrabold leading-none tracking-tight">
           Salem<span className="text-brand">Bonus</span>
         </div>
-        <div className="mt-0.5 text-[11px] text-ink-2">Бір аккаунт — көп мүмкіндіктер</div>
+        <div className="mt-0.5 truncate text-[10.5px] text-ink-2">Бір аккаунт — көп мүмкіндіктер</div>
       </div>
     </div>
   )

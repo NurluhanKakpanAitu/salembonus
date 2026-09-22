@@ -20,7 +20,38 @@ export interface BonusCard {
   amountToNextLevel: number
 }
 
+export type TransactionType = 'Accrual' | 'Redemption' | 'Birthday' | 'Promo' | 'Expiration'
+
+export interface BonusTransaction {
+  id: string
+  storeName: string
+  type: TransactionType
+  amount: number
+  purchaseAmount: number | null
+  createdAt: string
+}
+
+export interface Customer {
+  id: string
+  phone: string
+  fullName: string
+  firstName: string
+  email: string | null
+  birthDate: string | null
+  isBirthdayToday: boolean
+  totalBalance: number
+  storeCount: number
+}
+
 export const cardsApi = {
   list: () => api<BonusCard[]>('/cards'),
   get: (storeId: string) => api<BonusCard>(`/cards/${storeId}`),
+}
+
+export const transactionsApi = {
+  recent: (take = 20) => api<BonusTransaction[]>(`/transactions/recent?take=${take}`),
+}
+
+export const meApi = {
+  get: () => api<Customer>('/me'),
 }

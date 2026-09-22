@@ -3,9 +3,9 @@ import { Brand } from './Brand'
 
 export function PageHeader({ right }: { right?: ReactNode }) {
   return (
-    <header className="flex items-center justify-between py-2">
+    <header className="flex items-center justify-between gap-3 py-2">
       <Brand />
-      {right}
+      <div className="shrink-0">{right}</div>
     </header>
   )
 }
