@@ -58,7 +58,7 @@ cd backend && dotnet ef migrations add <Name> --project SalemBonus.Infrastructur
 
 ## Деплой
 
-Cloudflare Pages (фронт) + Koyeb (API, Docker) + Neon (база), барлығы тегін тарифте, домен `salembonus.kz`. Қадамдық нұсқаулық: [DEPLOY.md](DEPLOY.md).
+Cloudflare Pages (фронт) + Render (API, Docker) + Neon (база), барлығы тегін тарифте, домен `salembonus.kz`. Қадамдық нұсқаулық: [DEPLOY.md](DEPLOY.md).
 
 ## Аутентификация
 

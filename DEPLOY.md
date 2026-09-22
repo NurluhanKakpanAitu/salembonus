@@ -1,9 +1,9 @@
-# Деплой: Cloudflare Pages + Koyeb + Neon
+# Деплой: Cloudflare Pages + Render + Neon
 
 Барлығы тегін тарифте. Нәтиже:
 
 - `https://salembonus.kz` — тұтынушы PWA (Cloudflare Pages)
-- `https://api.salembonus.kz` — .NET API (Koyeb, Docker)
+- `https://api.salembonus.kz` — .NET API (Render, Docker)
 - База — Neon Postgres
 
 Барлық үш сервиске GitHub аккаунтымен кіруге болады. Реті маңызды: алдымен база, сосын API, соңында фронт.
@@ -32,29 +32,29 @@ git push -u origin main
    Host=ep-xxx-pooler.eu-central-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=***;SSL Mode=Require;Channel Binding=Require
    ```
 
-4. Осы жолды сақтап қой, Koyeb-ке керек. Кестелерді API өзі жасайды (миграция автоматты қолданылады, демо деректер толады).
+4. Осы жолды сақтап қой, Render-ге керек. Кестелерді API өзі жасайды (миграция автоматты қолданылады, демо деректер толады).
 
 Тегін лимит: 0.5 ГБ, 5 минут кірмесе база ұйықтайды, бірінші сұраныс ~1 сек.
 
 ---
 
-## 2. Koyeb (API)
+## 2. Render (API)
 
-1. https://app.koyeb.com → Sign up with GitHub.
-2. **Create Service** → **GitHub** → репозиторийді таңда.
-3. Баптаулар:
-   - **Builder:** Dockerfile
-   - **Work directory:** `backend`
-   - **Dockerfile location:** `backend/Dockerfile`
-   - **Instance:** Free (Nano)
-   - **Region:** Frankfurt
-   - **Port:** `8000`, protocol HTTP, path `/`
-   - **Health check:** HTTP, path `/health`, port `8000`
-4. **Environment variables** (Secret ретінде):
+1. https://render.com → **Get Started** → поштамен немесе GitHub-пен тіркел.
+2. Dashboard → **New +** → **Web Service**.
+3. **Source Code** → **GitHub** → **Connect GitHub** (бірінші рет сұрайды) → `salembonus` репозиторийін таңдап, **Connect**.
+4. Баптаулар:
+   - **Name:** `salembonus-api`
+   - **Region:** Frankfurt (EU Central)
+   - **Branch:** `main`
+   - **Root Directory:** `backend`
+   - **Language / Runtime:** Docker (Dockerfile-ды өзі табады)
+   - **Instance Type:** Free
+5. **Environment Variables** → **Add Environment Variable**:
 
    | Атауы | Мәні |
    |---|---|
-   | `ConnectionStrings__Default` | Neon-нан алған жол |
+   | `ConnectionStrings__Default` | Neon-нан алған .NET жолы |
    | `Jwt__Key` | кемінде 32 таңбалы кездейсоқ жол (төменде генерация) |
    | `Cors__Origins__0` | `https://salembonus.kz` |
    | `Cors__Origins__1` | `https://www.salembonus.kz` |
@@ -66,12 +66,15 @@ git push -u origin main
    openssl rand -base64 48
    ```
 
-5. **Deploy**. 3-5 минуттан кейін `https://<app>.koyeb.app/health` → `Healthy`.
-6. **Domains** → **Add domain** → `api.salembonus.kz`. Koyeb CNAME мәнін көрсетеді (мысалы `xxx.koyeb.app`), оны 4-қадамда DNS-ке қосасың.
+   `PORT` айнымалысын Render өзі береді, қосудың қажеті жоқ.
 
-Тегін тариф: сервис ~15 минут кірмесе ұйықтайды, ояну 10-20 сек. Демо алдында `https://api.salembonus.kz/health` ашып қой.
+6. **Advanced** → **Health Check Path:** `/health`.
+7. **Deploy Web Service**. Бірінші билд 5-8 минут. Аяқталғанда `https://salembonus-api.onrender.com/health` → `Healthy`.
+8. **Settings** → **Custom Domains** → **Add** → `api.salembonus.kz`. Render CNAME мәнін көрсетеді (`salembonus-api.onrender.com`), оны 4-қадамда DNS-ке қосасың. Сертификатты Render өзі береді.
 
-Әр `git push` автоматты деплой жасайды.
+Тегін тариф: 15 минут кірмесе ұйықтайды, ояну 30-50 сек. Демо алдында `https://api.salembonus.kz/health` ашып қой немесе UptimeRobot-пен пингте.
+
+Әр `git push` автоматты деплой жасайды. Логтар: сервис беті → **Logs**.
 
 ---
 
@@ -104,9 +107,9 @@ API мекенжайы `frontend/.env.production` файлында (`https://api
    |---|---|---|---|
    | CNAME | `@` | `<project>.pages.dev` | Proxied |
    | CNAME | `www` | `<project>.pages.dev` | Proxied |
-   | CNAME | `api` | `<app>.koyeb.app` | **DNS only** (сұр бұлт) |
+   | CNAME | `api` | `salembonus-api.onrender.com` | **DNS only** (сұр бұлт) |
 
-   `api` жазбасында proxy өшірулі болсын, әйтпесе Koyeb сертификат бере алмайды.
+   `api` жазбасында proxy өшірулі болсын, сонда Render сертификатты өзі береді.
 
 4. **SSL/TLS** → режим **Full (strict)**.
 
@@ -116,14 +119,14 @@ API мекенжайы `frontend/.env.production` файлында (`https://api
 curl https://api.salembonus.kz/health
 ```
 
-Браузерде `https://salembonus.kz` → кіру беті → нөмір → код. Продакшнда код экранда көрінбейді (`ReturnCodeInResponse=false`), SMS провайдері қосылғанша Koyeb логынан аласың: **Koyeb → Service → Logs**, `[SMS -> +7...]` жолы.
+Браузерде `https://salembonus.kz` → кіру беті → нөмір → код. Продакшнда код экранда көрінбейді (`ReturnCodeInResponse=false`), SMS провайдері қосылғанша Render логынан аласың: **Render → Service → Logs**, `[SMS -> +7...]` жолы.
 
 ---
 
 ## 5. Продакшн алдындағы тексеру тізімі
 
-- [ ] `Jwt__Key` кездейсоқ және тек Koyeb Secret-те, git-те жоқ
-- [ ] Neon connection string тек Koyeb-те
+- [ ] `Jwt__Key` кездейсоқ және тек Render Environment-те, git-те жоқ
+- [ ] Neon connection string тек Render-де
 - [ ] `Auth:ReturnCodeInResponse` продакшнда `false` (appsettings.json-да солай)
 - [ ] Дүкендердің `ApiKey` мәндері демо емес, нақты кездейсоқ (базада `Stores` кестесін жаңарту)
 - [ ] SMS провайдер қосылған (`ISmsSender` іске асыруы)

@@ -12,6 +12,6 @@ RUN dotnet publish SalemBonus.Api/SalemBonus.Api.csproj -c Release -o /app --no-
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 COPY --from=build /app .
-# Koyeb/Render PORT айнымалысын runtime-да береді, әдепкі 8080
+# Render/Koyeb PORT айнымалысын runtime-да береді, әдепкі 8080
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "exec dotnet SalemBonus.Api.dll --urls http://0.0.0.0:${PORT:-8080}"]
