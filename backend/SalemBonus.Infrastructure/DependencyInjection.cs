@@ -14,8 +14,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default") ?? "Data Source=salembonus.db";
-        services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
+        var connectionString = configuration.GetConnectionString("Default")
+            ?? throw new InvalidOperationException("ConnectionStrings:Default орнатылмаған (Postgres, мысалы Neon)");
+        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.Section));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.Section));

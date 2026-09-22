@@ -1,0 +1,14 @@
+# Жергілікті дамыту үшін Postgres. Продакшнда Neon қолданылады.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: salembonus
+      POSTGRES_USER: salembonus
+      POSTGRES_PASSWORD: salembonus
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

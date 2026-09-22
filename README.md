@@ -8,7 +8,7 @@
 backend/
   SalemBonus.Domain          Entities, Enums — тәуелділігі жоқ
   SalemBonus.Application     DTO, сервис интерфейстері мен іске асыруы, репозиторий интерфейстері
-  SalemBonus.Infrastructure  EF Core + SQLite, репозиторийлер, миграциялар, seed
+  SalemBonus.Infrastructure  EF Core + PostgreSQL, репозиторийлер, миграциялар, seed
   SalemBonus.Api             Controllers, Program.cs, appsettings
 frontend/  Vite + React + TypeScript PWA
 design/    Pen дизайн файлы (salembonus-app.pen) және PNG экспорттар
@@ -18,10 +18,16 @@ design/    Pen дизайн файлы (salembonus-app.pen) және PNG экс�
 
 ## Іске қосу
 
+База (Postgres, Docker):
+
+```bash
+docker compose up -d db
+```
+
 Backend (http://localhost:5113):
 
 ```bash
-dotnet run --project backend/SalemBonus.Api
+dotnet run --project backend/SalemBonus.Api --launch-profile http
 ```
 
 Frontend (http://localhost:5173, `/api` сұраныстары backend-ке проксиленеді):
@@ -34,13 +40,15 @@ OpenAPI спецификациясы dev режимде: http://localhost:5113/o
 
 ## Стек
 
-- Backend: ASP.NET Core 9, Clean Architecture, EF Core 9 + SQLite (кейін PostgreSQL), OpenAPI, CORS
+- Backend: ASP.NET Core 9, Clean Architecture, EF Core 9 + PostgreSQL (Neon), JWT, OpenAPI, CORS, Docker
 - Frontend: React 19, Vite, Tailwind CSS v4, React Router, TanStack Query, Zustand, lucide-react, vite-plugin-pwa
 - Домен: salembonus.kz (API: api.salembonus.kz)
 
 ## База деректері
 
-Әзірге SQLite, файл `backend/SalemBonus.Api/salembonus.db` (git-ке кірмейді). Қосылғанда миграциялар автоматты қолданылып, демо деректер толтырылады.
+PostgreSQL. Продакшнда Neon, жергілікті Docker (`docker compose up -d db`, порт 5433). Қосылғанда миграциялар автоматты қолданылып, бос базаға демо деректер толады.
+
+Connection string: `ConnectionStrings:Default` (жергілікті `appsettings.Development.json`, продакшнда `ConnectionStrings__Default` орта айнымалысы).
 
 Жаңа миграция:
 
@@ -48,7 +56,9 @@ OpenAPI спецификациясы dev режимде: http://localhost:5113/o
 cd backend && dotnet ef migrations add <Name> --project SalemBonus.Infrastructure --startup-project SalemBonus.Api --output-dir Persistence/Migrations
 ```
 
-PostgreSQL-ге көшу: `Npgsql.EntityFrameworkCore.PostgreSQL` пакетін қосып, `DependencyInjection.cs`-те `UseSqlite`-ті `UseNpgsql`-ге ауыстыру және миграцияларды қайта генерациялау.
+## Деплой
+
+Cloudflare Pages (фронт) + Koyeb (API, Docker) + Neon (база), барлығы тегін тарифте, домен `salembonus.kz`. Қадамдық нұсқаулық: [DEPLOY.md](DEPLOY.md).
 
 ## Аутентификация
 
