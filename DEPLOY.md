@@ -16,8 +16,8 @@ GitHub-та жаңа **private** репозиторий жаса (`salembonus`),
 
 ```bash
 cd /Users/nurlykhankakpan/RiderProjects/SalemBonus
-git remote add origin git@github.com:<username>/salembonus.git
-git push -u origin master
+git remote add origin https://github.com/NurluhanKakpanAitu/salembonus.git
+git push -u origin main
 ```
 
 ---
