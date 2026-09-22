@@ -6,6 +6,7 @@ import { LevelCard } from '../components/home/LevelCard'
 import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
+import type { BonusCard } from '../lib/api'
 import { useCards, useMe, useRecentTransactions } from '../lib/queries'
 
 export function HomePage() {
@@ -13,8 +14,9 @@ export function HomePage() {
   const cards = useCards()
   const transactions = useRecentTransactions(4)
   const [qrStore, setQrStore] = useState<string | null>(null)
+  const [activeCard, setActiveCard] = useState<BonusCard | null>(null)
 
-  const primaryCard = cards.data?.[0]
+  const levelCard = activeCard ?? cards.data?.[0]
 
   return (
     <>
@@ -33,14 +35,14 @@ export function HomePage() {
       <div className="mt-3 flex flex-col gap-5">
         {cards.isPending && <Skeleton className="h-[290px] rounded-[22px]" />}
         {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
-        {cards.data && cards.data.length > 0 && <CardCarousel cards={cards.data} onShowQr={(c) => setQrStore(c.storeName)} />}
+        {cards.data && cards.data.length > 0 && <CardCarousel cards={cards.data} onShowQr={(c) => setQrStore(c.storeName)} onActiveChange={setActiveCard} />}
         {cards.data && cards.data.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">
             Әзірге бонус картаңыз жоқ. Дүкенде телефон нөміріңізді айтыңыз.
           </div>
         )}
 
-        {primaryCard && <LevelCard card={primaryCard} />}
+        {levelCard && <LevelCard card={levelCard} />}
 
         {transactions.isPending && <Skeleton className="h-64" />}
         {transactions.data && <TransactionList items={transactions.data} allHref="/transactions" />}

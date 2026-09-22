@@ -32,7 +32,6 @@ export function StoreCard({ card }: { card: BonusCard }) {
           </div>
         </div>
         <div className="mt-2.5 text-[28px] font-extrabold leading-none tracking-tight">{formatBonus(card.balance)}</div>
-        <div className="mt-1.5 text-[13px]" style={{ color: t.muted }}>≈ {formatTenge(card.balance)}</div>
       </div>
 
       <div className="relative flex flex-col items-end gap-2">

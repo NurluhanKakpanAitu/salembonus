@@ -1,7 +1,7 @@
 import { ChevronRight, CircleMinus, CirclePlus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { BonusTransaction } from '../../lib/api'
-import { formatDateTime, formatSigned, transactionTitle } from '../../lib/format'
+import { formatDateTime, formatSigned, formatTenge, transactionTitle } from '../../lib/format'
 
 export function TransactionList({ items, title = 'Соңғы операциялар', allHref }: {
   items: BonusTransaction[]
@@ -37,7 +37,7 @@ export function TransactionList({ items, title = 'Соңғы операциял�
               </div>
               <div className="text-right">
                 <div className={`text-base font-bold ${plus ? 'text-green' : 'text-brand'}`}>{formatSigned(t.amount, 'Б')}</div>
-                <div className="text-xs text-ink-3">{formatSigned(t.amount, '₸')}</div>
+                {t.purchaseAmount != null && <div className="text-xs text-ink-3">Чек: {formatTenge(t.purchaseAmount)}</div>}
               </div>
             </li>
           )

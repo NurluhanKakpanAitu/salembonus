@@ -1,12 +1,21 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BonusCard } from '../../lib/api'
 import { HeroCard } from './HeroCard'
 
 const PADDING = 16
 
-export function CardCarousel({ cards, onShowQr }: { cards: BonusCard[]; onShowQr?: (card: BonusCard) => void }) {
+export function CardCarousel({ cards, onShowQr, onActiveChange }: {
+  cards: BonusCard[]
+  onShowQr?: (card: BonusCard) => void
+  onActiveChange?: (card: BonusCard) => void
+}) {
   const [active, setActive] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const c = cards[active]
+    if (c) onActiveChange?.(c)
+  }, [active, cards, onActiveChange])
 
   const slides = () => Array.from(ref.current?.children ?? []) as HTMLElement[]
 
