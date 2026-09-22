@@ -16,10 +16,10 @@ public static class DbSeeder
 
         var stores = new List<Store>
         {
-            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", CashbackPercent = 5 },
-            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", CashbackPercent = 3 },
-            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", CashbackPercent = 2 },
-            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", CashbackPercent = 2 },
+            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", CashbackPercent = 5, ThemeColor = "#111113", Icon = "car" },
+            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", CashbackPercent = 3, ThemeColor = "#3B2A22", Icon = "coffee" },
+            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", CashbackPercent = 2, ThemeColor = "#F6D9DE", Icon = "flower" },
+            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", CashbackPercent = 2, ThemeColor = "#E9EBF0", Icon = "dumbbell" },
         };
 
         var customer = new Customer

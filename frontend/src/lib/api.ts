@@ -14,6 +14,8 @@ export interface BonusCard {
   storeId: string
   storeName: string
   category: string
+  themeColor: string
+  icon: string
   balance: number
   level: string
   cashbackPercent: number

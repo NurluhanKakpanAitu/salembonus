@@ -40,6 +40,8 @@ public class BonusCardService(
         card.StoreId,
         card.Store?.Name ?? string.Empty,
         card.Store?.Category ?? string.Empty,
+        card.Store?.ThemeColor ?? "#111113",
+        card.Store?.Icon ?? "store",
         card.Balance,
         LevelName(card.Level),
         card.Store?.CashbackPercent ?? 0,
