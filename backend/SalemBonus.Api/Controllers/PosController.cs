@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SalemBonus.Application.Pos;
 using SalemBonus.Application.Pos.Dtos;
@@ -9,6 +10,7 @@ namespace SalemBonus.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/pos")]
+[AllowAnonymous]
 public class PosController(IPosService pos) : ControllerBase
 {
     public const string ApiKeyHeader = "X-Store-Api-Key";

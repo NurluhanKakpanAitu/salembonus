@@ -1,14 +1,81 @@
+import { useAuth, type AuthTokens } from './auth'
+
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
+export class ApiError extends Error {
+  status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+  }
+}
+
+async function readError(res: Response): Promise<string> {
+  try {
+    const body = await res.json()
+    return body?.detail ?? body?.title ?? `${res.status} ${res.statusText}`
+  } catch {
+    return `${res.status} ${res.statusText}`
+  }
+}
+
+let refreshing: Promise<boolean> | null = null
+
+/** Refresh токенмен жаңа жұп алады. Бір уақытта бір ғана refresh жүреді. */
+async function tryRefresh(): Promise<boolean> {
+  if (refreshing) return refreshing
+  refreshing = (async () => {
+    const { refreshToken, setTokens, clear } = useAuth.getState()
+    if (!refreshToken) return false
+    const res = await fetch(`${BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    })
+    if (!res.ok) {
+      clear()
+      return false
+    }
+    setTokens((await res.json()) as AuthTokens)
+    return true
+  })().finally(() => {
+    refreshing = null
   })
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  return refreshing
+}
+
+async function request<T>(path: string, init: RequestInit | undefined, retry: boolean): Promise<T> {
+  const { accessToken } = useAuth.getState()
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(init?.headers as Record<string, string>) }
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+
+  const res = await fetch(`${BASE}${path}`, { ...init, headers })
+
+  if (res.status === 401 && retry && accessToken) {
+    if (await tryRefresh()) return request<T>(path, init, false)
+    throw new ApiError(401, 'Кіру қажет')
+  }
+  if (!res.ok) throw new ApiError(res.status, await readError(res))
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
+}
+
+export const api = <T>(path: string, init?: RequestInit) => request<T>(path, init, true)
+
+const post = <T>(path: string, body: unknown) => api<T>(path, { method: 'POST', body: JSON.stringify(body) })
+
+export interface RequestCodeResult {
+  phone: string
+  expiresInSeconds: number
+  retryAfterSeconds: number
+  devCode: string | null
+}
+
+export const authApi = {
+  requestCode: (phone: string) => post<RequestCodeResult>('/auth/request-code', { phone }),
+  verify: (phone: string, code: string) =>
+    post<AuthTokens>('/auth/verify', { phone, code, device: navigator.userAgent.slice(0, 200) }),
+  logout: (refreshToken: string) => post<void>('/auth/logout', { refreshToken }),
 }
 
 export interface BonusCard {
@@ -34,6 +101,11 @@ export interface BonusTransaction {
   createdAt: string
 }
 
+export interface TransactionPage {
+  items: BonusTransaction[]
+  hasMore: boolean
+}
+
 export interface Customer {
   id: string
   phone: string
@@ -47,6 +119,17 @@ export interface Customer {
   storeCount: number
 }
 
+export interface UpdateProfile {
+  fullName: string
+  email: string | null
+  birthDate: string | null
+}
+
+export interface QrCode {
+  code: string
+  payload: string
+}
+
 export const cardsApi = {
   list: () => api<BonusCard[]>('/cards'),
   get: (storeId: string) => api<BonusCard>(`/cards/${storeId}`),
@@ -54,10 +137,14 @@ export const cardsApi = {
 
 export const transactionsApi = {
   recent: (take = 20) => api<BonusTransaction[]>(`/transactions/recent?take=${take}`),
+  list: (storeId: string | null, skip: number, take: number) =>
+    api<TransactionPage>(`/transactions?${storeId ? `storeId=${storeId}&` : ''}skip=${skip}&take=${take}`),
 }
 
 export const meApi = {
   get: () => api<Customer>('/me'),
+  update: (body: UpdateProfile) => api<Customer>('/me', { method: 'PUT', body: JSON.stringify(body) }),
+  qr: () => api<QrCode>('/me/qr'),
 }
 
 export type NotificationType =
@@ -89,23 +176,4 @@ export const notificationsApi = {
   unreadCount: () => api<number>('/notifications/unread-count'),
   markRead: (id: string) => api<void>(`/notifications/${id}/read`, { method: 'POST' }),
   markAllRead: () => api<void>('/notifications/read-all', { method: 'POST' }),
-}
-
-export interface QrCode {
-  code: string
-  payload: string
-}
-
-export interface TransactionPage {
-  items: BonusTransaction[]
-  hasMore: boolean
-}
-
-export const qrApi = {
-  get: () => api<QrCode>('/me/qr'),
-}
-
-export const transactionsPageApi = {
-  list: (storeId: string | null, skip: number, take: number) =>
-    api<TransactionPage>(`/transactions?${storeId ? `storeId=${storeId}&` : ''}skip=${skip}&take=${take}`),
 }

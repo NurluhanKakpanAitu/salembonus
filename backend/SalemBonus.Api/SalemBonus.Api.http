@@ -2,41 +2,86 @@
 @mkmKey = sk_test_mkm_auto_11111111
 @coffeeKey = sk_test_coffee_house_2222
 
-### ===== Тұтынушы қосымшасы =====
+### ===== Аутентификация (SMS + JWT) =====
+
+### 1. Код сұрау (dev-те devCode жауапта келеді, әрі API логында)
+# @name requestCode
+POST {{host}}/api/auth/request-code
+Content-Type: application/json
+
+{ "phone": "+7 701 123 45 67" }
+
+### 2. Кодты тексеру -> accessToken (15 мин) + refreshToken (30 күн)
+# @name verify
+POST {{host}}/api/auth/verify
+Content-Type: application/json
+
+{ "phone": "+77011234567", "code": "{{requestCode.response.body.devCode}}", "device": "rider-http" }
+
+### 3. Refresh (ескі refresh жабылады, жаңа жұп келеді)
+POST {{host}}/api/auth/refresh
+Content-Type: application/json
+
+{ "refreshToken": "{{verify.response.body.refreshToken}}" }
+
+### 4. Шығу
+POST {{host}}/api/auth/logout
+Content-Type: application/json
+
+{ "refreshToken": "{{verify.response.body.refreshToken}}" }
+
+### ===== Тұтынушы қосымшасы (Authorization: Bearer) =====
+@token = {{verify.response.body.accessToken}}
 
 ### Профиль
 GET {{host}}/api/me
+Authorization: Bearer {{token}}
 Accept: application/json
+
+### Профильді толтыру
+PUT {{host}}/api/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "fullName": "Мақсадбек Абдужаббаров", "email": "maksadbek97@gmail.com", "birthDate": "1997-09-15" }
 
 ### QR коды
 GET {{host}}/api/me/qr
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Карталар
 GET {{host}}/api/cards
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Бір дүкендегі карта
 GET {{host}}/api/cards/11111111-1111-1111-1111-111111111111
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Соңғы операциялар
 GET {{host}}/api/transactions/recent?take=10
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Барлық операциялар (беттеп), storeId міндетті емес
 GET {{host}}/api/transactions?skip=0&take=20&storeId=11111111-1111-1111-1111-111111111111
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Хабарламалар (category: Bonus | Promo | System | Store)
 GET {{host}}/api/notifications?skip=0&take=20
+Authorization: Bearer {{token}}
 Accept: application/json
 
 ### Оқылмаған саны
 GET {{host}}/api/notifications/unread-count
+Authorization: Bearer {{token}}
 
 ### Барлығын оқылды деп белгілеу
 POST {{host}}/api/notifications/read-all
+Authorization: Bearer {{token}}
 
 ### ===== SalemPos / касса (X-Store-Api-Key) =====
 

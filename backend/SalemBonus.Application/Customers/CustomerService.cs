@@ -9,7 +9,8 @@ namespace SalemBonus.Application.Customers;
 public class CustomerService(
     ICustomerRepository customers,
     IBonusCardRepository cards,
-    ICurrentUser currentUser) : ICustomerService
+    ICurrentUser currentUser,
+    IUnitOfWork unitOfWork) : ICustomerService
 {
     public const string QrPrefix = "SB:";
 
@@ -34,6 +35,27 @@ public class CustomerService(
             CustomerLevels.Name(topLevel),
             myCards.Sum(c => c.Balance),
             myCards.Count);
+    }
+
+    public async Task<CustomerDto> UpdateMeAsync(UpdateProfileRequest request, CancellationToken ct = default)
+    {
+        var name = (request.FullName ?? string.Empty).Trim();
+        if (name.Length < 2) throw new ValidationException("Атыңызды енгізіңіз");
+        if (name.Length > 200) throw new ValidationException("Аты тым ұзын");
+        var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+        if (email is not null && (!email.Contains('@') || email.Length > 200))
+            throw new ValidationException("Email дұрыс емес");
+        if (request.BirthDate is { } b && (b > DateOnly.FromDateTime(DateTime.UtcNow) || b.Year < 1900))
+            throw new ValidationException("Туған күн дұрыс емес");
+
+        var customer = await customers.GetForUpdateAsync(currentUser.CustomerId, ct)
+            ?? throw new NotFoundException("Тұтынушы табылмады");
+        customer.FullName = name;
+        customer.Email = email;
+        customer.BirthDate = request.BirthDate;
+        await unitOfWork.SaveChangesAsync(ct);
+
+        return (await GetMeAsync(ct))!;
     }
 
     public async Task<QrCodeDto> GetMyQrAsync(CancellationToken ct = default)

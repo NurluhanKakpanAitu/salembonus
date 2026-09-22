@@ -1,5 +1,8 @@
 import { Bell, ChevronRight, CreditCard, Gift, Globe, Info, Lock, LogOut, Settings, User } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { authApi } from '../lib/api'
+import { useAuth } from '../lib/auth'
 import { PageHeader } from '../components/PageHeader'
 import { PageTitle } from '../components/PageTitle'
 import { IconButton } from '../components/IconButton'
@@ -15,6 +18,15 @@ export function ProfilePage() {
   const me = useMe()
   const navigate = useNavigate()
   const hasUnread = (useUnreadCount().data ?? 0) > 0
+  const qc = useQueryClient()
+
+  const logout = async () => {
+    const { refreshToken, clear } = useAuth.getState()
+    if (refreshToken) await authApi.logout(refreshToken).catch(() => undefined)
+    clear()
+    qc.clear()
+    navigate('/login', { replace: true })
+  }
 
   const menu: MenuItem[] = [
     { icon: User, title: 'Жеке деректер', subtitle: 'Аты-жөні, телефон, туған күні', to: '/profile/edit' },
@@ -23,7 +35,7 @@ export function ProfilePage() {
     { icon: Bell, title: 'Хабарламалар', subtitle: 'Қандай хабарламалар алатыныңызды баптау', to: '/profile/notifications' },
     { icon: Globe, title: 'Тіл', subtitle: 'Қазақша / Русский', to: '/profile/language' },
     { icon: Info, title: 'Жиі қойылатын сұрақтар', subtitle: 'Жауаптар мен көмек', to: '/faq' },
-    { icon: LogOut, title: 'Шығу', subtitle: 'Аккаунттан шығу', danger: true, onClick: () => navigate('/') },
+    { icon: LogOut, title: 'Шығу', subtitle: 'Аккаунттан шығу', danger: true, onClick: () => void logout() },
   ]
 
   return (

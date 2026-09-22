@@ -50,6 +50,26 @@ cd backend && dotnet ef migrations add <Name> --project SalemBonus.Infrastructur
 
 PostgreSQL-ге көшу: `Npgsql.EntityFrameworkCore.PostgreSQL` пакетін қосып, `DependencyInjection.cs`-те `UseSqlite`-ті `UseNpgsql`-ге ауыстыру және миграцияларды қайта генерациялау.
 
+## Аутентификация
+
+Тұтынушы қосымшасы SMS код + JWT арқылы кіреді, дүкен жағы (`/api/pos/*`) бөлек `X-Store-Api-Key` кілтімен.
+
+| Метод | Жол | Не істейді |
+|---|---|---|
+| POST | `/api/auth/request-code` | Телефонға 4 таңбалы код (5 мин жарамды, 60 сек лимит, 5 әрекет) |
+| POST | `/api/auth/verify` | Кодты тексеру, `accessToken` (15 мин) + `refreshToken` (30 күн). Жаңа нөмір автотіркеледі, `profileCompleted=false` |
+| POST | `/api/auth/refresh` | Жаңа жұп, ескі refresh жабылады (айналдыру) |
+| POST | `/api/auth/logout` | Refresh токенді жабу |
+| PUT | `/api/me` | Профильді толтыру (аты, email, туған күні) |
+
+Қалған тұтынушы эндпоинттері `Authorization: Bearer <accessToken>` талап етеді. Код пен refresh токен базада SHA-256 хэшімен сақталады.
+
+Баптаулар `appsettings.json`: `Jwt` (Issuer, Audience, Key, мерзімдер), `Auth` (OTP параметрлері), `Sms:Provider`. Dev-те `Auth:ReturnCodeInResponse=true`, код жауапта және API логында (`[SMS -> +7...]`) көрінеді, қосымшада «Тест режимі» деп шығады. Продакшнда `Jwt__Key` орта айнымалысымен (32+ таңба) беріледі және `ReturnCodeInResponse=false`.
+
+SMS провайдер қосу: `ISmsSender` интерфейсін іске асырып (мысалы, SMSC.kz, Mobizon), `Infrastructure/DependencyInjection.cs`-те `LogSmsSender` орнына тіркеу.
+
+Frontend: токендер `localStorage`-та (`salembonus-auth`), 401 келгенде бір рет автоматты refresh, сәтсіз болса кіру бетіне. Экрандар: `/login`, `/verify`, `/welcome` (жаңа тұтынушы профилі).
+
 ## SalemPos / касса интеграциясы
 
 Дүкен жағы `X-Store-Api-Key` тақырыбымен жұмыс істейді. Демо кілттер seed-те:

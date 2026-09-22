@@ -9,6 +9,9 @@ public class CustomerRepository(AppDbContext db) : ICustomerRepository
     public Task<Customer?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         db.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
 
+    public Task<Customer?> GetForUpdateAsync(Guid id, CancellationToken ct = default) =>
+        db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public Task<Customer?> GetByPhoneAsync(string phone, CancellationToken ct = default) =>
         db.Customers.FirstOrDefaultAsync(c => c.Phone == phone, ct);
 

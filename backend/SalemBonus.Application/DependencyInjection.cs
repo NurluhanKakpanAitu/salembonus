@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SalemBonus.Application.Auth;
 using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Customers;
 using SalemBonus.Application.Notifications;
@@ -14,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IPosService, PosService>();
+        services.AddScoped<IAuthService, AuthService>();
         return services;
     }
 }

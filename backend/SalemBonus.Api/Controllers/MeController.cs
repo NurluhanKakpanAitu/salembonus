@@ -15,6 +15,11 @@ public class MeController(ICustomerService service) : ControllerBase
         return me is null ? NotFound() : Ok(me);
     }
 
+    /// <summary>Профильді толтыру/өзгерту.</summary>
+    [HttpPut]
+    public async Task<ActionResult<CustomerDto>> Update([FromBody] UpdateProfileRequest request, CancellationToken ct) =>
+        Ok(await service.UpdateMeAsync(request, ct));
+
     /// <summary>Кассада көрсетілетін QR коды.</summary>
     [HttpGet("qr")]
     public async Task<ActionResult<QrCodeDto>> GetQr(CancellationToken ct) =>

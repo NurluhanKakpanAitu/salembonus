@@ -6,4 +6,5 @@ public interface ICustomerService
 {
     Task<CustomerDto?> GetMeAsync(CancellationToken ct = default);
     Task<QrCodeDto> GetMyQrAsync(CancellationToken ct = default);
+    Task<CustomerDto> UpdateMeAsync(UpdateProfileRequest request, CancellationToken ct = default);
 }
