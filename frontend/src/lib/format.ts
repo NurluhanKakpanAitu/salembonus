@@ -38,3 +38,12 @@ export const transactionTitle: Record<TransactionType, string> = {
 
 export const levelThresholdLabel = (amountToNext: number) =>
   amountToNext <= 0 ? 'Ең жоғары деңгей' : `Қалды: ${formatTenge(amountToNext)}`
+
+/** "1997-09-15" -> "15 қыркүйек 1997" */
+export function formatDate(iso: string, withYear = true): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return withYear ? `${d} ${MONTHS[m - 1]} ${y}` : `${d} ${MONTHS[m - 1]}`
+}
+
+export const initials = (fullName: string) =>
+  fullName.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('')

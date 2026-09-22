@@ -41,6 +41,7 @@ export interface Customer {
   email: string | null
   birthDate: string | null
   isBirthdayToday: boolean
+  topLevel: string
   totalBalance: number
   storeCount: number
 }

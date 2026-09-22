@@ -43,17 +43,9 @@ public class BonusCardService(
         card.Store?.ThemeColor ?? "#111113",
         card.Store?.Icon ?? "store",
         card.Balance,
-        LevelName(card.Level),
+        CustomerLevels.Name(card.Level),
         card.Store?.CashbackPercent ?? 0,
         AmountToNextLevel(card));
-
-    private static string LevelName(CustomerLevel level) => level switch
-    {
-        CustomerLevel.Vip => "VIP клиент",
-        CustomerLevel.Favorite => "Сүйікті клиент",
-        CustomerLevel.Regular => "Тұрақты клиент",
-        _ => "Жаңа клиент",
-    };
 
     private static decimal AmountToNextLevel(BonusCard card)
     {

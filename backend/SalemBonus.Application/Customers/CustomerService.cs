@@ -1,5 +1,7 @@
+using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Customers.Dtos;
+using SalemBonus.Domain.Enums;
 
 namespace SalemBonus.Application.Customers;
 
@@ -16,6 +18,7 @@ public class CustomerService(
         var myCards = await cards.GetByCustomerAsync(customer.Id, ct);
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var firstName = customer.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? customer.FullName;
+        var topLevel = myCards.Count == 0 ? CustomerLevel.New : myCards.Max(c => c.Level);
 
         return new CustomerDto(
             customer.Id,
@@ -25,6 +28,7 @@ public class CustomerService(
             customer.Email,
             customer.BirthDate,
             customer.BirthDate is { } b && b.Month == today.Month && b.Day == today.Day,
+            CustomerLevels.Name(topLevel),
             myCards.Sum(c => c.Balance),
             myCards.Count);
     }
