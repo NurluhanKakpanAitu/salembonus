@@ -1,0 +1,16 @@
+# HTTPS сертификатын Caddy өзі алады және жаңартады (Let's Encrypt).
+# Cloudflare-де бұл домендердің DNS жазбалары "DNS only" (сұр бұлт) болуы керек.
+
+{
+	email {$ACME_EMAIL}
+}
+
+salembonus.kz, www.salembonus.kz {
+	encode zstd gzip
+	reverse_proxy web:80
+}
+
+api.salembonus.kz {
+	encode zstd gzip
+	reverse_proxy api:8080
+}

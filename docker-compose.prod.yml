@@ -1,0 +1,70 @@
+# Продакшн: база + API + фронт + Caddy (HTTPS), бәрі бір серверде.
+# Іске қосу: docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: salembonus
+      POSTGRES_USER: salembonus
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD керек}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salembonus -d salembonus"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    # Порт сыртқа шығарылмайды: базаға тек ішкі желіден кіріледі
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      PORT: "8080"
+      ConnectionStrings__Default: Host=db;Port=5432;Database=salembonus;Username=salembonus;Password=${DB_PASSWORD}
+      Jwt__Key: ${JWT_KEY:?Jwt кілті керек}
+      Cors__Origins__0: https://salembonus.kz
+      Cors__Origins__1: https://www.salembonus.kz
+      Auth__StaticOtpCode: ${STATIC_OTP_CODE:-}
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:-admin@salembonus.kz}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
