@@ -30,7 +30,7 @@ public class AuthService(
             throw new ValidationException($"Жаңа кодты {wait} секундтан кейін сұраңыз");
         }
 
-        var code = GenerateCode(_opt.OtpLength);
+        var code = string.IsNullOrWhiteSpace(_opt.StaticOtpCode) ? GenerateCode(_opt.OtpLength) : _opt.StaticOtpCode.Trim();
         otps.Add(new OtpCode
         {
             Id = Guid.NewGuid(),

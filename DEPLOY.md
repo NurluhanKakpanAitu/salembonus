@@ -128,6 +128,7 @@ curl https://api.salembonus.kz/health
 - [ ] `Jwt__Key` кездейсоқ және тек Render Environment-те, git-те жоқ
 - [ ] Neon connection string тек Render-де
 - [ ] `Auth:ReturnCodeInResponse` продакшнда `false` (appsettings.json-да солай)
+- [ ] `Auth__StaticOtpCode` орта айнымалысы Render-де жоқ (демо кезінде `1234` қойылған болуы мүмкін)
 - [ ] Дүкендердің `ApiKey` мәндері демо емес, нақты кездейсоқ (базада `Stores` кестесін жаңарту)
 - [ ] SMS провайдер қосылған (`ISmsSender` іске асыруы)
 - [ ] UptimeRobot (тегін) `https://api.salembonus.kz/health`-ті 5 минут сайын пингтейді, сонда API ұйықтамайды
