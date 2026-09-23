@@ -12,7 +12,7 @@ export function LogoMark({ size = 44 }: { size?: number }) {
 export function Wordmark({ height = 26 }: { height?: number }) {
   return (
     <span
-      className="relative inline-block whitespace-nowrap font-logo font-extrabold leading-none tracking-tight text-ink"
+      className="relative inline-block whitespace-nowrap font-logo font-extrabold leading-none tracking-[-0.03em] text-ink"
       style={{ fontSize: height }}
     >
       Salem<span className="text-brand">Bonus</span>

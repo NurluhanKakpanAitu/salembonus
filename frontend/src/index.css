@@ -17,9 +17,9 @@
   --color-violet: #6d5df6;
   --color-violet-soft: #eeebff;
   --color-dark: #111113;
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-logo: "Nunito", "Inter", system-ui, sans-serif;
-  --radius-card: 18px;
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-logo: "Manrope", system-ui, sans-serif;
+  --radius-card: 20px;
 }
 
 html, body, #root {

@@ -1,22 +1,18 @@
 import { useState } from 'react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { QrSheet } from '../components/QrSheet'
-import { CardCarousel } from '../components/home/CardCarousel'
-import { LevelCard } from '../components/home/LevelCard'
+import { BalanceCard } from '../components/home/BalanceCard'
+import { StoreStrip } from '../components/home/StoreStrip'
 import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
-import type { BonusCard } from '../lib/api'
 import { useCards, useMe, useRecentTransactions } from '../lib/queries'
 
 export function HomePage() {
   const me = useMe()
   const cards = useCards()
   const transactions = useRecentTransactions(4)
-  const [qrStore, setQrStore] = useState<string | null>(null)
-  const [activeCard, setActiveCard] = useState<BonusCard | null>(null)
-
-  const levelCard = activeCard ?? cards.data?.[0]
+  const [qrOpen, setQrOpen] = useState(false)
 
   return (
     <>
@@ -32,24 +28,26 @@ export function HomePage() {
         }
       />
 
-      <div className="mt-3 flex flex-col gap-5">
-        {cards.isPending && <Skeleton className="h-[290px] rounded-[22px]" />}
+      <div className="mt-3 flex flex-col gap-6">
+        {me.isPending && <Skeleton className="h-40 rounded-[24px]" />}
+        {me.isError && <ErrorBox message={me.error.message} onRetry={() => me.refetch()} />}
+        {me.data && <BalanceCard me={me.data} onShowQr={() => setQrOpen(true)} />}
+
+        {me.data?.isBirthdayToday && <BirthdayBanner />}
+
+        {cards.isPending && <Skeleton className="h-40" />}
         {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
-        {cards.data && cards.data.length > 0 && <CardCarousel cards={cards.data} onShowQr={(c) => setQrStore(c.storeName)} onActiveChange={setActiveCard} />}
+        {cards.data && cards.data.length > 0 && <StoreStrip cards={cards.data} />}
         {cards.data && cards.data.length === 0 && (
-          <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">
-            Әзірге бонус картаңыз жоқ. Дүкенде телефон нөміріңізді айтыңыз.
+          <div className="rounded-[20px] bg-surface p-6 text-center text-sm text-ink-2">
+            Әзірге бонус картаңыз жоқ. Дүкенде QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.
           </div>
         )}
 
-        {levelCard && <LevelCard card={levelCard} />}
-
         {transactions.isPending && <Skeleton className="h-64" />}
         {transactions.data && <TransactionList items={transactions.data} allHref="/transactions" />}
-
-        {me.data?.isBirthdayToday && <BirthdayBanner />}
       </div>
-      <QrSheet open={qrStore !== null} onClose={() => setQrStore(null)} storeName={qrStore ?? undefined} />
+      <QrSheet open={qrOpen} onClose={() => setQrOpen(false)} />
     </>
   )
 }

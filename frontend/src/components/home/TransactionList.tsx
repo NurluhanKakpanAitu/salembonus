@@ -11,10 +11,10 @@ export function TransactionList({ items, title = 'Соңғы операциял�
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-bold">{title}</h2>
+        <h2 className="text-[17px] font-bold">{title}</h2>
         {allHref && (
-          <Link to={allHref} className="flex items-center text-[13px] font-medium text-blue-600">
-            Барлығы <ChevronRight size={14} />
+          <Link to={allHref} className="flex items-center text-[13px] font-semibold text-brand">
+            Барлығы <ChevronRight size={16} />
           </Link>
         )}
       </div>
