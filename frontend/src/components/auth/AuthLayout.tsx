@@ -31,5 +31,5 @@ export function PrimaryButton({ children, loading, ...rest }: React.ButtonHTMLAt
 
 export function FieldError({ message }: { message?: string | null }) {
   if (!message) return null
-  return <p className="mt-2 text-[13px] text-brand">{message}</p>
+  return <p className="mt-2 text-[13px] text-danger">{message}</p>
 }

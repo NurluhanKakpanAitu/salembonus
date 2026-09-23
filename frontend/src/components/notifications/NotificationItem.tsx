@@ -5,11 +5,11 @@ import { storeIcon, storeTheme } from '../../lib/theme'
 
 const STYLE: Record<NotificationType, { icon: LucideIcon; bg: string; color: string }> = {
   BonusAccrued: { icon: Gift, bg: '#E8F7EE', color: '#16A34A' },
-  BonusRedeemed: { icon: CircleMinus, bg: '#FDECEC', color: '#E31E24' },
+  BonusRedeemed: { icon: CircleMinus, bg: '#FDECEC', color: '#E5484D' },
   Birthday: { icon: Cake, bg: '#EEEBFF', color: '#6D5DF6' },
   Promo: { icon: Percent, bg: '#E3EDFF', color: '#2563EB' },
   StoreAdded: { icon: Info, bg: '#3B2A22', color: '#FFFFFF' },
-  ProfileUpdated: { icon: UserCheck, bg: '#FDECEC', color: '#E31E24' },
+  ProfileUpdated: { icon: UserCheck, bg: '#E6F2FF', color: '#0A84F8' },
   System: { icon: Info, bg: '#E9EBF0', color: '#6B7280' },
 }
 

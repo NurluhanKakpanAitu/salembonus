@@ -16,7 +16,7 @@ export default defineConfig({
         short_name: 'SalemBonus',
         description: 'Бір аккаунт — көп мүмкіндіктер',
         lang: 'kk',
-        theme_color: '#E31E24',
+        theme_color: '#0A84F8',
         background_color: '#F4F5F8',
         display: 'standalone',
         start_url: '/',

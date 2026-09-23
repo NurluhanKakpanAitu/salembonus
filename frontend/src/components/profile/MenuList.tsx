@@ -17,9 +17,9 @@ export function MenuList({ items }: { items: MenuItem[] }) {
         const Icon = it.icon
         const inner = (
           <>
-            <Icon size={22} strokeWidth={1.8} className={it.danger ? 'text-brand' : 'text-ink-2'} />
+            <Icon size={22} strokeWidth={1.8} className={it.danger ? 'text-danger' : 'text-ink-2'} />
             <div className="min-w-0 flex-1">
-              <div className={`text-[15px] font-semibold ${it.danger ? 'text-brand' : ''}`}>{it.title}</div>
+              <div className={`text-[15px] font-semibold ${it.danger ? 'text-danger' : ''}`}>{it.title}</div>
               <div className="text-xs text-ink-2">{it.subtitle}</div>
             </div>
             <ChevronRight size={18} className="text-ink-3" />

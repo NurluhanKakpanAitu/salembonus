@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #e31e24;
-  --color-brand-soft: #fdecec;
+  --color-brand: #0a84f8;
+  --color-brand-soft: #e6f2ff;
+  --color-danger: #e5484d;
+  --color-danger-soft: #fdecec;
   --color-bg: #f4f5f8;
   --color-surface: #ffffff;
-  --color-ink: #151821;
+  --color-ink: #0b1220;
   --color-ink-2: #6b7280;
   --color-ink-3: #9ca3af;
   --color-line: #e8eaf0;
@@ -16,6 +18,7 @@
   --color-violet-soft: #eeebff;
   --color-dark: #111113;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-logo: "Nunito", "Inter", system-ui, sans-serif;
   --radius-card: 18px;
 }
 

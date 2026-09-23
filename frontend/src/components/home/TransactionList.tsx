@@ -27,7 +27,7 @@ export function TransactionList({ items, title = 'Соңғы операциял�
               key={t.id}
               className={`flex items-center gap-3 py-3.5 ${i < items.length - 1 ? 'border-b border-line' : ''}`}
             >
-              <div className={`flex size-11 shrink-0 items-center justify-center rounded-full ${plus ? 'bg-green-soft text-green' : 'bg-brand-soft text-brand'}`}>
+              <div className={`flex size-11 shrink-0 items-center justify-center rounded-full ${plus ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}>
                 {plus ? <CirclePlus size={22} /> : <CircleMinus size={22} />}
               </div>
               <div className="min-w-0 flex-1">
@@ -36,7 +36,7 @@ export function TransactionList({ items, title = 'Соңғы операциял�
                 <div className="text-xs text-ink-3">{formatDateTime(t.createdAt)}</div>
               </div>
               <div className="text-right">
-                <div className={`text-base font-bold ${plus ? 'text-green' : 'text-brand'}`}>{formatSigned(t.amount, 'Б')}</div>
+                <div className={`text-base font-bold ${plus ? 'text-green' : 'text-danger'}`}>{formatSigned(t.amount, 'Б')}</div>
                 {t.purchaseAmount != null && <div className="text-xs text-ink-3">Чек: {formatTenge(t.purchaseAmount)}</div>}
               </div>
             </li>
