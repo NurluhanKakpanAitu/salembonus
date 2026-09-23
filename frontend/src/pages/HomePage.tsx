@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { QrSheet } from '../components/QrSheet'
-import { BalanceCard } from '../components/home/BalanceCard'
+import { QrCode } from 'lucide-react'
 import { StoreStrip } from '../components/home/StoreStrip'
 import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
@@ -29,9 +29,13 @@ export function HomePage() {
       />
 
       <div className="mt-3 flex flex-col gap-6">
-        {me.isPending && <Skeleton className="h-40 rounded-[24px]" />}
-        {me.isError && <ErrorBox message={me.error.message} onRetry={() => me.refetch()} />}
-        {me.data && <BalanceCard me={me.data} onShowQr={() => setQrOpen(true)} />}
+        <button
+          type="button"
+          onClick={() => setQrOpen(true)}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-[15px] font-semibold text-white active:scale-[0.99]"
+        >
+          <QrCode size={22} /> QR-код көрсету
+        </button>
 
         {me.data?.isBirthdayToday && <BirthdayBanner />}
 
