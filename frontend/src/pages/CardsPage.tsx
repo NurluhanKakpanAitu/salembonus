@@ -4,7 +4,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { PageTitle } from '../components/PageTitle'
 import { IconButton } from '../components/IconButton'
-import { StoreCard } from '../components/cards/StoreCard'
+import { Link as RLink } from 'react-router-dom'
+import { BonusCardTile } from '../components/cards/BonusCardTile'
+import { QrSheet } from '../components/QrSheet'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { useCards, useUnreadCount } from '../lib/queries'
 
@@ -13,6 +15,7 @@ export function CardsPage() {
   const navigate = useNavigate()
   const hasUnread = (useUnreadCount().data ?? 0) > 0
   const [promoOpen, setPromoOpen] = useState(true)
+  const [qrStore, setQrStore] = useState<string | null>(null)
 
   return (
     <>
@@ -37,12 +40,16 @@ export function CardsPage() {
 
         {cards.isPending && (
           <>
-            <Skeleton className="h-[150px] rounded-[20px]" />
-            <Skeleton className="h-[150px] rounded-[20px]" />
+            <Skeleton className="h-[210px] rounded-[18px]" />
+            <Skeleton className="h-[210px] rounded-[18px]" />
           </>
         )}
         {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
-        {cards.data?.map((c) => <StoreCard key={c.storeId} card={c} />)}
+        {cards.data?.map((c) => (
+          <RLink key={c.storeId} to={`/cards/${c.storeId}`} className="block active:scale-[0.99]">
+            <BonusCardTile card={c} onAction={() => setQrStore(c.storeName)} />
+          </RLink>
+        ))}
         {cards.data?.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">
             Әзірге карта жоқ. Дүкенде сатып алғанда телефон нөміріңізді айтыңыз, карта автоматты қосылады.
@@ -64,6 +71,7 @@ export function CardsPage() {
           </div>
         )}
       </div>
+      <QrSheet open={qrStore !== null} onClose={() => setQrStore(null)} storeName={qrStore ?? undefined} />
     </>
   )
 }

@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { QrSheet } from '../components/QrSheet'
-import { QrCode } from 'lucide-react'
-import { StoreStrip } from '../components/home/StoreStrip'
+import { BonusCardTile } from '../components/cards/BonusCardTile'
 import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
@@ -12,7 +13,7 @@ export function HomePage() {
   const me = useMe()
   const cards = useCards()
   const transactions = useRecentTransactions(4)
-  const [qrOpen, setQrOpen] = useState(false)
+  const [qrStore, setQrStore] = useState<string | null>(null)
 
   return (
     <>
@@ -29,29 +30,37 @@ export function HomePage() {
       />
 
       <div className="mt-3 flex flex-col gap-6">
-        <button
-          type="button"
-          onClick={() => setQrOpen(true)}
-          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-[15px] font-semibold text-white active:scale-[0.99]"
-        >
-          <QrCode size={22} /> QR-код көрсету
-        </button>
-
         {me.data?.isBirthdayToday && <BirthdayBanner />}
 
-        {cards.isPending && <Skeleton className="h-40" />}
-        {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
-        {cards.data && cards.data.length > 0 && <StoreStrip cards={cards.data} />}
-        {cards.data && cards.data.length === 0 && (
-          <div className="rounded-[20px] bg-surface p-6 text-center text-sm text-ink-2">
-            Әзірге бонус картаңыз жоқ. Дүкенде QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-[17px] font-bold">Менің карталарым</h2>
+            {cards.data && cards.data.length > 2 && (
+              <Link to="/cards" className="flex items-center text-[13px] font-semibold text-brand">
+                Барлығы <ChevronRight size={16} />
+              </Link>
+            )}
           </div>
-        )}
+          {cards.isPending && <Skeleton className="h-[168px] rounded-[18px]" />}
+          {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
+          {cards.data && cards.data.length === 0 && (
+            <div className="rounded-[18px] bg-surface p-6 text-center text-sm text-ink-2">
+              Әзірге бонус картаңыз жоқ. Дүкенде QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.
+            </div>
+          )}
+          <div className="flex flex-col gap-3">
+            {cards.data?.slice(0, 2).map((c) => (
+              <Link key={c.storeId} to={`/cards/${c.storeId}`} className="block active:scale-[0.99]">
+                <BonusCardTile card={c} size="compact" onAction={() => setQrStore(c.storeName)} />
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {transactions.isPending && <Skeleton className="h-64" />}
         {transactions.data && <TransactionList items={transactions.data} allHref="/transactions" />}
       </div>
-      <QrSheet open={qrOpen} onClose={() => setQrOpen(false)} />
+      <QrSheet open={qrStore !== null} onClose={() => setQrStore(null)} storeName={qrStore ?? undefined} />
     </>
   )
 }

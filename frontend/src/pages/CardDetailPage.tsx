@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { BackHeader } from '../components/BackHeader'
-import { HeroCard } from '../components/home/HeroCard'
+import { BonusCardTile } from '../components/cards/BonusCardTile'
 import { LevelCard } from '../components/home/LevelCard'
 import { TransactionList } from '../components/home/TransactionList'
 import { QrSheet } from '../components/QrSheet'
@@ -19,11 +19,11 @@ export function CardDetailPage() {
     <>
       <BackHeader title={card.data?.storeName ?? 'Карта'} subtitle={card.data?.category} fallback="/cards" />
       <div className="mt-3 flex flex-col gap-5">
-        {card.isPending && <Skeleton className="h-[290px] rounded-[22px]" />}
+        {card.isPending && <Skeleton className="h-[210px] rounded-[18px]" />}
         {card.isError && <ErrorBox message={card.error.message} onRetry={() => card.refetch()} />}
         {card.data && (
           <>
-            <HeroCard card={card.data} onShowQr={() => setQrOpen(true)} />
+            <BonusCardTile card={card.data} onAction={() => setQrOpen(true)} />
             <LevelCard card={card.data} />
           </>
         )}
