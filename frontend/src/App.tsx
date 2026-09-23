@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { RequireAuth } from './components/auth/RequireAuth'
+import { InstallGate } from './components/InstallGate'
 import { HomePage } from './pages/HomePage'
 import { CardsPage } from './pages/CardsPage'
 import { CardDetailPage } from './pages/CardDetailPage'
@@ -14,6 +15,7 @@ import { WelcomePage } from './pages/auth/WelcomePage'
 
 export default function App() {
   return (
+    <InstallGate>
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route path="verify" element={<VerifyPage />} />
@@ -31,5 +33,6 @@ export default function App() {
         </Route>
       </Route>
     </Routes>
+    </InstallGate>
   )
 }

@@ -9,17 +9,20 @@ const DISMISS_KEY = 'salembonus-install-dismissed'
 const DISMISS_DAYS = 7
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null
+let installedNow = false
 const listeners = new Set<() => void>()
+const notify = () => listeners.forEach((l) => l())
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault()
     deferredPrompt = e as BeforeInstallPromptEvent
-    listeners.forEach((l) => l())
+    notify()
   })
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null
-    listeners.forEach((l) => l())
+    installedNow = true
+    notify()
   })
 }
 
@@ -27,7 +30,15 @@ export const isStandalone = () =>
   window.matchMedia('(display-mode: standalone)').matches ||
   (navigator as Navigator & { standalone?: boolean }).standalone === true
 
-export const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream
+const ua = () => navigator.userAgent
+
+export const isIos = () => /iphone|ipad|ipod/i.test(ua()) && !(window as Window & { MSStream?: unknown }).MSStream
+
+/** Нағыз Safari (Chrome/Instagram/Telegram ішкі браузерлері емес). Тек Safari орнатуға рұқсат береді. */
+export const isIosSafari = () =>
+  isIos() && /safari/i.test(ua()) && !/crios|fxios|edgios|opios|instagram|fban|fbav|telegram|line\//i.test(ua())
+
+export const isMobile = () => /android|iphone|ipad|ipod|mobile/i.test(ua()) || navigator.maxTouchPoints > 1
 
 const isDismissed = () => {
   try {
@@ -40,7 +51,6 @@ const isDismissed = () => {
 
 export type InstallMode = 'none' | 'prompt' | 'ios'
 
-/** Орнату баннерін қашан және қалай көрсету керегін анықтайды. */
 export function useInstallPrompt() {
   const [, rerender] = useState(0)
   const [dismissed, setDismissed] = useState(isDismissed)
@@ -76,5 +86,5 @@ export function useInstallPrompt() {
     setDismissed(true)
   }
 
-  return { mode, install, dismiss }
+  return { mode, install, dismiss, installed: installedNow }
 }

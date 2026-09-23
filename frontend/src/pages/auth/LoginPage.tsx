@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { AuthLayout, FieldError, PrimaryButton } from '../../components/auth/AuthLayout'
-import { InstallBanner } from '../../components/InstallBanner'
 import { authApi, ApiError } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatPhoneInput, isCompletePhone, toE164 } from '../../lib/phone'
@@ -52,7 +51,6 @@ export function LoginPage() {
         />
         <FieldError message={error} />
         <PrimaryButton loading={loading} disabled={!isCompletePhone(phone)}>Код алу</PrimaryButton>
-        <div className="mt-6"><InstallBanner /></div>
         <p className="mt-auto pt-8 text-center text-xs text-ink-3">
           Жалғастыра отырып, сіз қызмет шарттарымен және құпиялылық саясатымен келісесіз
         </p>
