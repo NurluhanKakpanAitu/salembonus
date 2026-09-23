@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: 'SalemBonus',
         short_name: 'SalemBonus',
-        description: 'Бір аккаунт — көп мүмкіндіктер',
+        description: 'Барлық дүкендердің бонустары бір қосымшада',
         lang: 'kk',
         theme_color: '#0A84F8',
         background_color: '#F4F5F8',

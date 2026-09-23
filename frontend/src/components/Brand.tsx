@@ -30,9 +30,8 @@ export function Wordmark({ height = 26 }: { height?: number }) {
 
 export function Brand() {
   return (
-    <div className="min-w-0 py-1">
+    <div className="min-w-0 py-2">
       <Wordmark height={24} />
-      <div className="mt-2 truncate text-[10.5px] text-ink-2">Бір аккаунт — көп мүмкіндіктер</div>
     </div>
   )
 }

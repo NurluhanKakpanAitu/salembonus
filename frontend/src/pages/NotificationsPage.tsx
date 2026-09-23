@@ -1,18 +1,16 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { CheckCheck, ChevronDown } from 'lucide-react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { PageTitle } from '../components/PageTitle'
 import { IconButton } from '../components/IconButton'
-import { FilterChips } from '../components/notifications/FilterChips'
 import { NotificationItem } from '../components/notifications/NotificationItem'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
-import type { Notification, NotificationCategory } from '../lib/api'
+import type { Notification } from '../lib/api'
 import { dayKey, dayLabel } from '../lib/format'
 import { useMarkAllRead, useMarkRead, useNotifications, useUnreadCount } from '../lib/queries'
 
 export function NotificationsPage() {
-  const [category, setCategory] = useState<NotificationCategory | null>(null)
-  const q = useNotifications(category)
+  const q = useNotifications(null)
   const unread = useUnreadCount()
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
@@ -51,8 +49,6 @@ export function NotificationsPage() {
           title="Хабарламалар"
           subtitle={unread.data ? `${unread.data} оқылмаған хабарлама` : 'Барлық маңызды жаңалықтар осында'}
         />
-
-        <FilterChips value={category} onChange={setCategory} />
 
         {q.isPending && (
           <>

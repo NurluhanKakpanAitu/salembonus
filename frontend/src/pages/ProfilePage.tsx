@@ -59,7 +59,6 @@ export function ProfilePage() {
 
         <footer className="py-2 text-center text-[11px] text-ink-3">
           <div>SalemBonus v{APP_VERSION}</div>
-          <div>Бір аккаунт — көп мүмкіндіктер</div>
         </footer>
       </div>
     </>
