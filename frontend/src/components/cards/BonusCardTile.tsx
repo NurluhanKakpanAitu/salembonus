@@ -1,6 +1,6 @@
-import { Crown, QrCode, Receipt, ShoppingBag, ShoppingCart, Tag, Truck, type LucideIcon } from 'lucide-react'
+import { QrCode, Receipt, ShoppingBag, ShoppingCart, Tag, Truck, type LucideIcon } from 'lucide-react'
 import type { BonusCard } from '../../lib/api'
-import { formatNumber, formatTenge } from '../../lib/format'
+import { formatNumber } from '../../lib/format'
 import { storeTheme } from '../../lib/theme'
 
 const PATTERN: LucideIcon[] = [Truck, ShoppingCart, ShoppingBag, Receipt, Tag, ShoppingCart, Truck, ShoppingBag]
@@ -21,7 +21,6 @@ export function BonusCardTile({
   actionLabel?: string
 }) {
   const t = storeTheme(card.themeColor)
-  const isVip = card.level === 'VIP клиент'
   const compact = size === 'compact'
 
   return (
@@ -46,25 +45,11 @@ export function BonusCardTile({
         </div>
       </div>
 
-      <div className={`absolute inset-x-0 text-center ${compact ? 'top-[70px]' : 'top-[84px]'}`}>
+      <div className={`absolute inset-x-0 text-center ${compact ? 'top-[72px]' : 'top-[88px]'}`}>
         <div className="flex items-baseline justify-center gap-1.5 font-extrabold leading-none tracking-[-0.03em]">
           <span className={compact ? 'text-[42px]' : 'text-[52px]'}>{formatNumber(card.balance)}</span>
           <span className={compact ? 'text-[22px]' : 'text-[27px]'}>Б</span>
         </div>
-        {!compact && (
-          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs" style={{ color: t.muted }}>
-            {isVip && <Crown size={12} className="text-gold" />}
-            <span className={isVip ? 'font-semibold text-gold' : ''}>{card.level}</span>
-            <span>·</span>
-            <span>{card.cashbackPercent}% бонус</span>
-            {card.amountToNextLevel > 0 && (
-              <>
-                <span>·</span>
-                <span>келесіге {formatTenge(card.amountToNextLevel)}</span>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {onAction && (

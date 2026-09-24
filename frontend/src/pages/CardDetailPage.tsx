@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { BackHeader } from '../components/BackHeader'
 import { BonusCardTile } from '../components/cards/BonusCardTile'
-import { LevelCard } from '../components/home/LevelCard'
+import { StoreStatusCard } from '../components/cards/StoreStatusCard'
 import { TransactionList } from '../components/home/TransactionList'
 import { QrSheet } from '../components/QrSheet'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
-import { useCard, useTransactions } from '../lib/queries'
+import { useCard, useStore, useTransactions } from '../lib/queries'
 
 export function CardDetailPage() {
   const { storeId = '' } = useParams()
   const card = useCard(storeId)
+  const store = useStore(storeId)
   const tx = useTransactions(storeId)
   const [qrOpen, setQrOpen] = useState(false)
   const items = tx.data?.pages.flatMap((p) => p.items) ?? []
@@ -21,16 +22,15 @@ export function CardDetailPage() {
       <div className="mt-3 flex flex-col gap-5">
         {card.isPending && <Skeleton className="h-[210px] rounded-[18px]" />}
         {card.isError && <ErrorBox message={card.error.message} onRetry={() => card.refetch()} />}
-        {card.data && (
-          <>
-            <BonusCardTile card={card.data} onAction={() => setQrOpen(true)} />
-            <LevelCard card={card.data} />
-          </>
-        )}
+        {card.data && <BonusCardTile card={card.data} onAction={() => setQrOpen(true)} />}
+
+        {store.isPending && <Skeleton className="h-64" />}
+        {store.data && <StoreStatusCard store={store.data} />}
+
         {tx.data && (
           <TransactionList
             items={items}
-            title="Осы дүкендегі операциялар"
+            title="Соңғы операциялар"
             allHref={tx.hasNextPage ? `/transactions?storeId=${storeId}` : undefined}
           />
         )}

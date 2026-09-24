@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { cardsApi, meApi, notificationsApi, transactionsApi, type NotificationCategory, type UpdateProfile } from './api'
+import { cardsApi, meApi, notificationsApi, storesApi, transactionsApi, type NotificationCategory, type UpdateProfile } from './api'
 import { useAuth } from './auth'
 
 const PAGE = 10
@@ -30,6 +30,12 @@ export const useCards = () => {
 
 export const useCard = (storeId: string) =>
   useQuery({ queryKey: ['cards', storeId], queryFn: () => cardsApi.get(storeId), ...LIVE })
+
+export const useStores = (search = '') =>
+  useQuery({ queryKey: ['stores', search], queryFn: () => storesApi.list(search || undefined) })
+
+export const useStore = (id: string) =>
+  useQuery({ queryKey: ['stores', 'detail', id], queryFn: () => storesApi.get(id), ...LIVE })
 
 export const useQr = () => useQuery({ queryKey: ['me', 'qr'], queryFn: meApi.qr, staleTime: Infinity })
 

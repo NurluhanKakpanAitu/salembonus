@@ -176,3 +176,44 @@ export const notificationsApi = {
   markRead: (id: string) => api<void>(`/notifications/${id}/read`, { method: 'POST' }),
   markAllRead: () => api<void>('/notifications/read-all', { method: 'POST' }),
 }
+
+export interface StoreListItem {
+  id: string
+  name: string
+  category: string
+  description: string
+  themeColor: string
+  icon: string
+  cashbackPercent: number
+  hasCard: boolean
+  balance: number
+  level: string | null
+}
+
+export interface StoreLevel {
+  name: string
+  fromAmount: number
+  isCurrent: boolean
+}
+
+export interface StoreDetail {
+  id: string
+  name: string
+  category: string
+  description: string
+  themeColor: string
+  icon: string
+  cashbackPercent: number
+  maxRedeemPercent: number
+  hasCard: boolean
+  balance: number
+  level: string | null
+  amountToNextLevel: number | null
+  levels: StoreLevel[]
+}
+
+export const storesApi = {
+  list: (search?: string) =>
+    api<StoreListItem[]>(`/stores${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  get: (id: string) => api<StoreDetail>(`/stores/${id}`),
+}
