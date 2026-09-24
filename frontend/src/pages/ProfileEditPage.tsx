@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, Phone } from 'lucide-react'
 import { BackHeader } from '../components/BackHeader'
@@ -26,13 +26,32 @@ export function ProfileEditPage() {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
+  // Телефон аты ретінде сақталса (әлі толтырылмаған профиль), бос өріс көрсетеміз
+  const initial = useMemo(
+    () =>
+      me.data
+        ? {
+            fullName: me.data.fullName.startsWith('+') ? '' : me.data.fullName,
+            email: me.data.email ?? '',
+            birthDate: me.data.birthDate ?? '',
+          }
+        : null,
+    [me.data],
+  )
+
   useEffect(() => {
-    if (!me.data) return
-    const name = me.data.fullName.startsWith('+') ? '' : me.data.fullName
-    setFullName(name)
-    setEmail(me.data.email ?? '')
-    setBirthDate(me.data.birthDate ?? '')
-  }, [me.data])
+    if (!initial) return
+    setFullName(initial.fullName)
+    setEmail(initial.email)
+    setBirthDate(initial.birthDate)
+  }, [initial])
+
+  /** Сақтау батырмасы тек бірдеңе өзгергенде белсенді болады. */
+  const isDirty =
+    !!initial &&
+    (fullName.trim() !== initial.fullName ||
+      email.trim() !== initial.email ||
+      birthDate !== initial.birthDate)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -115,7 +134,7 @@ export function ProfileEditPage() {
 
           <button
             type="submit"
-            disabled={update.isPending || fullName.trim().length < 2}
+            disabled={!isDirty || update.isPending || fullName.trim().length < 2}
             className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-[15px] font-semibold text-white transition active:scale-[0.99] disabled:opacity-50"
           >
             {saved ? <><Check size={20} /> Сақталды</> : update.isPending ? 'Сақталуда…' : 'Сақтау'}
