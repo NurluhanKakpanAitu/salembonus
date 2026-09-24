@@ -28,15 +28,15 @@ export function WelcomePage() {
 
   return (
     <AuthLayout title="Танысайық" subtitle="Бонустар мен туған күн сыйлығы үшін деректеріңізді толтырыңыз">
-      <form onSubmit={submit} className="flex flex-1 flex-col">
-        <label className="text-xs font-medium text-ink-2" htmlFor="name">Аты-жөні *</label>
-        <input id="name" autoFocus autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} placeholder="Мақсадбек Абдужаббаров" />
+      <form onSubmit={submit} autoComplete="off" className="flex flex-1 flex-col">
+        <label className="text-xs font-medium text-ink-2" htmlFor="welcome-fullname">Аты-жөні *</label>
+        <input id="welcome-fullname" name="welcome-fullname" autoFocus autoComplete="off" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} placeholder="Мақсадбек Абдужаббаров" />
 
-        <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="email">Email</label>
-        <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="name@example.kz" />
+        <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="welcome-email">Email</label>
+        <input id="welcome-email" name="welcome-email" type="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} placeholder="name@example.kz" />
 
-        <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="bd">Туған күні</label>
-        <input id="bd" type="date" autoComplete="bday" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputCls} max={new Date().toISOString().slice(0, 10)} />
+        <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="welcome-birthdate">Туған күні</label>
+        <input id="welcome-birthdate" name="welcome-birthdate" type="date" autoComplete="off" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className={inputCls} max={new Date().toISOString().slice(0, 10)} />
         <p className="mt-1.5 text-xs text-ink-3">Туған күніңізде серіктес дүкендерден сыйлық бонус аласыз</p>
 
         <FieldError message={error} />

@@ -77,39 +77,42 @@ export function ProfileEditPage() {
       {me.isError && <ErrorBox message={me.error.message} onRetry={() => me.refetch()} />}
 
       {me.data && (
-        <form onSubmit={submit} className="mt-4 flex flex-col">
+        <form onSubmit={submit} autoComplete="off" className="mt-4 flex flex-col">
           <div className="flex justify-center">
             <div className="flex size-20 items-center justify-center rounded-full bg-violet-soft text-2xl font-bold text-violet">
               {initials(fullName) || '·'}
             </div>
           </div>
 
-          <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="name">Аты-жөні *</label>
+          <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="profile-fullname">Аты-жөні *</label>
           <input
-            id="name"
-            autoComplete="name"
+            id="profile-fullname"
+            name="profile-fullname"
+            autoComplete="off"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className={inputCls}
             placeholder="Мақсадбек Абдужаббаров"
           />
 
-          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="email">Email</label>
+          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-email">Email</label>
           <input
-            id="email"
+            id="profile-email"
+            name="profile-email"
             type="email"
-            autoComplete="email"
+            autoComplete="off"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={inputCls}
             placeholder="name@example.kz"
           />
 
-          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="bd">Туған күні</label>
+          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-birthdate">Туған күні</label>
           <input
-            id="bd"
+            id="profile-birthdate"
+            name="profile-birthdate"
             type="date"
-            autoComplete="bday"
+            autoComplete="off"
             value={birthDate}
             onChange={(e) => setBirthDate(e.target.value)}
             className={inputCls}
