@@ -7,8 +7,11 @@ import { TransactionList } from '../components/home/TransactionList'
 import { QrSheet } from '../components/QrSheet'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { useCard, useStore, useTransactions } from '../lib/queries'
+import { useT } from '../lib/i18n'
+import { storeCategory } from '../lib/storeCategory'
 
 export function CardDetailPage() {
+  const t = useT()
   const { storeId = '' } = useParams()
   const card = useCard(storeId)
   const store = useStore(storeId)
@@ -18,7 +21,7 @@ export function CardDetailPage() {
 
   return (
     <>
-      <BackHeader title={card.data?.storeName ?? 'Карта'} subtitle={card.data?.category} fallback="/cards" />
+      <BackHeader title={card.data?.storeName ?? t('cards.card1')} subtitle={card.data ? storeCategory(card.data.category) : undefined} fallback="/cards" />
       <div className="mt-3 flex flex-col gap-5">
         {card.isPending && <Skeleton className="h-[210px] rounded-[18px]" />}
         {card.isError && <ErrorBox message={card.error.message} onRetry={() => card.refetch()} />}
@@ -30,7 +33,7 @@ export function CardDetailPage() {
         {tx.data && (
           <TransactionList
             items={items}
-            title="Соңғы операциялар"
+            title={t('tx.recent')}
             allHref={tx.hasNextPage ? `/transactions?storeId=${storeId}` : undefined}
           />
         )}

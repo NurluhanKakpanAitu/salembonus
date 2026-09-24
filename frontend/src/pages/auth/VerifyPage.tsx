@@ -4,10 +4,12 @@ import { AuthLayout, FieldError, PrimaryButton } from '../../components/auth/Aut
 import { authApi, ApiError } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatPhoneInput } from '../../lib/phone'
+import { useT } from '../../lib/i18n'
 
 const CODE_LENGTH = 4
 
 export function VerifyPage() {
+  const t = useT()
   const phone = useAuth((s) => s.pendingPhone)
   const setTokens = useAuth((s) => s.setTokens)
   const navigate = useNavigate()
@@ -35,7 +37,7 @@ export function VerifyPage() {
       setTokens(tokens)
       navigate(tokens.profileCompleted ? '/' : '/welcome', { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Байланыс қатесі, қайталап көріңіз')
+      setError(err instanceof ApiError ? err.message : t('auth.networkError'))
       setCode('')
       inputRef.current?.focus()
     } finally {
@@ -63,12 +65,12 @@ export function VerifyPage() {
       setCode('')
       inputRef.current?.focus()
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Байланыс қатесі')
+      setError(err instanceof ApiError ? err.message : t('auth.networkErrorShort'))
     }
   }
 
   return (
-    <AuthLayout title="Кодты енгізіңіз" subtitle={`${formatPhoneInput(phone)} нөміріне SMS жіберілді`}>
+    <AuthLayout title={t('auth.verify.title')} subtitle={t('auth.verify.subtitle', { phone: formatPhoneInput(phone) })}>
       <form onSubmit={submit} className="flex flex-1 flex-col">
         <div className="relative" onClick={() => inputRef.current?.focus()}>
           <div className="flex justify-center gap-3">
@@ -92,25 +94,25 @@ export function VerifyPage() {
             value={code}
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 opacity-0"
-            aria-label="SMS код"
+            aria-label={t('auth.smsCode')}
           />
         </div>
         <FieldError message={error} />
         {devCode && (
           <p className="mt-3 rounded-xl bg-violet-soft px-3 py-2 text-center text-xs text-violet">
-            Тест режимі: код <b className="tracking-widest">{devCode}</b>
+            {t('auth.devCode')} <b className="tracking-widest">{devCode}</b>
           </p>
         )}
-        <PrimaryButton loading={loading} disabled={code.length !== CODE_LENGTH}>Кіру</PrimaryButton>
+        <PrimaryButton loading={loading} disabled={code.length !== CODE_LENGTH}>{t('auth.enter')}</PrimaryButton>
         <div className="mt-4 text-center text-sm">
           {retryIn > 0 ? (
-            <span className="text-ink-3">Қайта жіберу: {retryIn} с</span>
+            <span className="text-ink-3">{t('auth.resendIn', { seconds: retryIn })}</span>
           ) : (
-            <button type="button" onClick={resend} className="font-semibold text-brand">Кодты қайта жіберу</button>
+            <button type="button" onClick={resend} className="font-semibold text-brand">{t('auth.resend')}</button>
           )}
         </div>
         <button type="button" onClick={() => navigate('/login')} className="mt-auto pt-8 text-center text-sm text-ink-2">
-          Нөмірді өзгерту
+          {t('auth.changePhone')}
         </button>
       </form>
     </AuthLayout>

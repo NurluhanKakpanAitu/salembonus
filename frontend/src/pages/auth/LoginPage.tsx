@@ -4,8 +4,10 @@ import { AuthLayout, FieldError, PrimaryButton } from '../../components/auth/Aut
 import { authApi, ApiError } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
 import { formatPhoneInput, isCompletePhone, toE164 } from '../../lib/phone'
+import { useT } from '../../lib/i18n'
 
 export function LoginPage() {
+  const t = useT()
   const loggedIn = useAuth((s) => !!s.accessToken)
   const setPendingPhone = useAuth((s) => s.setPendingPhone)
   const navigate = useNavigate()
@@ -18,7 +20,7 @@ export function LoginPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!isCompletePhone(phone)) {
-      setError('Нөмірді толық енгізіңіз')
+      setError(t('auth.phoneIncomplete'))
       return
     }
     setLoading(true)
@@ -29,16 +31,16 @@ export function LoginPage() {
       setPendingPhone(e164)
       navigate('/verify', { state: { devCode: res.devCode, retryAfter: res.retryAfterSeconds } })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Байланыс қатесі, қайталап көріңіз')
+      setError(err instanceof ApiError ? err.message : t('auth.networkError'))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthLayout title="Кіру" subtitle="Телефон нөміріңізге SMS код жібереміз">
+    <AuthLayout title={t('auth.login.title')} subtitle={t('auth.login.subtitle')}>
       <form onSubmit={submit} className="flex flex-1 flex-col">
-        <label className="text-xs font-medium text-ink-2" htmlFor="phone">Телефон нөмірі</label>
+        <label className="text-xs font-medium text-ink-2" htmlFor="phone">{t('auth.phoneLabel')}</label>
         <input
           id="phone"
           type="tel"
@@ -50,9 +52,9 @@ export function LoginPage() {
           className="mt-2 h-14 w-full rounded-2xl border border-line bg-surface px-4 text-xl font-semibold tracking-wide outline-none focus:border-brand"
         />
         <FieldError message={error} />
-        <PrimaryButton loading={loading} disabled={!isCompletePhone(phone)}>Код алу</PrimaryButton>
+        <PrimaryButton loading={loading} disabled={!isCompletePhone(phone)}>{t('auth.getCode')}</PrimaryButton>
         <p className="mt-auto pt-8 text-center text-xs text-ink-3">
-          Жалғастыра отырып, сіз қызмет шарттарымен және құпиялылық саясатымен келісесіз
+          {t('auth.terms')}
         </p>
       </form>
     </AuthLayout>

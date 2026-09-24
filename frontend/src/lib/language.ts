@@ -23,6 +23,9 @@ function read(): Language {
 
 let current = read()
 
+/** Хук қолдануға болмайтын жерлерде (api, форматтау) ағымдағы тіл. */
+export const getLanguage = (): Language => current
+
 export function setLanguage(lang: Language) {
   current = lang
   try {

@@ -3,9 +3,11 @@ import { QRCodeSVG } from 'qrcode.react'
 import { X } from 'lucide-react'
 import { useMe, useQr } from '../lib/queries'
 import { LogoMark } from './Brand'
+import { useT } from '../lib/i18n'
 
 /** Кассада көрсетілетін QR коды. Төменнен шығатын парақ. */
 export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: () => void; storeName?: string }) {
+  const t = useT()
   const qr = useQr()
   const me = useMe()
 
@@ -31,10 +33,10 @@ export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: 
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300" />
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold">Менің QR кодым</div>
-            <div className="text-xs text-ink-2">{storeName ? `${storeName} кассасында көрсетіңіз` : 'Кез келген серіктес дүкенде көрсетіңіз'}</div>
+            <div className="text-lg font-bold">{t('qr.myTitle')}</div>
+            <div className="text-xs text-ink-2">{storeName ? t('qr.showAt', { store: storeName }) : t('qr.showAnywhere')}</div>
           </div>
-          <button type="button" aria-label="Жабу" onClick={onClose} className="flex size-9 items-center justify-center rounded-full bg-bg text-ink-2">
+          <button type="button" aria-label={t('common.close')} onClick={onClose} className="flex size-9 items-center justify-center rounded-full bg-bg text-ink-2">
             <X size={18} />
           </button>
         </div>
@@ -53,7 +55,7 @@ export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: 
           <div className="mt-4 font-mono text-lg font-semibold tracking-[0.3em]">{qr.data?.code ?? '…'}</div>
           <div className="mt-1 text-xs text-ink-2">{me.data?.fullName}</div>
           <p className="mt-4 text-center text-xs text-ink-3">
-            QR оқылмаса, сатушыға телефон нөміріңізді айтыңыз
+            {t('qr.fallback')}
           </p>
         </div>
       </div>

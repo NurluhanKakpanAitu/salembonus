@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using SalemBonus.Application.Auth.Dtos;
 using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Common.Exceptions;
+using SalemBonus.Application.Common.Localization;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Entities;
 
@@ -14,9 +15,12 @@ public class AuthService(
     ISmsSender sms,
     ITokenService tokens,
     IUnitOfWork unitOfWork,
-    IOptions<AuthOptions> options) : IAuthService
+    IOptions<AuthOptions> options,
+    ICurrentLanguage language) : IAuthService
 {
     private readonly AuthOptions _opt = options.Value;
+
+    private AppLanguage Lang => language.Value;
 
     public async Task<RequestCodeResult> RequestCodeAsync(string rawPhone, CancellationToken ct = default)
     {
@@ -27,7 +31,7 @@ public class AuthService(
         if (latest is not null && latest.CreatedAt.AddSeconds(_opt.OtpResendSeconds) > now)
         {
             var wait = (int)Math.Ceiling((latest.CreatedAt.AddSeconds(_opt.OtpResendSeconds) - now).TotalSeconds);
-            throw new ValidationException($"Жаңа кодты {wait} секундтан кейін сұраңыз");
+            throw new ValidationException(Messages.CodeRetryAfter(Lang, wait));
         }
 
         var code = string.IsNullOrWhiteSpace(_opt.StaticOtpCode) ? GenerateCode(_opt.OtpLength) : _opt.StaticOtpCode.Trim();
@@ -54,9 +58,9 @@ public class AuthService(
 
         var otp = await otps.GetLatestAsync(phone, ct);
         if (otp is null || !otp.IsActive(now))
-            throw new ValidationException("Кодтың мерзімі өтті, жаңа код сұраңыз");
+            throw new ValidationException(Messages.CodeExpired(Lang));
         if (otp.Attempts >= _opt.OtpMaxAttempts)
-            throw new ValidationException("Әрекет саны асып кетті, жаңа код сұраңыз");
+            throw new ValidationException(Messages.CodeAttemptsExceeded(Lang));
 
         otp.Attempts++;
         var code = new string(request.Code.Where(char.IsDigit).ToArray());
@@ -64,7 +68,7 @@ public class AuthService(
         {
             await unitOfWork.SaveChangesAsync(ct);
             var left = _opt.OtpMaxAttempts - otp.Attempts;
-            throw new ValidationException(left > 0 ? $"Код қате, {left} әрекет қалды" : "Код қате, жаңа код сұраңыз");
+            throw new ValidationException(Messages.CodeWrong(Lang, left));
         }
         otp.ConsumedAt = now;
 
@@ -93,10 +97,10 @@ public class AuthService(
         var now = DateTime.UtcNow;
         var stored = await refreshTokens.GetByHashAsync(tokens.Hash(refreshToken), ct);
         if (stored is null || !stored.IsActive(now))
-            throw new UnauthorizedException("Сессияның мерзімі өтті, қайта кіріңіз");
+            throw new UnauthorizedException(Messages.SessionExpired(Lang));
 
         var customer = await customers.GetByIdAsync(stored.CustomerId, ct)
-            ?? throw new UnauthorizedException("Тұтынушы табылмады");
+            ?? throw new UnauthorizedException(Messages.CustomerNotFound(Lang));
 
         stored.RevokedAt = now;
         var result = IssueTokens(customer, stored.Device, now, false);
@@ -130,13 +134,13 @@ public class AuthService(
         return new AuthTokens(access.Token, access.ExpiresAt, refreshValue, refreshExpires, isNew, profileCompleted);
     }
 
-    private static string ParsePhone(string raw)
+    private string ParsePhone(string raw)
     {
         if (string.IsNullOrWhiteSpace(raw) || !BonusRules.LooksLikePhone(raw))
-            throw new ValidationException("Телефон нөмірі дұрыс емес");
+            throw new ValidationException(Messages.PhoneInvalid(Lang));
         var phone = BonusRules.NormalizePhone(raw);
         if (phone.Length != 12 || !phone.StartsWith("+7"))
-            throw new ValidationException("Қазақстан нөмірін енгізіңіз: +7 7XX XXX XX XX");
+            throw new ValidationException(Messages.PhoneNotKz(Lang));
         return phone;
     }
 

@@ -1,3 +1,6 @@
+import { getLanguage } from './language'
+import { translate } from './i18n'
+
 const MAX_SIDE = 512
 const QUALITY = 0.82
 
@@ -14,7 +17,7 @@ export async function toSquareDataUrl(file: File): Promise<string> {
   canvas.width = size
   canvas.height = size
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Суретті өңдеу мүмкін болмады')
+  if (!ctx) throw new Error(translate(getLanguage(), 'profile.imageFailed'))
 
   ctx.drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, size, size)
   bitmap.close()

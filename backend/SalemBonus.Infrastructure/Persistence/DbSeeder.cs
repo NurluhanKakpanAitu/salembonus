@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.Notifications;
 using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Enums;
 
@@ -48,12 +49,12 @@ public static class DbSeeder
 
         var notifications = new List<Notification>
         {
-            N(NotificationType.BonusAccrued, stores[0], "Бонус есептелді!", "MKM AUTO — Сізге 1 250 Б бонус есептелді.", "Сатып алу сомасы: 25 000 ₸", now.AddHours(-2), false),
-            N(NotificationType.BonusRedeemed, stores[1], "Бонус жұмсалды", "Coffee House — 5 000 Б бонус шегерілді.", "Сатып алу сомасы: 12 000 ₸", now.AddHours(-5), false),
-            N(NotificationType.Birthday, stores[2], "Туған күн бонусы!", "Beauty Shop — Туған күніңізге 3 000 Б бонус берілді!", "Бонус 3 күн ішінде жарамды.", now.AddHours(-7), false),
+            N(NotificationType.BonusAccrued, stores[0], "Бонус есептелді!", "MKM AUTO — Сізге 1 250 Б бонус есептелді.", "Сатып алу сомасы: 25 000 ₸", now.AddHours(-2), false, NotificationTemplates.BonusAccrued, 1250, 25_000),
+            N(NotificationType.BonusRedeemed, stores[1], "Бонус жұмсалды", "Coffee House — 5 000 Б бонус шегерілді.", "Сатып алу сомасы: 12 000 ₸", now.AddHours(-5), false, NotificationTemplates.BonusRedeemed, 5000, 12_000),
+            N(NotificationType.Birthday, stores[2], "Туған күн бонусы!", "Beauty Shop — Туған күніңізге 3 000 Б бонус берілді!", "Бонус 3 күн ішінде жарамды.", now.AddHours(-7), false, NotificationTemplates.Birthday, 3000),
             N(NotificationType.Promo, stores[3], "Акция басталды!", "SportLife — Барлық кроссовкаларға 2x бонус!", "Акция 30 қыркүйекке дейін.", now.AddHours(-8), true),
-            N(NotificationType.StoreAdded, stores[1], "Жаңа дүкен қосылды", "Coffee House дүкені сіздің карталарыңызға қосылды.", "Енді бұл дүкенде де бонус жинай аласыз!", now.AddDays(-1).AddHours(-3), true),
-            N(NotificationType.ProfileUpdated, null, "Профиль жаңартылды", "Жеке деректеріңіз сәтті жаңартылды.", null, now.AddDays(-2).AddHours(-6), true),
+            N(NotificationType.StoreAdded, stores[1], "Жаңа дүкен қосылды", "Coffee House дүкені сіздің карталарыңызға қосылды.", "Енді бұл дүкенде де бонус жинай аласыз!", now.AddDays(-1).AddHours(-3), true, NotificationTemplates.StoreAdded),
+            N(NotificationType.ProfileUpdated, null, "Профиль жаңартылды", "Жеке деректеріңіз сәтті жаңартылды.", null, now.AddDays(-2).AddHours(-6), true, NotificationTemplates.ProfileUpdated),
         };
 
         db.Customers.Add(customer);
@@ -100,7 +101,9 @@ public static class DbSeeder
         Level = level,
     };
 
-    private static Notification N(NotificationType type, Store? store, string title, string body, string? detail, DateTime at, bool read) => new()
+    private static Notification N(
+        NotificationType type, Store? store, string title, string body, string? detail, DateTime at, bool read,
+        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null) => new()
     {
         Id = Guid.NewGuid(),
         CustomerId = DemoCustomerId,
@@ -109,6 +112,9 @@ public static class DbSeeder
         Title = title,
         Body = body,
         Detail = detail,
+        TemplateKey = templateKey,
+        Amount = amount,
+        PurchaseAmount = purchaseAmount,
         IsRead = read,
         CreatedAt = at,
     };

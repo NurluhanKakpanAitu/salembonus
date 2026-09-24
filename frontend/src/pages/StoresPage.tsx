@@ -8,8 +8,11 @@ import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { ApiError, type StoreListItem } from '../lib/api'
 import { storeIcon, storeTheme } from '../lib/theme'
 import { useJoinStore, useStores } from '../lib/queries'
+import { useT, type Translator } from '../lib/i18n'
+import { storeCategory } from '../lib/storeCategory'
 
 export function StoresPage() {
+  const t = useT()
   const [search, setSearch] = useState('')
   const [scanOpen, setScanOpen] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(null)
@@ -24,7 +27,7 @@ export function StoresPage() {
       setScanOpen(false)
       navigate(`/cards/${res.store.id}`)
     } catch (err) {
-      setJoinError(err instanceof ApiError ? err.message : 'Дүкенді қосу мүмкін болмады')
+      setJoinError(err instanceof ApiError ? err.message : t('stores.joinFailed'))
     }
   }
 
@@ -33,7 +36,7 @@ export function StoresPage() {
       <PageHeader right={<Avatar />} />
 
       <div className="mt-3 flex flex-col gap-4">
-        <PageTitle title="Дүкендер" subtitle="Серіктес дүкендерден бонус жинаңыз" />
+        <PageTitle title={t('stores.title')} subtitle={t('stores.subtitle')} />
 
         <button
           type="button"
@@ -43,7 +46,7 @@ export function StoresPage() {
           }}
           className="flex h-14 w-full items-center justify-center gap-2.5 rounded-2xl bg-brand text-[15px] font-semibold text-white active:scale-[0.99]"
         >
-          <QrCode size={22} /> QR кодты сканерлеу
+          <QrCode size={22} /> {t('stores.scan')}
         </button>
 
         {joinError && !scanOpen && (
@@ -55,7 +58,7 @@ export function StoresPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Дүкен іздеу"
+            placeholder={t('stores.search')}
             className="h-12 w-full rounded-2xl border border-line bg-surface pl-11 pr-4 text-[15px] outline-none focus:border-brand"
           />
         </div>
@@ -71,12 +74,12 @@ export function StoresPage() {
 
         <div className="flex flex-col gap-2.5">
           {stores.data?.map((s) => (
-            <StoreRow key={s.id} store={s} onAdd={() => addStore(s.id)} adding={join.isPending} />
+            <StoreRow key={s.id} store={s} onAdd={() => addStore(s.id)} adding={join.isPending} t={t} />
           ))}
         </div>
 
         {stores.data?.length === 0 && (
-          <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">Дүкен табылмады</div>
+          <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">{t('stores.notFound')}</div>
         )}
       </div>
 
@@ -91,24 +94,26 @@ export function StoresPage() {
   )
 }
 
-function StoreRow({ store, onAdd, adding }: { store: StoreListItem; onAdd: () => void; adding: boolean }) {
-  const t = storeTheme(store.themeColor)
+function StoreRow({ store, onAdd, adding, t }: { store: StoreListItem; onAdd: () => void; adding: boolean; t: Translator }) {
+  const theme = storeTheme(store.themeColor)
   const Icon = storeIcon(store.icon)
 
   const body = (
     <>
       <div
         className="flex size-12 shrink-0 items-center justify-center rounded-2xl"
-        style={{ background: store.themeColor, color: t.text }}
+        style={{ background: store.themeColor, color: theme.text }}
       >
         <Icon size={22} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-bold leading-tight">{store.name}</div>
-        <div className="truncate text-xs text-ink-2">{store.category} · {store.cashbackPercent}% бонус</div>
+        <div className="truncate text-xs text-ink-2">
+          {storeCategory(store.category)} · {t('stores.cashback', { percent: store.cashbackPercent })}
+        </div>
         {store.hasCard ? (
           <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-green-soft px-2 py-0.5 text-[11px] font-semibold text-green">
-            <Check size={12} strokeWidth={3} /> Сіз қосылғансыз
+            <Check size={12} strokeWidth={3} /> {t('stores.joined')}
           </div>
         ) : (
           <div className="mt-0.5 truncate text-xs text-ink-3">{store.description}</div>
@@ -126,7 +131,7 @@ function StoreRow({ store, onAdd, adding }: { store: StoreListItem; onAdd: () =>
           onClick={onAdd}
           className="flex shrink-0 items-center gap-1 rounded-xl bg-brand-soft px-3 py-2 text-[13px] font-semibold text-brand disabled:opacity-50"
         >
-          <Plus size={15} /> Қосу
+          <Plus size={15} /> {t('stores.join')}
         </button>
       )}
     </>

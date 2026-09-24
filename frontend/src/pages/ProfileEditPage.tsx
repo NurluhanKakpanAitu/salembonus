@@ -6,6 +6,7 @@ import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { ApiError } from '../lib/api'
 import { initials } from '../lib/format'
 import { useMe, useUpdateMe } from '../lib/queries'
+import { useT } from '../lib/i18n'
 
 const inputCls =
   'mt-2 h-13 w-full rounded-2xl border border-line bg-surface px-4 text-base outline-none focus:border-brand'
@@ -16,6 +17,7 @@ function formatPhone(p: string) {
 }
 
 export function ProfileEditPage() {
+  const t = useT()
   const me = useMe()
   const update = useUpdateMe()
   const navigate = useNavigate()
@@ -65,13 +67,13 @@ export function ProfileEditPage() {
       setSaved(true)
       setTimeout(() => navigate(-1), 700)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Сақтау мүмкін болмады')
+      setError(err instanceof ApiError ? err.message : t('profile.saveFailed'))
     }
   }
 
   return (
     <>
-      <BackHeader title="Жеке деректер" fallback="/profile" />
+      <BackHeader title={t('profile.personal')} fallback="/profile" />
 
       {me.isPending && <Skeleton className="mt-4 h-72" />}
       {me.isError && <ErrorBox message={me.error.message} onRetry={() => me.refetch()} />}
@@ -84,7 +86,7 @@ export function ProfileEditPage() {
             </div>
           </div>
 
-          <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="profile-fullname">Аты-жөні *</label>
+          <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="profile-fullname">{t('profile.fullName')} *</label>
           <input
             id="profile-fullname"
             name="profile-fullname"
@@ -92,7 +94,7 @@ export function ProfileEditPage() {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className={inputCls}
-            placeholder="Мақсадбек Абдужаббаров"
+            placeholder={t('profile.namePlaceholder')}
           />
 
           <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-email">Email</label>
@@ -104,10 +106,10 @@ export function ProfileEditPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={inputCls}
-            placeholder="name@example.kz"
+            placeholder={t('profile.emailPlaceholder')}
           />
 
-          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-birthdate">Туған күні</label>
+          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-birthdate">{t('profile.birthDate')}</label>
           <input
             id="profile-birthdate"
             name="profile-birthdate"
@@ -118,18 +120,18 @@ export function ProfileEditPage() {
             className={inputCls}
             max={new Date().toISOString().slice(0, 10)}
           />
-          <p className="mt-1.5 text-xs text-ink-3">Туған күніңізде серіктес дүкендерден сыйлық бонус аласыз</p>
+          <p className="mt-1.5 text-xs text-ink-3">{t('profile.birthHint')}</p>
 
           <div className="mt-5 rounded-2xl bg-surface px-4 py-3.5">
             <div className="flex items-center gap-3">
               <Phone size={18} className="shrink-0 text-ink-2" />
               <div className="min-w-0 flex-1">
-                <div className="text-xs text-ink-2">Телефон нөмірі</div>
+                <div className="text-xs text-ink-2">{t('auth.phoneLabel')}</div>
                 <div className="text-[15px] font-semibold">{formatPhone(me.data.phone)}</div>
               </div>
             </div>
             <p className="mt-2 text-xs text-ink-3">
-              Нөмір аккаунтқа кіру үшін қолданылады, оны өзгерту үшін қолдау қызметіне жазыңыз.
+              {t('profile.phoneNote')}
             </p>
           </div>
 
@@ -140,7 +142,7 @@ export function ProfileEditPage() {
             disabled={!isDirty || update.isPending || fullName.trim().length < 2}
             className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-[15px] font-semibold text-white transition active:scale-[0.99] disabled:opacity-50"
           >
-            {saved ? <><Check size={20} /> Сақталды</> : update.isPending ? 'Сақталуда…' : 'Сақтау'}
+            {saved ? <><Check size={20} /> {t('profile.saved')}</> : update.isPending ? t('profile.saving') : t('profile.save')}
           </button>
         </form>
       )}

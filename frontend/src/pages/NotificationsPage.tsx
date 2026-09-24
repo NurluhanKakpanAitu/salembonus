@@ -8,8 +8,10 @@ import { ErrorBox, Skeleton } from '../components/Skeleton'
 import type { Notification } from '../lib/api'
 import { dayKey, dayLabel } from '../lib/format'
 import { useMarkAllRead, useMarkRead, useNotifications, useUnreadCount } from '../lib/queries'
+import { useT } from '../lib/i18n'
 
 export function NotificationsPage() {
+  const t = useT()
   const q = useNotifications(null)
   const unread = useUnreadCount()
   const markRead = useMarkRead()
@@ -36,7 +38,7 @@ export function NotificationsPage() {
           <div className="flex items-center gap-2.5">
             <IconButton
               icon={CheckCheck}
-              label="Барлығын оқылды деп белгілеу"
+              label={t('notif.markAll')}
               onClick={() => markAll.mutate()}
             />
             <Avatar />
@@ -46,8 +48,8 @@ export function NotificationsPage() {
 
       <div className="mt-3 flex flex-col gap-4">
         <PageTitle
-          title="Хабарламалар"
-          subtitle={unread.data ? `${unread.data} оқылмаған хабарлама` : 'Барлық маңызды жаңалықтар осында'}
+          title={t('notif.title')}
+          subtitle={unread.data ? t('notif.unread', { count: unread.data }) : t('notif.subtitle')}
         />
 
         {q.isPending && (
@@ -69,7 +71,7 @@ export function NotificationsPage() {
         ))}
 
         {q.data && groups.length === 0 && (
-          <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">Бұл санатта хабарлама жоқ</div>
+          <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">{t('notif.empty')}</div>
         )}
 
         {q.hasNextPage && (
@@ -80,7 +82,7 @@ export function NotificationsPage() {
               onClick={() => q.fetchNextPage()}
               className="flex items-center gap-1.5 rounded-full bg-gray-200 px-4 py-2.5 text-[13px] font-medium text-ink-2 disabled:opacity-60"
             >
-              {q.isFetchingNextPage ? 'Жүктелуде…' : 'Ескі хабарламаларды көрсету'} <ChevronDown size={16} />
+              {q.isFetchingNextPage ? t('common.loadingShort') : t('notif.showOlder')} <ChevronDown size={16} />
             </button>
           </div>
         )}

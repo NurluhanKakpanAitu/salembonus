@@ -1,11 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using SalemBonus.Application.Common.Exceptions;
+using SalemBonus.Application.Common.Localization;
 using SalemBonus.Application.Common.Interfaces;
 
 namespace SalemBonus.Infrastructure.Identity;
 
-public class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUser
+public class HttpCurrentUser(IHttpContextAccessor accessor, ICurrentLanguage language) : ICurrentUser
 {
     private Guid? Read()
     {
@@ -16,5 +17,5 @@ public class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 
     public bool IsAuthenticated => Read() is not null;
 
-    public Guid CustomerId => Read() ?? throw new UnauthorizedException("Кіру қажет");
+    public Guid CustomerId => Read() ?? throw new UnauthorizedException(Messages.LoginRequired(language.Value));
 }

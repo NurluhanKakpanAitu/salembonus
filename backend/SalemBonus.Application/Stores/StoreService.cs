@@ -1,6 +1,8 @@
 using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Common.Exceptions;
+using SalemBonus.Application.Common.Localization;
 using SalemBonus.Application.Common.Interfaces;
+using SalemBonus.Application.Notifications;
 using SalemBonus.Application.Stores.Dtos;
 using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Enums;
@@ -12,8 +14,11 @@ public class StoreService(
     IBonusCardRepository cards,
     INotificationRepository notifications,
     IUnitOfWork unitOfWork,
-    ICurrentUser currentUser) : IStoreService
+    ICurrentUser currentUser,
+    ICurrentLanguage language) : IStoreService
 {
+    private AppLanguage Lang => language.Value;
+
     /// <summary>Дүкен QR кодының префиксі: "SBS:MKMAUTO".</summary>
     public const string QrPrefix = "SBS:";
 
@@ -39,7 +44,7 @@ public class StoreService(
                     store.Id, store.Name, store.Category, store.Description,
                     store.ThemeColor, store.Icon, store.CashbackPercent,
                     card is not null, card?.Balance ?? 0,
-                    card is null ? null : CustomerLevels.Name(card.Level));
+                    card is null ? null : CustomerLevels.Key(card.Level));
             })
             .OrderByDescending(x => x.HasCard)
             .ThenByDescending(x => x.Balance)
@@ -58,7 +63,7 @@ public class StoreService(
     public async Task<JoinStoreResultDto> JoinAsync(string rawCode, CancellationToken ct = default)
     {
         var store = await FindStoreAsync(rawCode, ct)
-            ?? throw new NotFoundException("Дүкен табылмады. QR кодты тексеріп, қайта сканерлеңіз.");
+            ?? throw new NotFoundException(Messages.StoreQrNotFound(Lang));
 
         var existing = await cards.GetAsync(currentUser.CustomerId, store.Id, ct);
         if (existing is not null)
@@ -84,6 +89,7 @@ public class StoreService(
             Title = "Жаңа дүкен қосылды",
             Body = $"{store.Name} дүкені сіздің карталарыңызға қосылды.",
             Detail = $"Енді осы дүкенде {store.CashbackPercent}% бонус жинай аласыз!",
+            TemplateKey = NotificationTemplates.StoreAdded,
             CreatedAt = now,
         });
 
@@ -95,7 +101,7 @@ public class StoreService(
     private async Task<Store?> FindStoreAsync(string rawCode, CancellationToken ct)
     {
         var code = (rawCode ?? string.Empty).Trim();
-        if (code.Length == 0) throw new ValidationException("QR коды бос");
+        if (code.Length == 0) throw new ValidationException(Messages.QrCodeEmpty(Lang));
 
         if (code.StartsWith(QrPrefix, StringComparison.OrdinalIgnoreCase))
             code = code[QrPrefix.Length..].Trim();
@@ -114,17 +120,17 @@ public class StoreService(
         var currentLevel = card?.Level ?? CustomerLevel.New;
         var levels = new[]
         {
-            new StoreLevelDto(CustomerLevels.Name(CustomerLevel.New), 0, currentLevel == CustomerLevel.New),
-            new StoreLevelDto(CustomerLevels.Name(CustomerLevel.Regular), LevelThresholds.Regular, currentLevel == CustomerLevel.Regular),
-            new StoreLevelDto(CustomerLevels.Name(CustomerLevel.Favorite), LevelThresholds.Favorite, currentLevel == CustomerLevel.Favorite),
-            new StoreLevelDto(CustomerLevels.Name(CustomerLevel.Vip), LevelThresholds.Vip, currentLevel == CustomerLevel.Vip),
+            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.New), 0, currentLevel == CustomerLevel.New),
+            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.Regular), LevelThresholds.Regular, currentLevel == CustomerLevel.Regular),
+            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.Favorite), LevelThresholds.Favorite, currentLevel == CustomerLevel.Favorite),
+            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.Vip), LevelThresholds.Vip, currentLevel == CustomerLevel.Vip),
         };
 
         return new StoreDetailDto(
             store.Id, store.Name, store.Category, store.Description,
             store.ThemeColor, store.Icon, store.CashbackPercent, store.MaxRedeemPercent,
             card is not null, card?.Balance ?? 0,
-            card is null ? null : CustomerLevels.Name(card.Level),
+            card is null ? null : CustomerLevels.Key(card.Level),
             card is null ? null : BonusRules.AmountToNextLevel(card),
             levels);
     }

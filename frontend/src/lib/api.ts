@@ -1,4 +1,6 @@
 import { useAuth, type AuthTokens } from './auth'
+import { getLanguage } from './language'
+import { translate } from './i18n'
 
 const BASE = import.meta.env.VITE_API_URL ?? '/api'
 
@@ -46,14 +48,19 @@ async function tryRefresh(): Promise<boolean> {
 
 async function request<T>(path: string, init: RequestInit | undefined, retry: boolean): Promise<T> {
   const { accessToken } = useAuth.getState()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(init?.headers as Record<string, string>) }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    // Сервер қате мәтіндерін осы тілде қайтарады.
+    'Accept-Language': getLanguage(),
+    ...(init?.headers as Record<string, string>),
+  }
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`
 
   const res = await fetch(`${BASE}${path}`, { ...init, headers })
 
   if (res.status === 401 && retry && accessToken) {
     if (await tryRefresh()) return request<T>(path, init, false)
-    throw new ApiError(401, 'Кіру қажет')
+    throw new ApiError(401, translate(getLanguage(), 'auth.loginRequired'))
   }
   if (!res.ok) throw new ApiError(res.status, await readError(res))
   if (res.status === 204) return undefined as T
@@ -160,6 +167,11 @@ export interface Notification {
   title: string
   body: string
   detail: string | null
+  /** Мәтін үлгісінің кілті — бар болса, мәтін қосымшаның тілінде құрастырылады. */
+  templateKey: string | null
+  amount: number | null
+  purchaseAmount: number | null
+  levelKey: string | null
   storeName: string | null
   storeIcon: string | null
   storeThemeColor: string | null

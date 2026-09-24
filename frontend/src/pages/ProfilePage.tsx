@@ -10,10 +10,12 @@ import { LanguagePicker } from '../components/profile/LanguagePicker'
 import { MenuList, type MenuItem } from '../components/profile/MenuList'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { useMe } from '../lib/queries'
+import { useT } from '../lib/i18n'
 
 const APP_VERSION = '1.0.0'
 
 export function ProfilePage() {
+  const t = useT()
   const me = useMe()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -27,8 +29,8 @@ export function ProfilePage() {
   }
 
   const menu: MenuItem[] = [
-    { icon: User, title: 'Жеке деректер', subtitle: 'Аты-жөні, телефон, туған күні', to: '/profile/edit' },
-    { icon: LogOut, title: 'Шығу', subtitle: 'Аккаунттан шығу', danger: true, onClick: () => void logout() },
+    { icon: User, title: t('profile.personal'), subtitle: t('profile.personalHint'), to: '/profile/edit' },
+    { icon: LogOut, title: t('profile.logout'), subtitle: t('profile.logoutHint'), danger: true, onClick: () => void logout() },
   ]
 
   return (
@@ -36,7 +38,7 @@ export function ProfilePage() {
       <PageHeader />
 
       <div className="mt-3 flex flex-col gap-4">
-        <PageTitle title="Профиль" subtitle="Жеке деректеріңіз және қосымша баптаулар" />
+        <PageTitle title={t('profile.title')} subtitle={t('profile.subtitle')} />
 
         {me.isPending && <Skeleton className="h-56" />}
         {me.isError && <ErrorBox message={me.error.message} onRetry={() => me.refetch()} />}

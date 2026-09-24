@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import { Keyboard, X } from 'lucide-react'
+import { useT } from '../../lib/i18n'
 
 type Mode = 'camera' | 'manual'
 
@@ -21,6 +22,7 @@ export function QrScanner({
   busy?: boolean
   error?: string | null
 }) {
+  const t = useT()
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [mode, setMode] = useState<Mode>('camera')
@@ -81,7 +83,7 @@ export function QrScanner({
         await video.play()
         frame = requestAnimationFrame(tick)
       } catch {
-        setCameraError('Камераға қолжетімділік берілмеді. Кодты қолмен енгізіңіз.')
+        setCameraError(t('scan.noCamera'))
         setMode('manual')
       }
     })()
@@ -91,7 +93,7 @@ export function QrScanner({
       cancelAnimationFrame(frame)
       stream?.getTracks().forEach((t) => t.stop())
     }
-  }, [open, mode, onDetect])
+  }, [open, mode, onDetect, t])
 
   // Сәтсіз әрекеттен кейін қайта сканерлеуге рұқсат
   useEffect(() => {
@@ -103,8 +105,8 @@ export function QrScanner({
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black">
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))] text-white">
-        <div className="text-[15px] font-semibold">Дүкен QR кодын сканерлеңіз</div>
-        <button type="button" aria-label="Жабу" onClick={onClose} className="flex size-10 items-center justify-center rounded-full bg-white/15">
+        <div className="text-[15px] font-semibold">{t('scan.title')}</div>
+        <button type="button" aria-label={t('common.close')} onClick={onClose} className="flex size-10 items-center justify-center rounded-full bg-white/15">
           <X size={20} />
         </button>
       </div>
@@ -115,12 +117,12 @@ export function QrScanner({
           <canvas ref={canvasRef} className="hidden" />
           <div className="relative size-[70vw] max-w-[300px] rounded-[28px] border-4 border-white/80 shadow-[0_0_0_100vmax_rgba(0,0,0,0.45)]" />
           <div className="absolute bottom-10 left-0 right-0 px-8 text-center text-sm text-white/80">
-            {busy ? 'Дүкен қосылуда…' : 'QR кодты жақтау ішіне келтіріңіз'}
+            {busy ? t('scan.joining') : t('scan.hint')}
           </div>
         </div>
       ) : (
         <div className="flex flex-1 flex-col justify-center px-6">
-          <label className="text-sm text-white/70" htmlFor="store-code">Дүкен коды</label>
+          <label className="text-sm text-white/70" htmlFor="store-code">{t('scan.codeLabel')}</label>
           <input
             id="store-code"
             autoFocus
@@ -130,14 +132,14 @@ export function QrScanner({
             placeholder="MKMAUTO"
             className="mt-2 h-14 w-full rounded-2xl bg-white/10 px-4 text-lg font-semibold tracking-widest text-white outline-none placeholder:text-white/30"
           />
-          <p className="mt-2 text-xs text-white/50">Код дүкендегі плакатта QR кодтың астында жазылған</p>
+          <p className="mt-2 text-xs text-white/50">{t('scan.codeHint')}</p>
           <button
             type="button"
             disabled={manualCode.trim().length < 3 || busy}
             onClick={() => onDetect(manualCode.trim())}
             className="mt-5 h-14 w-full rounded-2xl bg-brand text-[15px] font-semibold text-white disabled:opacity-50"
           >
-            {busy ? 'Қосылуда…' : 'Қосу'}
+            {busy ? t('scan.joinBusy') : t('stores.join')}
           </button>
         </div>
       )}
@@ -155,7 +157,7 @@ export function QrScanner({
           className="inline-flex items-center gap-2 text-sm font-medium text-white/80"
         >
           <Keyboard size={16} />
-          {mode === 'camera' ? 'Кодты қолмен енгізу' : 'Камерамен сканерлеу'}
+          {mode === 'camera' ? t('scan.manual') : t('scan.camera')}
         </button>
       </div>
     </div>

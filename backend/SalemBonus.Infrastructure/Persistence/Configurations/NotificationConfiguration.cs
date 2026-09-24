@@ -13,6 +13,8 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         b.HasIndex(x => new { x.CustomerId, x.IsRead });
         b.Property(x => x.Title).HasMaxLength(200).IsRequired();
         b.Property(x => x.Body).HasMaxLength(1000).IsRequired();
+        b.Property(x => x.TemplateKey).HasMaxLength(40);
+        b.Property(x => x.LevelKey).HasMaxLength(20);
         b.Property(x => x.Detail).HasMaxLength(500);
         b.Ignore(x => x.Category);
         b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId);

@@ -54,7 +54,7 @@ public class BonusCardService(
         card.Store?.ThemeColor ?? "#111113",
         card.Store?.Icon ?? "store",
         card.Balance,
-        CustomerLevels.Name(card.Level),
+        CustomerLevels.Key(card.Level),
         card.Store?.CashbackPercent ?? 0,
         BonusRules.AmountToNextLevel(card));
 }

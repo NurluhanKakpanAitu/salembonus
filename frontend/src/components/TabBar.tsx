@@ -1,16 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import { Bell, CirclePlus, CreditCard, House, User } from 'lucide-react'
 import { useUnreadCount } from '../lib/queries'
+import { useT, type TranslationKey } from '../lib/i18n'
 
-const tabs = [
-  { to: '/', label: 'Басты бет', icon: House, end: true },
-  { to: '/cards', label: 'Карталарым', icon: CreditCard },
-  { to: '/stores', label: 'Магазиндер', icon: CirclePlus },
-  { to: '/notifications', label: 'Хабарламалар', icon: Bell, badge: true },
-  { to: '/profile', label: 'Профиль', icon: User },
+const tabs: { to: string; label: TranslationKey; icon: typeof House; end?: boolean; badge?: boolean }[] = [
+  { to: '/', label: 'tab.home', icon: House, end: true },
+  { to: '/cards', label: 'tab.cards', icon: CreditCard },
+  { to: '/stores', label: 'tab.stores', icon: CirclePlus },
+  { to: '/notifications', label: 'tab.notifications', icon: Bell, badge: true },
+  { to: '/profile', label: 'tab.profile', icon: User },
 ]
 
 export function TabBar() {
+  const t = useT()
   const unread = useUnreadCount()
   const hasUnread = (unread.data ?? 0) > 0
 
@@ -32,7 +34,7 @@ export function TabBar() {
                 <Icon size={24} strokeWidth={1.8} />
                 {badge && hasUnread && <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand" />}
               </span>
-              {label}
+              {t(label)}
             </NavLink>
           </li>
         ))}

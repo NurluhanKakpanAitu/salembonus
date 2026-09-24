@@ -7,8 +7,10 @@ import { BonusCardTile } from '../components/cards/BonusCardTile'
 import { QrSheet } from '../components/QrSheet'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { useCards } from '../lib/queries'
+import { useT } from '../lib/i18n'
 
 export function CardsPage() {
+  const t = useT()
   const cards = useCards()
   const [qrStore, setQrStore] = useState<string | null>(null)
 
@@ -17,13 +19,13 @@ export function CardsPage() {
       <PageHeader right={<Avatar />} />
 
       <div className="mt-3 flex flex-col gap-4">
-        <PageTitle title="Менің карталарым" subtitle="Барлық бонус карталар бір жерде" />
+        <PageTitle title={t('cards.title')} subtitle={t('cards.subtitle')} />
 
         <Link
           to="/stores"
           className="flex items-center justify-center gap-2 rounded-[14px] bg-violet-soft px-4 py-3 text-sm font-semibold text-violet"
         >
-          <CirclePlus size={20} /> Дүкен қосу
+          <CirclePlus size={20} /> {t('cards.addStore')}
         </Link>
 
         {cards.isPending && (
@@ -40,7 +42,7 @@ export function CardsPage() {
         ))}
         {cards.data?.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">
-            Әзірге карта жоқ. Дүкенде сатып алғанда QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.
+            {t('cards.empty')}
           </div>
         )}
       </div>

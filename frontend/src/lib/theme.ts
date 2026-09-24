@@ -42,13 +42,14 @@ export function storeTheme(hex: string): StoreTheme {
   }
 }
 
+/** Деңгей кілті бойынша белгінің түсі (Vip, Regular, Favorite, New). */
 export const levelBadge = (level: string): { bg: string; text: string; border?: string } => {
   switch (level) {
-    case 'VIP клиент':
+    case 'Vip':
       return { bg: 'transparent', text: '#F5B301', border: '#F5B301' }
-    case 'Тұрақты клиент':
+    case 'Regular':
       return { bg: '#1F7A4D', text: '#FFFFFF' }
-    case 'Сүйікті клиент':
+    case 'Favorite':
       return { bg: '#DDEEFF', text: '#1D6FB8' }
     default:
       return { bg: '#6B7280', text: '#FFFFFF' }

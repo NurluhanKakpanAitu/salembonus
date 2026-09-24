@@ -1,12 +1,14 @@
 import { Crown, Percent } from 'lucide-react'
 import type { StoreDetail } from '../../lib/api'
 import { formatTenge } from '../../lib/format'
-
-/** Деңгей атауының қысқа түрі: "VIP клиент" -> "VIP". */
-const shortLevel = (name: string) => name.replace(/\s*клиент$/i, '')
+import { useT } from '../../lib/i18n'
+import type { TranslationKey } from '../../lib/i18n'
 
 /** Клиент мәртебесі, бонус пайызы, келесі мәртебеге дейінгі жол. */
 export function StoreStatusCard({ store }: { store: StoreDetail }) {
+  const t = useT()
+  const levelName = (key: string) => t(`level.${key}` as TranslationKey)
+  const shortLevel = (key: string) => t(`level.short.${key}` as TranslationKey)
   const levels = store.levels
   const currentIdx = Math.max(0, levels.findIndex((l) => l.isCurrent))
   const next = levels[currentIdx + 1]
@@ -26,21 +28,21 @@ export function StoreStatusCard({ store }: { store: StoreDetail }) {
           <Crown size={24} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-xs text-ink-2">Клиент мәртебесі</div>
-          <div className="truncate text-lg font-bold leading-tight">{store.level ?? 'Жаңа клиент'}</div>
+          <div className="text-xs text-ink-2">{t('cards.clientStatus')}</div>
+          <div className="truncate text-lg font-bold leading-tight">{levelName(store.level ?? 'New')}</div>
         </div>
         <div className="shrink-0 text-right">
           <div className="text-[26px] font-extrabold leading-none tracking-tight text-brand">
             {store.cashbackPercent}%
           </div>
-          <div className="mt-0.5 text-xs text-ink-2">бонус</div>
+          <div className="mt-0.5 text-xs text-ink-2">{t('cards.cashbackWord')}</div>
         </div>
       </div>
 
       <div className="px-4">
         <div className="flex items-baseline justify-between">
           <span className="text-xs text-ink-2">
-            {isMax ? 'Ең жоғары мәртебеге жеттіңіз' : `${shortLevel(next.name)} мәртебесіне дейін`}
+            {isMax ? t('cards.maxLevel') : t('cards.toNextLevel', { level: shortLevel(next.name) })}
           </span>
           {!isMax && <span className="text-[15px] font-bold">{formatTenge(toNext)}</span>}
         </div>
@@ -71,9 +73,7 @@ export function StoreStatusCard({ store }: { store: StoreDetail }) {
       <div className="mt-4 border-t border-line px-4 py-3.5 text-[13px]">
         <div className="flex items-center gap-2.5 text-ink-2">
           <Percent size={15} className="shrink-0" />
-          <span>
-            Әр сатып алудан <b className="text-ink">{store.cashbackPercent}%</b> бонус есептеледі
-          </span>
+          <span>{t('cards.cashbackNote', { percent: store.cashbackPercent })}</span>
         </div>
       </div>
     </section>

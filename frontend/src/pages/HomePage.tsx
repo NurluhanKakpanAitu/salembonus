@@ -8,8 +8,10 @@ import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { useCards, useMe, useRecentTransactions } from '../lib/queries'
+import { useT } from '../lib/i18n'
 
 export function HomePage() {
+  const t = useT()
   const me = useMe()
   const cards = useCards()
   const transactions = useRecentTransactions(4)
@@ -21,7 +23,7 @@ export function HomePage() {
         right={
           <div className="flex items-center gap-2.5">
             <div className="text-right">
-              <div className="text-xs text-ink-2">Сәлем,</div>
+              <div className="text-xs text-ink-2">{t('home.greeting')}</div>
               <div className="text-[15px] font-bold">{me.data ? `${me.data.firstName}!` : '…'}</div>
             </div>
             <Avatar />
@@ -34,10 +36,10 @@ export function HomePage() {
 
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[17px] font-bold">Менің карталарым</h2>
+            <h2 className="text-[17px] font-bold">{t('home.myCards')}</h2>
             {cards.data && cards.data.length > 1 && (
               <Link to="/cards" className="flex items-center text-[13px] font-semibold text-brand">
-                Барлығы <ChevronRight size={16} />
+                {t('common.all')} <ChevronRight size={16} />
               </Link>
             )}
           </div>
@@ -45,7 +47,7 @@ export function HomePage() {
           {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
           {cards.data && cards.data.length === 0 && (
             <div className="rounded-[18px] bg-surface p-6 text-center text-sm text-ink-2">
-              Әзірге бонус картаңыз жоқ. Дүкенде QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.
+              {t('home.noCards')}
             </div>
           )}
           {cards.data && cards.data.length > 0 && (

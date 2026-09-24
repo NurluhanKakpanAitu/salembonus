@@ -1,7 +1,9 @@
 using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Common.Exceptions;
+using SalemBonus.Application.Common.Localization;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Customers;
+using SalemBonus.Application.Notifications;
 using SalemBonus.Application.Pos.Dtos;
 using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Enums;
@@ -14,15 +16,18 @@ public class PosService(
     IBonusCardRepository cards,
     IBonusTransactionRepository transactions,
     INotificationRepository notifications,
-    IUnitOfWork unitOfWork) : IPosService
+    IUnitOfWork unitOfWork,
+    ICurrentLanguage language) : IPosService
 {
+    private AppLanguage Lang => language.Value;
+
     public async Task<PosStoreDto> AuthenticateAsync(string? apiKey, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
-            throw new UnauthorizedException("X-Store-Api-Key тақырыбы жоқ");
+            throw new UnauthorizedException(Messages.StoreApiKeyMissing(Lang));
         var store = await stores.GetByApiKeyAsync(apiKey, ct);
         if (store is null || !store.IsActive)
-            throw new UnauthorizedException("API кілті жарамсыз");
+            throw new UnauthorizedException(Messages.StoreApiKeyInvalid(Lang));
         return new PosStoreDto(store.Id, store.Name, store.Category, store.CashbackPercent, store.MaxRedeemPercent);
     }
 
@@ -30,7 +35,7 @@ public class PosService(
     {
         var store = await GetStoreAsync(storeId, ct);
         var customer = await FindCustomerAsync(code, ct)
-            ?? throw new NotFoundException("Тұтынушы табылмады");
+            ?? throw new NotFoundException(Messages.CustomerNotFound(Lang));
         var card = await cards.GetAsync(customer.Id, storeId, ct);
         return ToDto(customer, store, card);
     }
@@ -38,9 +43,9 @@ public class PosService(
     public async Task<PurchaseResultDto> RegisterPurchaseAsync(Guid storeId, PurchaseRequest request, CancellationToken ct = default)
     {
         if (request.PurchaseAmount <= 0)
-            throw new ValidationException("Сатып алу сомасы оң болуы керек");
+            throw new ValidationException(Messages.PurchaseAmountPositive(Lang));
         if (request.RedeemAmount < 0)
-            throw new ValidationException("Шегерілетін бонус теріс бола алмайды");
+            throw new ValidationException(Messages.RedeemNegative(Lang));
 
         var store = await GetStoreAsync(storeId, ct);
         var customer = await FindCustomerAsync(request.CustomerCode, ct) ?? await RegisterByPhoneAsync(request.CustomerCode, ct);
@@ -55,7 +60,7 @@ public class PosService(
 
         var maxRedeem = BonusRules.MaxRedeemable(request.PurchaseAmount, store.MaxRedeemPercent, card.Balance);
         if (request.RedeemAmount > maxRedeem)
-            throw new ValidationException($"Ең көп {maxRedeem} Б шегеруге болады (баланс {card.Balance} Б, лимит {store.MaxRedeemPercent}%)");
+            throw new ValidationException(Messages.RedeemTooMuch(Lang, maxRedeem, card.Balance, store.MaxRedeemPercent));
 
         var now = DateTime.UtcNow;
         Guid? redemptionId = null;
@@ -68,7 +73,8 @@ public class PosService(
             notifications.Add(NewNotification(customer, store, NotificationType.BonusRedeemed,
                 "Бонус жұмсалды",
                 $"{store.Name} — {Fmt(request.RedeemAmount)} Б бонус шегерілді.",
-                $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now));
+                $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now,
+                NotificationTemplates.BonusRedeemed, request.RedeemAmount, request.PurchaseAmount));
         }
 
         var paid = request.PurchaseAmount - request.RedeemAmount;
@@ -83,7 +89,8 @@ public class PosService(
             notifications.Add(NewNotification(customer, store, NotificationType.BonusAccrued,
                 "Бонус есептелді!",
                 $"{store.Name} — Сізге {Fmt(accrued)} Б бонус есептелді.",
-                $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now.AddMilliseconds(1)));
+                $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now.AddMilliseconds(1),
+                NotificationTemplates.BonusAccrued, accrued, request.PurchaseAmount));
         }
 
         card.TotalSpent += paid;
@@ -94,8 +101,9 @@ public class PosService(
             card.Level = newLevel;
             notifications.Add(NewNotification(customer, store, NotificationType.System,
                 "Жаңа деңгей!",
-                $"{store.Name} — Құттықтаймыз, сіз енді {CustomerLevels.Name(newLevel)} деңгейіндесіз.",
-                null, now.AddMilliseconds(2)));
+                $"{store.Name} — Құттықтаймыз, сіз енді {CustomerLevels.Name(newLevel, Lang)} деңгейіндесіз.",
+                null, now.AddMilliseconds(2),
+                NotificationTemplates.LevelUp, levelKey: CustomerLevels.Key(newLevel)));
         }
 
         if (isNewCard)
@@ -103,23 +111,24 @@ public class PosService(
             notifications.Add(NewNotification(customer, store, NotificationType.StoreAdded,
                 "Жаңа дүкен қосылды",
                 $"{store.Name} дүкені сіздің карталарыңызға қосылды.",
-                "Енді бұл дүкенде де бонус жинай аласыз!", now.AddMilliseconds(-1)));
+                "Енді бұл дүкенде де бонус жинай аласыз!", now.AddMilliseconds(-1),
+                NotificationTemplates.StoreAdded));
         }
 
         await unitOfWork.SaveChangesAsync(ct);
 
         return new PurchaseResultDto(
             customer.Id, card.Id, request.PurchaseAmount, request.RedeemAmount, paid, accrued,
-            card.Balance, CustomerLevels.Name(card.Level), upgraded, accrualId, redemptionId);
+            card.Balance, CustomerLevels.Name(card.Level, Lang), upgraded, accrualId, redemptionId);
     }
 
     private async Task<Store> GetStoreAsync(Guid storeId, CancellationToken ct) =>
-        await stores.GetByIdAsync(storeId, ct) ?? throw new NotFoundException("Дүкен табылмады");
+        await stores.GetByIdAsync(storeId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
 
     private async Task<Customer?> FindCustomerAsync(string rawCode, CancellationToken ct)
     {
         var code = rawCode.Trim();
-        if (string.IsNullOrEmpty(code)) throw new ValidationException("Тұтынушы коды бос");
+        if (string.IsNullOrEmpty(code)) throw new ValidationException(Messages.CustomerCodeEmpty(Lang));
         if (code.StartsWith(CustomerService.QrPrefix, StringComparison.OrdinalIgnoreCase))
             code = code[CustomerService.QrPrefix.Length..];
         if (BonusRules.LooksLikePhone(code))
@@ -130,7 +139,7 @@ public class PosService(
     private async Task<Customer> RegisterByPhoneAsync(string rawCode, CancellationToken ct)
     {
         if (!BonusRules.LooksLikePhone(rawCode))
-            throw new NotFoundException("QR коды бойынша тұтынушы табылмады");
+            throw new NotFoundException(Messages.CustomerByQrNotFound(Lang));
         var phone = BonusRules.NormalizePhone(rawCode);
         var customer = new Customer
         {
@@ -143,13 +152,13 @@ public class PosService(
         return customer;
     }
 
-    private static PosCustomerDto ToDto(Customer c, Store store, BonusCard? card) => new(
+    private PosCustomerDto ToDto(Customer c, Store store, BonusCard? card) => new(
         c.Id,
         c.FullName,
         MaskPhone(c.Phone),
         card is null,
         card?.Balance ?? 0,
-        CustomerLevels.Name(card?.Level ?? CustomerLevel.New),
+        CustomerLevels.Name(card?.Level ?? CustomerLevel.New, Lang),
         store.CashbackPercent,
         store.MaxRedeemPercent);
 
@@ -164,7 +173,9 @@ public class PosService(
         CreatedAt = at,
     };
 
-    private static Notification NewNotification(Customer c, Store s, NotificationType type, string title, string body, string? detail, DateTime at) => new()
+    private static Notification NewNotification(
+        Customer c, Store s, NotificationType type, string title, string body, string? detail, DateTime at,
+        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null, string? levelKey = null) => new()
     {
         Id = Guid.NewGuid(),
         CustomerId = c.Id,
@@ -173,6 +184,10 @@ public class PosService(
         Title = title,
         Body = body,
         Detail = detail,
+        TemplateKey = templateKey,
+        Amount = amount,
+        PurchaseAmount = purchaseAmount,
+        LevelKey = levelKey,
         CreatedAt = at,
     };
 

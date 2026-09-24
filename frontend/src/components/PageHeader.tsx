@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Brand } from './Brand'
 import { useMe } from '../lib/queries'
 import { initials } from '../lib/format'
+import { useT } from '../lib/i18n'
 
 export function PageHeader({ right }: { right?: ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export function PageHeader({ right }: { right?: ReactNode }) {
 
 /** Профильге апаратын аватар: фото болса фото, әйтпесе инициалдар. */
 export function Avatar({ to = '/profile/edit' }: { to?: string }) {
+  const t = useT()
   const me = useMe()
   const name = me.data?.fullName ?? ''
   const short = name && !name.startsWith('+') ? initials(name) : ''
@@ -23,7 +25,7 @@ export function Avatar({ to = '/profile/edit' }: { to?: string }) {
   return (
     <Link
       to={to}
-      aria-label="Жеке деректер"
+      aria-label={t('profile.personal')}
       className="flex size-11 items-center justify-center overflow-hidden rounded-full bg-violet-soft text-sm font-bold text-violet active:scale-95"
     >
       {photo ? <img src={photo} alt="" className="size-full object-cover" /> : short || (

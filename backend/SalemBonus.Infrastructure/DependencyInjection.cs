@@ -23,6 +23,7 @@ public static class DependencyInjection
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
+        services.AddScoped<ICurrentLanguage, HttpCurrentLanguage>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<ISmsSender, LogSmsSender>();
 

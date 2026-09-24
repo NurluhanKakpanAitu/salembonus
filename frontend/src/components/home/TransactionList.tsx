@@ -2,42 +2,46 @@ import { ChevronRight, CircleMinus, CirclePlus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { BonusTransaction } from '../../lib/api'
 import { formatDateTime, formatSigned, formatTenge, transactionTitle } from '../../lib/format'
+import { useT } from '../../lib/i18n'
 
-export function TransactionList({ items, title = 'Соңғы операциялар', allHref }: {
+export function TransactionList({ items, title, allHref }: {
   items: BonusTransaction[]
   title?: string
   allHref?: string
 }) {
+  const t = useT()
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[17px] font-bold">{title}</h2>
+        <h2 className="text-[17px] font-bold">{title ?? t('tx.recent')}</h2>
         {allHref && (
           <Link to={allHref} className="flex items-center text-[13px] font-semibold text-brand">
-            Барлығы <ChevronRight size={16} />
+            {t('common.all')} <ChevronRight size={16} />
           </Link>
         )}
       </div>
       <ul className="rounded-card bg-surface px-4">
-        {items.length === 0 && <li className="py-6 text-center text-sm text-ink-2">Операциялар әлі жоқ</li>}
-        {items.map((t, i) => {
-          const plus = t.amount >= 0
+        {items.length === 0 && <li className="py-6 text-center text-sm text-ink-2">{t('tx.empty')}</li>}
+        {items.map((tx, i) => {
+          const plus = tx.amount >= 0
           return (
             <li
-              key={t.id}
+              key={tx.id}
               className={`flex items-center gap-3 py-3.5 ${i < items.length - 1 ? 'border-b border-line' : ''}`}
             >
               <div className={`flex size-11 shrink-0 items-center justify-center rounded-full ${plus ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}>
                 {plus ? <CirclePlus size={22} /> : <CircleMinus size={22} />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[15px] font-semibold">{transactionTitle[t.type] ?? t.type}</div>
-                <div className="text-[13px] text-ink-2">{t.storeName}</div>
-                <div className="text-xs text-ink-3">{formatDateTime(t.createdAt)}</div>
+                <div className="truncate text-[15px] font-semibold">{transactionTitle(tx.type)}</div>
+                <div className="text-[13px] text-ink-2">{tx.storeName}</div>
+                <div className="text-xs text-ink-3">{formatDateTime(tx.createdAt)}</div>
               </div>
               <div className="text-right">
-                <div className={`text-base font-bold ${plus ? 'text-green' : 'text-danger'}`}>{formatSigned(t.amount, 'Б')}</div>
-                {t.purchaseAmount != null && <div className="text-xs text-ink-3">Чек: {formatTenge(t.purchaseAmount)}</div>}
+                <div className={`text-base font-bold ${plus ? 'text-green' : 'text-danger'}`}>{formatSigned(tx.amount, 'Б')}</div>
+                {tx.purchaseAmount != null && (
+                  <div className="text-xs text-ink-3">{t('tx.receipt', { amount: formatTenge(tx.purchaseAmount) })}</div>
+                )}
               </div>
             </li>
           )

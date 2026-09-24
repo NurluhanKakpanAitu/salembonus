@@ -4,8 +4,10 @@ import type { Customer } from '../../lib/api'
 import { initials } from '../../lib/format'
 import { toSquareDataUrl } from '../../lib/image'
 import { useSetAvatar } from '../../lib/queries'
+import { useT } from '../../lib/i18n'
 
 export function ProfileCard({ me }: { me: Customer }) {
+  const t = useT()
   const fileRef = useRef<HTMLInputElement>(null)
   const setAvatar = useSetAvatar()
   const [error, setError] = useState<string | null>(null)
@@ -16,7 +18,7 @@ export function ProfileCard({ me }: { me: Customer }) {
     try {
       await setAvatar.mutateAsync(await toSquareDataUrl(file))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Фотоны жүктеу мүмкін болмады')
+      setError(err instanceof Error ? err.message : t('profile.photoFailed'))
     }
   }
 
@@ -33,7 +35,7 @@ export function ProfileCard({ me }: { me: Customer }) {
           </div>
           <button
             type="button"
-            aria-label="Фото жүктеу"
+            aria-label={t('profile.uploadPhoto')}
             disabled={setAvatar.isPending}
             onClick={() => fileRef.current?.click()}
             className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-surface bg-brand text-white disabled:opacity-60"
@@ -62,7 +64,7 @@ export function ProfileCard({ me }: { me: Customer }) {
             onClick={() => setAvatar.mutate(null)}
             className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-ink-2 disabled:opacity-50"
           >
-            <Trash2 size={13} /> Фотоны өшіру
+            <Trash2 size={13} /> {t('profile.removePhoto')}
           </button>
         )}
 

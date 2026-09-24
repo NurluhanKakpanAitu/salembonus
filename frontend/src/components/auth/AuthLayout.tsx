@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Brand } from '../Brand'
+import { useT } from '../../lib/i18n'
 
 export function AuthLayout({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
 }
 
 export function PrimaryButton({ children, loading, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }) {
+  const t = useT()
   return (
     <button
       type="submit"
@@ -24,7 +26,7 @@ export function PrimaryButton({ children, loading, ...rest }: React.ButtonHTMLAt
       disabled={rest.disabled || loading}
       className="mt-6 h-13 w-full rounded-2xl bg-brand text-[15px] font-semibold text-white transition active:scale-[0.99] disabled:opacity-50"
     >
-      {loading ? 'Күте тұрыңыз…' : children}
+      {loading ? t('common.loading') : children}
     </button>
   )
 }
