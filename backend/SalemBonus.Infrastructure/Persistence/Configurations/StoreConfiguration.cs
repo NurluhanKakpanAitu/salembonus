@@ -18,5 +18,7 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
         b.Property(x => x.MaxRedeemPercent).HasPrecision(5, 2);
         b.Property(x => x.ApiKey).HasMaxLength(64).IsRequired();
         b.HasIndex(x => x.ApiKey).IsUnique();
+        b.Property(x => x.JoinCode).HasMaxLength(16).IsRequired();
+        b.HasIndex(x => x.JoinCode).IsUnique();
     }
 }

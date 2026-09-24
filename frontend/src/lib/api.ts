@@ -212,8 +212,14 @@ export interface StoreDetail {
   levels: StoreLevel[]
 }
 
+export interface JoinStoreResult {
+  alreadyJoined: boolean
+  store: StoreDetail
+}
+
 export const storesApi = {
   list: (search?: string) =>
     api<StoreListItem[]>(`/stores${search ? `?search=${encodeURIComponent(search)}` : ''}`),
   get: (id: string) => api<StoreDetail>(`/stores/${id}`),
+  join: (code: string) => api<JoinStoreResult>('/stores/join', { method: 'POST', body: JSON.stringify({ code }) }),
 }

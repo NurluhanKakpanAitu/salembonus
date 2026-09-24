@@ -37,6 +37,19 @@ export const useStores = (search = '') =>
 export const useStore = (id: string) =>
   useQuery({ queryKey: ['stores', 'detail', id], queryFn: () => storesApi.get(id), ...LIVE })
 
+export const useJoinStore = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (code: string) => storesApi.join(code),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stores'] })
+      qc.invalidateQueries({ queryKey: ['cards'] })
+      qc.invalidateQueries({ queryKey: ['me'] })
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+    },
+  })
+}
+
 export const useQr = () => useQuery({ queryKey: ['me', 'qr'], queryFn: meApi.qr, staleTime: Infinity })
 
 export const useRecentTransactions = (take = 20) => {

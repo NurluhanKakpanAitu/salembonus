@@ -28,5 +28,10 @@ public record StoreDetailDto(
     decimal? AmountToNextLevel,
     IReadOnlyList<StoreLevelDto> Levels);
 
+/// <summary>QR сканерлеп дүкен қосу нәтижесі.</summary>
+public record JoinStoreRequest(string Code);
+
+public record JoinStoreResultDto(bool AlreadyJoined, StoreDetailDto Store);
+
 /// <summary>Дүкендегі деңгейлер баспалдағы.</summary>
 public record StoreLevelDto(string Name, decimal FromAmount, bool IsCurrent);

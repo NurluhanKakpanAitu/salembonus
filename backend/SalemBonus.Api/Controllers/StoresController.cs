@@ -14,6 +14,11 @@ public class StoresController(IStoreService service) : ControllerBase
         [FromQuery] string? search, CancellationToken ct) =>
         Ok(await service.GetAllAsync(search, ct));
 
+    /// <summary>QR кодты сканерлеп дүкен қосу.</summary>
+    [HttpPost("join")]
+    public async Task<ActionResult<JoinStoreResultDto>> Join([FromBody] JoinStoreRequest request, CancellationToken ct) =>
+        Ok(await service.JoinAsync(request.Code, ct));
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<StoreDetailDto>> Get(Guid id, CancellationToken ct)
     {

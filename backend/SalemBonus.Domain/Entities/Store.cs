@@ -17,6 +17,8 @@ public class Store
     public string Icon { get; set; } = "store";
     /// <summary>SalemPos / касса интеграциясы үшін API кілті.</summary>
     public string ApiKey { get; set; } = string.Empty;
+    /// <summary>Дүкен плакатындағы QR-ға салынатын қысқа код. Тұтынушы сканерлеп карта ашады.</summary>
+    public string JoinCode { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
