@@ -12,17 +12,12 @@ public static class DbSeeder
     public static async Task SeedAsync(AppDbContext db, CancellationToken ct = default)
     {
         await db.Database.MigrateAsync(ct);
-        if (await db.Stores.AnyAsync(ct)) return;
 
-        var stores = new List<Store>
-        {
-            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.", CashbackPercent = 5, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, ApiKey = "sk_test_mkm_auto_11111111", JoinCode = "MKMAUTO" },
-            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", Description = "Кофе, десерт және таңғы ас. Қалада бірнеше нүкте.", CashbackPercent = 3, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50, ApiKey = "sk_test_coffee_house_2222", JoinCode = "COFFEE" },
-            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", Description = "Косметика, парфюмерия және күтім құралдары.", CashbackPercent = 2, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30, ApiKey = "sk_test_beauty_shop_33333", JoinCode = "BEAUTY" },
-            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", Description = "Спорт киімі, аяқкиім және жаттығу жабдықтары.", CashbackPercent = 2, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20, ApiKey = "sk_test_sportlife_444444", JoinCode = "SPORT" },
-            new() { Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Name = "Дәрі-Дәрмек", Category = "Дәріхана", Description = "Дәрілер, витаминдер және медициналық тауарлар.", CashbackPercent = 3, ThemeColor = "#0E7C66", Icon = "store", MaxRedeemPercent = 30, ApiKey = "sk_test_pharmacy_555555", JoinCode = "DARIHANA" },
-            new() { Id = Guid.Parse("66666666-6666-6666-6666-666666666666"), Name = "Нан Үйі", Category = "Наубайхана", Description = "Жаңа піскен нан, тоқаш және торттар.", CashbackPercent = 4, ThemeColor = "#8A5A2B", Icon = "shopping-bag", MaxRedeemPercent = 40, ApiKey = "sk_test_bakery_666666", JoinCode = "NANUI" },
-        };
+        var stores = Catalog();
+        await SyncStoresAsync(db, stores, ct);
+
+        // Демо тұтынушы бір рет қана құрылады.
+        if (await db.Customers.AnyAsync(ct)) return;
 
         var customer = new Customer
         {
@@ -61,11 +56,37 @@ public static class DbSeeder
             N(NotificationType.ProfileUpdated, null, "Профиль жаңартылды", "Жеке деректеріңіз сәтті жаңартылды.", null, now.AddDays(-2).AddHours(-6), true),
         };
 
-        db.Stores.AddRange(stores);
         db.Customers.Add(customer);
         db.BonusCards.AddRange(cards);
         db.BonusTransactions.AddRange(transactions);
         db.Notifications.AddRange(notifications);
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Серіктес дүкендер каталогы. Жаңа дүкен қосылса, келесі іске қосылғанда базаға түседі.</summary>
+    private static List<Store> Catalog() => new()
+    {
+            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.", CashbackPercent = 5, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, ApiKey = "sk_test_mkm_auto_11111111", JoinCode = "MKMAUTO" },
+            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", Description = "Кофе, десерт және таңғы ас. Қалада бірнеше нүкте.", CashbackPercent = 3, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50, ApiKey = "sk_test_coffee_house_2222", JoinCode = "COFFEE" },
+            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", Description = "Косметика, парфюмерия және күтім құралдары.", CashbackPercent = 2, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30, ApiKey = "sk_test_beauty_shop_33333", JoinCode = "BEAUTY" },
+            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", Description = "Спорт киімі, аяқкиім және жаттығу жабдықтары.", CashbackPercent = 2, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20, ApiKey = "sk_test_sportlife_444444", JoinCode = "SPORT" },
+            new() { Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Name = "Дәрі-Дәрмек", Category = "Дәріхана", Description = "Дәрілер, витаминдер және медициналық тауарлар.", CashbackPercent = 3, ThemeColor = "#0E7C66", Icon = "store", MaxRedeemPercent = 30, ApiKey = "sk_test_pharmacy_555555", JoinCode = "DARIHANA" },
+            new() { Id = Guid.Parse("66666666-6666-6666-6666-666666666666"), Name = "Нан Үйі", Category = "Наубайхана", Description = "Жаңа піскен нан, тоқаш және торттар.", CashbackPercent = 4, ThemeColor = "#8A5A2B", Icon = "shopping-bag", MaxRedeemPercent = 40, ApiKey = "sk_test_bakery_666666", JoinCode = "NANUI" },
+    };
+
+    /// <summary>Каталогтағы жаңа дүкендерді қосады, бос қосылу кодын толтырады.</summary>
+    private static async Task SyncStoresAsync(AppDbContext db, List<Store> catalog, CancellationToken ct)
+    {
+        var existing = await db.Stores.ToDictionaryAsync(x => x.Id, ct);
+        foreach (var store in catalog)
+        {
+            if (!existing.TryGetValue(store.Id, out var current))
+            {
+                db.Stores.Add(store);
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(current.JoinCode)) current.JoinCode = store.JoinCode;
+        }
         await db.SaveChangesAsync(ct);
     }
 
