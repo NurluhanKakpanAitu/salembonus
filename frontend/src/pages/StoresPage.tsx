@@ -120,10 +120,7 @@ function StoreRow({ store, onAdd, adding, t }: { store: StoreListItem; onAdd: ()
         )}
       </div>
       {store.hasCard ? (
-        <div className="flex shrink-0 items-center gap-1 text-right">
-          <div className="text-[15px] font-bold">{store.balance.toLocaleString('ru-RU')} Б</div>
-          <ChevronRight size={18} className="text-ink-3" />
-        </div>
+        <ChevronRight size={18} className="shrink-0 text-ink-3" />
       ) : (
         <button
           type="button"
