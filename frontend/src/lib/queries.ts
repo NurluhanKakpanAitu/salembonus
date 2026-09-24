@@ -23,6 +23,14 @@ export const useUpdateMe = () => {
   })
 }
 
+export const useSetAvatar = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (avatarUrl: string | null) => meApi.setAvatar(avatarUrl),
+    onSuccess: (data) => qc.setQueryData(['me'], data),
+  })
+}
+
 export const useCards = () => {
   const enabled = useLoggedIn()
   return useQuery({ queryKey: ['cards'], queryFn: cardsApi.list, enabled, ...LIVE })

@@ -7,6 +7,7 @@ public record CustomerDto(
     string FirstName,
     string? Email,
     DateOnly? BirthDate,
+    string? AvatarUrl,
     bool IsBirthdayToday,
     int TotalBalance,
     int StoreCount);

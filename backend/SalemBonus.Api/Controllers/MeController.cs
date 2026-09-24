@@ -20,6 +20,11 @@ public class MeController(ICustomerService service) : ControllerBase
     public async Task<ActionResult<CustomerDto>> Update([FromBody] UpdateProfileRequest request, CancellationToken ct) =>
         Ok(await service.UpdateMeAsync(request, ct));
 
+    /// <summary>Профиль фотосын жүктеу немесе өшіру.</summary>
+    [HttpPut("avatar")]
+    public async Task<ActionResult<CustomerDto>> UpdateAvatar([FromBody] UpdateAvatarRequest request, CancellationToken ct) =>
+        Ok(await service.UpdateAvatarAsync(request, ct));
+
     /// <summary>Кассада көрсетілетін QR коды.</summary>
     [HttpGet("qr")]
     public async Task<ActionResult<QrCodeDto>> GetQr(CancellationToken ct) =>

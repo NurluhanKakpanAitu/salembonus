@@ -1,59 +1,74 @@
-import { Calendar, Camera, Coins, Pencil, Store } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Camera, Loader2, Trash2 } from 'lucide-react'
 import type { Customer } from '../../lib/api'
-import { formatBonus, formatDate, initials } from '../../lib/format'
+import { initials } from '../../lib/format'
+import { toSquareDataUrl } from '../../lib/image'
+import { useSetAvatar } from '../../lib/queries'
 
 export function ProfileCard({ me }: { me: Customer }) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const setAvatar = useSetAvatar()
+  const [error, setError] = useState<string | null>(null)
+
+  const pick = async (file: File | undefined) => {
+    if (!file) return
+    setError(null)
+    try {
+      await setAvatar.mutateAsync(await toSquareDataUrl(file))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Фотоны жүктеу мүмкін болмады')
+    }
+  }
+
   return (
-    <section className="rounded-card bg-surface p-4">
-      <div className="flex items-center gap-3.5">
-        <div className="relative shrink-0">
-          <div className="flex size-[72px] items-center justify-center rounded-full bg-violet-soft text-xl font-bold text-violet">
-            {initials(me.fullName)}
+    <section className="rounded-card bg-surface p-5">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative">
+          <div className="flex size-24 items-center justify-center overflow-hidden rounded-full bg-violet-soft text-2xl font-bold text-violet">
+            {me.avatarUrl ? (
+              <img src={me.avatarUrl} alt="" className="size-full object-cover" />
+            ) : (
+              initials(me.fullName)
+            )}
           </div>
           <button
             type="button"
-            aria-label="Фото өзгерту"
-            className="absolute -bottom-0.5 -right-0.5 flex size-[26px] items-center justify-center rounded-full bg-surface text-ink shadow"
+            aria-label="Фото жүктеу"
+            disabled={setAvatar.isPending}
+            onClick={() => fileRef.current?.click()}
+            className="absolute bottom-0 right-0 flex size-8 items-center justify-center rounded-full border-2 border-surface bg-brand text-white disabled:opacity-60"
           >
-            <Camera size={14} />
+            {setAvatar.isPending ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
           </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              void pick(e.target.files?.[0])
+              e.target.value = ''
+            }}
+          />
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold leading-tight">{me.fullName}</div>
-          <div className="mt-1 text-xs text-ink-2">{formatPhone(me.phone)}</div>
-          {me.email && <div className="truncate text-xs text-ink-2">{me.email}</div>}
-          {me.birthDate && (
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-2">
-              <Calendar size={13} /> {formatDate(me.birthDate)}
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          aria-label="Өңдеу"
-          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-violet-soft text-violet"
-        >
-          <Pencil size={18} />
-        </button>
-      </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Stat icon={<Coins size={18} className="text-violet" />} iconBg="#EEEBFF" value={formatBonus(me.totalBalance)} label="Барлық бонус" />
-        <Stat icon={<Store size={18} className="text-violet" />} iconBg="#EEEBFF" value={String(me.storeCount)} label="Дүкендер" />
+        <div className="mt-3 text-[17px] font-bold leading-tight">{me.fullName}</div>
+        <div className="mt-1 text-sm text-ink-2">{formatPhone(me.phone)}</div>
+
+        {me.avatarUrl && (
+          <button
+            type="button"
+            disabled={setAvatar.isPending}
+            onClick={() => setAvatar.mutate(null)}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-ink-2 disabled:opacity-50"
+          >
+            <Trash2 size={13} /> Фотоны өшіру
+          </button>
+        )}
+
+        {error && <div className="mt-3 text-xs text-danger">{error}</div>}
       </div>
     </section>
-  )
-}
-
-function Stat({ icon, iconBg, value, label }: { icon: React.ReactNode; iconBg: string; value: string; label: string }) {
-  return (
-    <div className="rounded-xl border border-line px-2.5 py-3">
-      <div className="flex size-[34px] items-center justify-center rounded-[9px]" style={{ background: iconBg }}>
-        {icon}
-      </div>
-      <div className="mt-2 whitespace-nowrap text-[13px] font-bold">{value}</div>
-      <div className="text-[10px] text-ink-2">{label}</div>
-    </div>
   )
 }
 

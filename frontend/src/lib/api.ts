@@ -113,6 +113,7 @@ export interface Customer {
   firstName: string
   email: string | null
   birthDate: string | null
+  avatarUrl: string | null
   isBirthdayToday: boolean
   totalBalance: number
   storeCount: number
@@ -143,6 +144,8 @@ export const transactionsApi = {
 export const meApi = {
   get: () => api<Customer>('/me'),
   update: (body: UpdateProfile) => api<Customer>('/me', { method: 'PUT', body: JSON.stringify(body) }),
+  setAvatar: (avatarUrl: string | null) =>
+    api<Customer>('/me/avatar', { method: 'PUT', body: JSON.stringify({ avatarUrl }) }),
   qr: () => api<QrCode>('/me/qr'),
 }
 

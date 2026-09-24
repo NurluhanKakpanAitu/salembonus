@@ -1,6 +1,7 @@
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Customers.Dtos;
+using SalemBonus.Domain.Entities;
 
 namespace SalemBonus.Application.Customers;
 
@@ -28,6 +29,7 @@ public class CustomerService(
             firstName,
             customer.Email,
             customer.BirthDate,
+            customer.AvatarUrl,
             customer.BirthDate is { } b && b.Month == today.Month && b.Day == today.Day,
             myCards.Sum(c => c.Balance),
             myCards.Count);
@@ -52,6 +54,27 @@ public class CustomerService(
         await unitOfWork.SaveChangesAsync(ct);
 
         return (await GetMeAsync(ct))!;
+    }
+
+    public async Task<CustomerDto> UpdateAvatarAsync(UpdateAvatarRequest request, CancellationToken ct = default)
+    {
+        var customer = await customers.GetForUpdateAsync(currentUser.CustomerId, ct)
+            ?? throw new NotFoundException("Тұтынушы табылмады");
+        customer.AvatarUrl = NormalizeAvatar(request.AvatarUrl);
+        await unitOfWork.SaveChangesAsync(ct);
+        return (await GetMeAsync(ct))!;
+    }
+
+    /// <summary>Бос мән фотоны өшіреді.</summary>
+    private static string? NormalizeAvatar(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var url = value.Trim();
+        if (!CustomerAvatar.IsAllowedFormat(url))
+            throw new ValidationException("Тек JPEG, PNG немесе WebP сурет жүктеуге болады");
+        if (url.Length > CustomerAvatar.MaxLength)
+            throw new ValidationException("Сурет тым үлкен, кішірек сурет таңдаңыз");
+        return url;
     }
 
     public async Task<QrCodeDto> GetMyQrAsync(CancellationToken ct = default)
