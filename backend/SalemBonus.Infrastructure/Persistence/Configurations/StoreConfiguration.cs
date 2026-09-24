@@ -11,6 +11,7 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
         b.HasKey(x => x.Id);
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.Property(x => x.Category).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Description).HasMaxLength(500).IsRequired();
         b.Property(x => x.CashbackPercent).HasPrecision(5, 2);
         b.Property(x => x.ThemeColor).HasMaxLength(9).IsRequired();
         b.Property(x => x.Icon).HasMaxLength(50).IsRequired();

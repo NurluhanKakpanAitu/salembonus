@@ -16,10 +16,10 @@ public static class DbSeeder
 
         var stores = new List<Store>
         {
-            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", CashbackPercent = 5, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, ApiKey = "sk_test_mkm_auto_11111111" },
-            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", CashbackPercent = 3, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50, ApiKey = "sk_test_coffee_house_2222" },
-            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", CashbackPercent = 2, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30, ApiKey = "sk_test_beauty_shop_33333" },
-            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", CashbackPercent = 2, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20, ApiKey = "sk_test_sportlife_444444" },
+            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.", CashbackPercent = 5, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, ApiKey = "sk_test_mkm_auto_11111111" },
+            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", Description = "Кофе, десерт және таңғы ас. Қалада бірнеше нүкте.", CashbackPercent = 3, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50, ApiKey = "sk_test_coffee_house_2222" },
+            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", Description = "Косметика, парфюмерия және күтім құралдары.", CashbackPercent = 2, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30, ApiKey = "sk_test_beauty_shop_33333" },
+            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", Description = "Спорт киімі, аяқкиім және жаттығу жабдықтары.", CashbackPercent = 2, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20, ApiKey = "sk_test_sportlife_444444" },
         };
 
         var customer = new Customer
