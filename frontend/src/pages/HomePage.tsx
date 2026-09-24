@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { QrSheet } from '../components/QrSheet'
-import { BonusCardTile } from '../components/cards/BonusCardTile'
+import { CardCarousel } from '../components/cards/CardCarousel'
 import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
@@ -35,26 +35,22 @@ export function HomePage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[17px] font-bold">Менің карталарым</h2>
-            {cards.data && cards.data.length > 2 && (
+            {cards.data && cards.data.length > 1 && (
               <Link to="/cards" className="flex items-center text-[13px] font-semibold text-brand">
                 Барлығы <ChevronRight size={16} />
               </Link>
             )}
           </div>
-          {cards.isPending && <Skeleton className="h-[168px] rounded-[18px]" />}
+          {cards.isPending && <Skeleton className="h-[178px] rounded-[18px]" />}
           {cards.isError && <ErrorBox message={cards.error.message} onRetry={() => cards.refetch()} />}
           {cards.data && cards.data.length === 0 && (
             <div className="rounded-[18px] bg-surface p-6 text-center text-sm text-ink-2">
               Әзірге бонус картаңыз жоқ. Дүкенде QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.
             </div>
           )}
-          <div className="flex flex-col gap-3">
-            {cards.data?.slice(0, 2).map((c) => (
-              <Link key={c.storeId} to={`/cards/${c.storeId}`} className="block active:scale-[0.99]">
-                <BonusCardTile card={c} size="compact" onAction={() => setQrStore(c.storeName)} />
-              </Link>
-            ))}
-          </div>
+          {cards.data && cards.data.length > 0 && (
+            <CardCarousel cards={cards.data} onShowQr={(c) => setQrStore(c.storeName)} />
+          )}
         </section>
 
         {transactions.isPending && <Skeleton className="h-64" />}

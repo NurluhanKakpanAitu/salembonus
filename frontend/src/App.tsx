@@ -8,6 +8,7 @@ import { CardDetailPage } from './pages/CardDetailPage'
 import { StoresPage } from './pages/StoresPage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { ProfileEditPage } from './pages/ProfileEditPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { VerifyPage } from './pages/auth/VerifyPage'
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="stores" element={<StoresPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/edit" element={<ProfileEditPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>

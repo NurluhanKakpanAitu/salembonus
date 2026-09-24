@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { Brand } from './Brand'
+import { useMe } from '../lib/queries'
+import { initials } from '../lib/format'
 
 export function PageHeader({ right }: { right?: ReactNode }) {
   return (
@@ -10,13 +13,24 @@ export function PageHeader({ right }: { right?: ReactNode }) {
   )
 }
 
-export function Avatar() {
+/** Профильге апаратын аватар. Аты болса инициалдарын көрсетеді. */
+export function Avatar({ to = '/profile/edit' }: { to?: string }) {
+  const me = useMe()
+  const name = me.data?.fullName ?? ''
+  const short = name && !name.startsWith('+') ? initials(name) : ''
+
   return (
-    <div className="flex size-11 items-center justify-center rounded-full bg-gray-200 text-ink-2">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
-      </svg>
-    </div>
+    <Link
+      to={to}
+      aria-label="Жеке деректер"
+      className="flex size-11 items-center justify-center rounded-full bg-violet-soft text-sm font-bold text-violet active:scale-95"
+    >
+      {short || (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+        </svg>
+      )}
+    </Link>
   )
 }
