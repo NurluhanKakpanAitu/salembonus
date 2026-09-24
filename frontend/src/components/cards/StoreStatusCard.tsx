@@ -1,4 +1,4 @@
-import { Crown, Percent, Wallet } from 'lucide-react'
+import { Crown, Percent } from 'lucide-react'
 import type { StoreDetail } from '../../lib/api'
 import { formatTenge } from '../../lib/format'
 
@@ -68,17 +68,11 @@ export function StoreStatusCard({ store }: { store: StoreDetail }) {
         })}
       </div>
 
-      <div className="mt-4 flex flex-col gap-2 border-t border-line px-4 py-3.5 text-[13px]">
+      <div className="mt-4 border-t border-line px-4 py-3.5 text-[13px]">
         <div className="flex items-center gap-2.5 text-ink-2">
           <Percent size={15} className="shrink-0" />
           <span>
             Әр сатып алудан <b className="text-ink">{store.cashbackPercent}%</b> бонус есептеледі
-          </span>
-        </div>
-        <div className="flex items-center gap-2.5 text-ink-2">
-          <Wallet size={15} className="shrink-0" />
-          <span>
-            Бір сатып алуда соманың <b className="text-ink">{store.maxRedeemPercent}%</b> дейін бонуспен төлеуге болады
           </span>
         </div>
       </div>
