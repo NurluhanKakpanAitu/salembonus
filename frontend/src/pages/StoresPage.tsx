@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ChevronRight, Plus, QrCode, Search } from 'lucide-react'
+import { Check, ChevronRight, Plus, QrCode, Search } from 'lucide-react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { PageTitle } from '../components/PageTitle'
 import { QrScanner } from '../components/stores/QrScanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { ApiError, type StoreListItem } from '../lib/api'
-import { formatBonus } from '../lib/format'
 import { storeIcon, storeTheme } from '../lib/theme'
 import { useJoinStore, useStores } from '../lib/queries'
 
@@ -28,9 +27,6 @@ export function StoresPage() {
       setJoinError(err instanceof ApiError ? err.message : 'Дүкенді қосу мүмкін болмады')
     }
   }
-
-  const mine = stores.data?.filter((s) => s.hasCard) ?? []
-  const others = stores.data?.filter((s) => !s.hasCard) ?? []
 
   return (
     <>
@@ -65,28 +61,19 @@ export function StoresPage() {
         </div>
 
         {stores.isPending && (
-          <>
+          <div className="flex flex-col gap-2.5">
             <Skeleton className="h-20" />
             <Skeleton className="h-20" />
-          </>
+            <Skeleton className="h-20" />
+          </div>
         )}
         {stores.isError && <ErrorBox message={stores.error.message} onRetry={() => stores.refetch()} />}
 
-        {others.length > 0 && (
-          <Section title="Қосуға болады">
-            {others.map((s) => (
-              <StoreRow key={s.id} store={s} onAdd={() => addStore(s.id)} adding={join.isPending} />
-            ))}
-          </Section>
-        )}
-
-        {mine.length > 0 && (
-          <Section title="Менің дүкендерім">
-            {mine.map((s) => (
-              <StoreRow key={s.id} store={s} />
-            ))}
-          </Section>
-        )}
+        <div className="flex flex-col gap-2.5">
+          {stores.data?.map((s) => (
+            <StoreRow key={s.id} store={s} onAdd={() => addStore(s.id)} adding={join.isPending} />
+          ))}
+        </div>
 
         {stores.data?.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">Дүкен табылмады</div>
@@ -104,16 +91,7 @@ export function StoresPage() {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h2 className="mb-2.5 text-[15px] font-bold">{title}</h2>
-      <div className="flex flex-col gap-2.5">{children}</div>
-    </section>
-  )
-}
-
-function StoreRow({ store, onAdd, adding }: { store: StoreListItem; onAdd?: () => void; adding?: boolean }) {
+function StoreRow({ store, onAdd, adding }: { store: StoreListItem; onAdd: () => void; adding: boolean }) {
   const t = storeTheme(store.themeColor)
   const Icon = storeIcon(store.icon)
 
@@ -128,14 +106,17 @@ function StoreRow({ store, onAdd, adding }: { store: StoreListItem; onAdd?: () =
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-bold leading-tight">{store.name}</div>
         <div className="truncate text-xs text-ink-2">{store.category} · {store.cashbackPercent}% бонус</div>
-        {!store.hasCard && <div className="mt-0.5 truncate text-xs text-ink-3">{store.description}</div>}
+        {store.hasCard ? (
+          <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-green-soft px-2 py-0.5 text-[11px] font-semibold text-green">
+            <Check size={12} strokeWidth={3} /> Сіз қосылғансыз
+          </div>
+        ) : (
+          <div className="mt-0.5 truncate text-xs text-ink-3">{store.description}</div>
+        )}
       </div>
       {store.hasCard ? (
         <div className="flex shrink-0 items-center gap-1 text-right">
-          <div>
-            <div className="text-[15px] font-bold">{formatBonus(store.balance)}</div>
-            <div className="text-[11px] text-ink-2">{store.level}</div>
-          </div>
+          <div className="text-[15px] font-bold">{store.balance.toLocaleString('ru-RU')} Б</div>
           <ChevronRight size={18} className="text-ink-3" />
         </div>
       ) : (
