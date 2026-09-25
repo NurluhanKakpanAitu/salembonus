@@ -147,7 +147,6 @@ public class PosService(
         {
             Id = Guid.NewGuid(),
             Phone = phone,
-            FullName = phone,
             QrCode = BonusRules.GenerateQrCode(),
         };
         customers.Add(customer);

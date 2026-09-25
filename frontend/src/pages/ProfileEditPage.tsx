@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Phone } from 'lucide-react'
 import { BackHeader } from '../components/BackHeader'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
+import { LocationPicker, locationCode, locationFrom, type LocationValue } from '../components/profile/LocationPicker'
 import { ApiError } from '../lib/api'
 import { initials } from '../lib/format'
 import { useMe, useUpdateMe } from '../lib/queries'
@@ -16,26 +17,30 @@ function formatPhone(p: string) {
   return d.length === 11 ? `+${d[0]} ${d.slice(1, 4)} ${d.slice(4, 7)} ${d.slice(7, 9)} ${d.slice(9)}` : p
 }
 
+const EMPTY_LOCATION: LocationValue = { region: null, district: null, settlement: null }
+
 export function ProfileEditPage() {
   const t = useT()
   const me = useMe()
   const update = useUpdateMe()
   const navigate = useNavigate()
 
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [birthDate, setBirthDate] = useState('')
+  const [location, setLocation] = useState<LocationValue>(EMPTY_LOCATION)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
-  // Телефон аты ретінде сақталса (әлі толтырылмаған профиль), бос өріс көрсетеміз
   const initial = useMemo(
     () =>
       me.data
         ? {
-            fullName: me.data.fullName.startsWith('+') ? '' : me.data.fullName,
-            email: me.data.email ?? '',
+            firstName: me.data.firstName,
+            lastName: me.data.lastName,
             birthDate: me.data.birthDate ?? '',
+            katoCode: me.data.katoCode ?? null,
+            location: locationFrom(me.data),
           }
         : null,
     [me.data],
@@ -43,26 +48,30 @@ export function ProfileEditPage() {
 
   useEffect(() => {
     if (!initial) return
-    setFullName(initial.fullName)
-    setEmail(initial.email)
+    setFirstName(initial.firstName)
+    setLastName(initial.lastName)
     setBirthDate(initial.birthDate)
+    setLocation(initial.location)
   }, [initial])
 
   /** Сақтау батырмасы тек бірдеңе өзгергенде белсенді болады. */
   const isDirty =
     !!initial &&
-    (fullName.trim() !== initial.fullName ||
-      email.trim() !== initial.email ||
-      birthDate !== initial.birthDate)
+    (firstName.trim() !== initial.firstName ||
+      lastName.trim() !== initial.lastName ||
+      birthDate !== initial.birthDate ||
+      locationCode(location) !== initial.katoCode)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     try {
       await update.mutateAsync({
-        fullName: fullName.trim(),
-        email: email.trim() || null,
+        firstName: firstName.trim(),
+        lastName: lastName.trim() || null,
+        email: me.data?.email ?? null,
         birthDate: birthDate || null,
+        katoCode: locationCode(location),
       })
       setSaved(true)
       setTimeout(() => navigate(-1), 700)
@@ -79,37 +88,46 @@ export function ProfileEditPage() {
       {me.isError && <ErrorBox message={me.error.message} onRetry={() => me.refetch()} />}
 
       {me.data && (
-        <form onSubmit={submit} autoComplete="off" className="mt-4 flex flex-col">
+        <form onSubmit={submit} autoComplete="off" className="mt-4 flex flex-col pb-4">
           <div className="flex justify-center">
-            <div className="flex size-20 items-center justify-center rounded-full bg-violet-soft text-2xl font-bold text-violet">
-              {initials(fullName) || '·'}
+            <div className="flex size-20 items-center justify-center overflow-hidden rounded-full bg-violet-soft text-2xl font-bold text-violet">
+              {me.data.avatarUrl ? (
+                <img src={me.data.avatarUrl} alt="" className="size-full object-cover" />
+              ) : (
+                initials(`${firstName} ${lastName}`) || '·'
+              )}
             </div>
           </div>
 
-          <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="profile-fullname">{t('profile.fullName')} *</label>
+          <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="profile-firstname">
+            {t('profile.firstName')} *
+          </label>
           <input
-            id="profile-fullname"
-            name="profile-fullname"
+            id="profile-firstname"
+            name="profile-firstname"
             autoComplete="off"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
             className={inputCls}
-            placeholder={t('profile.namePlaceholder')}
+            placeholder={t('profile.firstNamePlaceholder')}
           />
 
-          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-email">Email</label>
+          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-lastname">
+            {t('profile.lastName')}
+          </label>
           <input
-            id="profile-email"
-            name="profile-email"
-            type="email"
+            id="profile-lastname"
+            name="profile-lastname"
             autoComplete="off"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
             className={inputCls}
-            placeholder={t('profile.emailPlaceholder')}
+            placeholder={t('profile.lastNamePlaceholder')}
           />
 
-          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-birthdate">{t('profile.birthDate')}</label>
+          <label className="mt-4 text-xs font-medium text-ink-2" htmlFor="profile-birthdate">
+            {t('profile.birthDate')}
+          </label>
           <input
             id="profile-birthdate"
             name="profile-birthdate"
@@ -122,6 +140,8 @@ export function ProfileEditPage() {
           />
           <p className="mt-1.5 text-xs text-ink-3">{t('profile.birthHint')}</p>
 
+          <LocationPicker value={location} onChange={setLocation} />
+
           <div className="mt-5 rounded-2xl bg-surface px-4 py-3.5">
             <div className="flex items-center gap-3">
               <Phone size={18} className="shrink-0 text-ink-2" />
@@ -130,19 +150,25 @@ export function ProfileEditPage() {
                 <div className="text-[15px] font-semibold">{formatPhone(me.data.phone)}</div>
               </div>
             </div>
-            <p className="mt-2 text-xs text-ink-3">
-              {t('profile.phoneNote')}
-            </p>
+            <p className="mt-2 text-xs text-ink-3">{t('profile.phoneNote')}</p>
           </div>
 
           {error && <p className="mt-3 text-[13px] text-danger">{error}</p>}
 
           <button
             type="submit"
-            disabled={!isDirty || update.isPending || fullName.trim().length < 2}
+            disabled={!isDirty || update.isPending || firstName.trim().length < 2}
             className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-[15px] font-semibold text-white transition active:scale-[0.99] disabled:opacity-50"
           >
-            {saved ? <><Check size={20} /> {t('profile.saved')}</> : update.isPending ? t('profile.saving') : t('profile.save')}
+            {saved ? (
+              <>
+                <Check size={20} /> {t('profile.saved')}
+              </>
+            ) : update.isPending ? (
+              t('profile.saving')
+            ) : (
+              t('profile.save')
+            )}
           </button>
         </form>
       )}

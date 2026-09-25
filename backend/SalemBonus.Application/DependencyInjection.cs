@@ -4,6 +4,7 @@ using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Customers;
 using SalemBonus.Application.Notifications;
 using SalemBonus.Application.Pos;
+using SalemBonus.Application.Kato;
 using SalemBonus.Application.Stores;
 
 namespace SalemBonus.Application;
@@ -18,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<IPosService, PosService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IStoreService, StoreService>();
+        services.AddScoped<IKatoService, KatoService>();
         return services;
     }
 }

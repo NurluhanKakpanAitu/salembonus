@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SalemBonus.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using SalemBonus.Infrastructure.Persistence;
 namespace SalemBonus.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260925091205_SplitCustomerName")]
+    partial class SplitCustomerName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,10 +118,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("KatoCode")
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -143,38 +142,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("SalemBonus.Domain.Entities.KatoEntry", b =>
-                {
-                    b.Property<string>("Code")
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("NameKk")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("NameRu")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("ParentCode")
-                        .HasMaxLength(9)
-                        .HasColumnType("character varying(9)");
-
-                    b.HasKey("Code");
-
-                    b.HasIndex("Level");
-
-                    b.HasIndex("ParentCode");
-
-                    b.ToTable("Kato");
                 });
 
             modelBuilder.Entity("SalemBonus.Domain.Entities.Notification", b =>

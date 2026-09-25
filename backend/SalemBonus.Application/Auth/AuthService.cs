@@ -80,7 +80,6 @@ public class AuthService(
             {
                 Id = Guid.NewGuid(),
                 Phone = phone,
-                FullName = phone,
                 QrCode = BonusRules.GenerateQrCode(),
                 CreatedAt = now,
             };
@@ -130,7 +129,7 @@ public class AuthService(
             Device = device,
             CreatedAt = now,
         });
-        var profileCompleted = customer.FullName != customer.Phone;
+        var profileCompleted = customer.IsProfileCompleted;
         return new AuthTokens(access.Token, access.ExpiresAt, refreshValue, refreshExpires, isNew, profileCompleted);
     }
 

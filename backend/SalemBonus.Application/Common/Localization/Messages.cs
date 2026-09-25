@@ -72,6 +72,10 @@ public static class Messages
         "Сурет тым үлкен, кішірек сурет таңдаңыз",
         "Изображение слишком большое, выберите меньше");
 
+    public static string KatoInvalid(AppLanguage l) => Pick(l,
+        "Елді мекен дұрыс таңдалмады",
+        "Населённый пункт выбран неверно");
+
     public static string CustomerNotFound(AppLanguage l) => Pick(l,
         "Тұтынушы табылмады",
         "Клиент не найден");

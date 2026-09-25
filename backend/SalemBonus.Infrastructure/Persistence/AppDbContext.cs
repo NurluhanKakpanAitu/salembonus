@@ -7,6 +7,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Store> Stores => Set<Store>();
     public DbSet<StoreLevel> StoreLevels => Set<StoreLevel>();
+    public DbSet<KatoEntry> Kato => Set<KatoEntry>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<BonusCard> BonusCards => Set<BonusCard>();
     public DbSet<BonusTransaction> BonusTransactions => Set<BonusTransaction>();

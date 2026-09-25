@@ -11,9 +11,13 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         b.HasKey(x => x.Id);
         b.Property(x => x.Phone).HasMaxLength(20).IsRequired();
         b.HasIndex(x => x.Phone).IsUnique();
-        b.Property(x => x.FullName).HasMaxLength(200).IsRequired();
+        b.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.LastName).HasMaxLength(100).IsRequired();
+        b.Ignore(x => x.FullName);
+        b.Ignore(x => x.IsProfileCompleted);
         b.Property(x => x.Email).HasMaxLength(200);
         b.Property(x => x.AvatarUrl).HasMaxLength(CustomerAvatar.MaxLength);
+        b.Property(x => x.KatoCode).HasMaxLength(9);
         b.Property(x => x.QrCode).HasMaxLength(16).IsRequired();
         b.HasIndex(x => x.QrCode).IsUnique();
     }

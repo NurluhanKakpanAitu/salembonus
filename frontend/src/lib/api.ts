@@ -116,23 +116,49 @@ export interface TransactionPage {
   hasMore: boolean
 }
 
+export interface KatoNode {
+  code: string
+  name: string
+  level: number
+  hasChildren: boolean
+}
+
+export interface KatoMatch {
+  code: string
+  name: string
+  level: number
+  path: string
+}
+
 export interface Customer {
   id: string
   phone: string
   fullName: string
   firstName: string
+  lastName: string
   email: string | null
   birthDate: string | null
   avatarUrl: string | null
+  katoCode: string | null
+  katoPath: KatoNode[]
   isBirthdayToday: boolean
   totalBalance: number
   storeCount: number
 }
 
 export interface UpdateProfile {
-  fullName: string
+  firstName: string
+  lastName: string | null
   email: string | null
   birthDate: string | null
+  katoCode: string | null
+}
+
+export const katoApi = {
+  children: (parent?: string | null) =>
+    api<KatoNode[]>(`/kato/children${parent ? `?parent=${parent}` : ''}`),
+  settlements: (parent: string) => api<KatoNode[]>(`/kato/settlements?parent=${parent}`),
+  search: (q: string) => api<KatoMatch[]>(`/kato/search?q=${encodeURIComponent(q)}`),
 }
 
 export interface QrCode {

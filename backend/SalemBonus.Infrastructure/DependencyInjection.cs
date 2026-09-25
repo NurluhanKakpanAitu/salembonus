@@ -29,6 +29,7 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IStoreRepository, StoreRepository>();
+        services.AddScoped<IKatoRepository, KatoRepository>();
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<IBonusCardRepository, BonusCardRepository>();
         services.AddScoped<IBonusTransactionRepository, BonusTransactionRepository>();

@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { cardsApi, meApi, notificationsApi, storesApi, transactionsApi, type NotificationCategory, type UpdateProfile } from './api'
+import { cardsApi, katoApi, meApi, notificationsApi, storesApi, transactionsApi, type NotificationCategory, type UpdateProfile } from './api'
 import { useAuth } from './auth'
 
 const PAGE = 10
@@ -30,6 +30,23 @@ export const useSetAvatar = () => {
     onSuccess: (data) => qc.setQueryData(['me'], data),
   })
 }
+
+/** КАТО тармақтары ұзақ өзгермейді, сондықтан ұзақ сақталады. */
+export const useKatoChildren = (parent: string | null | undefined, enabled = true) =>
+  useQuery({
+    queryKey: ['kato', parent ?? 'root'],
+    queryFn: () => katoApi.children(parent),
+    enabled,
+    staleTime: Infinity,
+  })
+
+export const useKatoSettlements = (parent: string | null | undefined) =>
+  useQuery({
+    queryKey: ['kato', 'settlements', parent],
+    queryFn: () => katoApi.settlements(parent!),
+    enabled: !!parent,
+    staleTime: Infinity,
+  })
 
 export const useCards = () => {
   const enabled = useLoggedIn()

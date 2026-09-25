@@ -15,6 +15,8 @@ public static class DbSeeder
     {
         await db.Database.MigrateAsync(ct);
 
+        await KatoSeeder.SeedAsync(db, ct);
+
         var stores = Catalog();
         await SyncStoresAsync(db, stores, ct);
         await SyncDemoCardLevelsAsync(db, ct);
@@ -26,7 +28,8 @@ public static class DbSeeder
         {
             Id = DemoCustomerId,
             Phone = "+77011234567",
-            FullName = "Мақсадбек Абдужаббаров",
+            FirstName = "Мақсадбек",
+            LastName = "Абдужаббаров",
             Email = "maksadbek97@gmail.com",
             BirthDate = new DateOnly(1997, 9, 15),
             QrCode = "SALEM2025X",
