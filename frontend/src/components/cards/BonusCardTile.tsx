@@ -1,8 +1,10 @@
-import { QrCode } from 'lucide-react'
+import { Info, QrCode } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import type { BonusCard } from '../../lib/api'
 import { formatNumber } from '../../lib/format'
 import { storeTheme } from '../../lib/theme'
 import { useT, type TranslationKey } from '../../lib/i18n'
+import { useQr } from '../../lib/queries'
 
 /**
  * Бонус картасы: жоғарыда дүкен атауы мен мәртебе белгісі, ортада баланс,
@@ -12,18 +14,26 @@ export function BonusCardTile({
   card,
   size = 'full',
   onAction,
+  expanded = false,
+  onInfo,
 }: {
   card: BonusCard
   size?: 'full' | 'compact'
   onAction?: () => void
+  /** Ашық күйде QR коды картаның ішінде көрінеді. */
+  expanded?: boolean
+  onInfo?: () => void
 }) {
   const t = useT()
   const theme = storeTheme(card.themeColor)
   const compact = size === 'compact'
+  const qr = useQr()
 
   return (
     <div
-      className={`flex w-full flex-col justify-between rounded-[22px] px-5 py-4 ${compact ? 'h-[196px]' : 'h-[216px]'}`}
+      className={`flex w-full flex-col justify-between rounded-[22px] px-5 py-4 ${
+        expanded ? 'min-h-[216px]' : compact ? 'h-[196px]' : 'h-[216px]'
+      }`}
       style={{ background: theme.bg, color: theme.text }}
     >
       <div className="flex items-start justify-between gap-3">
@@ -49,11 +59,39 @@ export function BonusCardTile({
         </div>
       </div>
 
-      <div className="flex items-end justify-between gap-3">
+      {expanded && (
+        <div className="mt-4 flex flex-col items-center">
+          <div className="rounded-2xl bg-white p-3">
+            {qr.data ? (
+              <QRCodeSVG value={qr.data.payload} size={168} level="H" includeMargin={false} />
+            ) : (
+              <div className="size-[168px] animate-pulse rounded-lg bg-gray-100" />
+            )}
+          </div>
+          <div className="mt-2 text-[15px] font-bold tracking-[0.2em]">{qr.data?.code ?? '…'}</div>
+        </div>
+      )}
+
+      <div className="mt-4 flex items-end justify-between gap-3">
         <div className="min-w-0 truncate text-[11px] font-semibold tracking-[0.06em]" style={{ color: theme.muted }}>
           {t('cards.brandLine')}
         </div>
-        {onAction && (
+        {expanded && onInfo && (
+          <button
+            type="button"
+            aria-label={t('cards.openCard')}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onInfo()
+            }}
+            className="flex size-9 shrink-0 items-center justify-center rounded-full active:scale-95"
+            style={{ background: theme.box, color: theme.text }}
+          >
+            <Info size={18} />
+          </button>
+        )}
+        {!expanded && onAction && (
           <button
             type="button"
             onClick={(e) => {
