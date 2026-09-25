@@ -22,7 +22,7 @@ export function NotificationItem({ n, onOpen }: { n: Notification; onOpen?: (n: 
   if (n.type === 'StoreAdded' && n.storeThemeColor && n.storeIcon) {
     const theme = storeTheme(n.storeThemeColor)
     Icon = storeIcon(n.storeIcon)
-    bg = theme.bg
+    bg = theme.solid
     color = theme.text
   }
 

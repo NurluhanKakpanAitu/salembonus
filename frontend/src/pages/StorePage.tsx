@@ -107,7 +107,7 @@ function Cover({ store }: { store: StoreDetail }) {
   return (
     <div
       className="flex h-40 items-center justify-center overflow-hidden rounded-card"
-      style={{ background: store.themeColor, color: theme.text }}
+      style={{ background: theme.bg, color: theme.text }}
     >
       {store.photoUrl ? (
         <img src={store.photoUrl} alt="" className="size-full object-cover" />

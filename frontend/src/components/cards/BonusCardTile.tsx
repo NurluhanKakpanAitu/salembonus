@@ -42,7 +42,7 @@ export function BonusCardTile({
         </div>
         <div
           className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold"
-          style={{ background: theme.text, color: theme.bg }}
+          style={{ background: theme.text, color: theme.solid }}
         >
           {t('cards.levelPill', {
             level: t(`level.${card.level}` as TranslationKey),
@@ -109,7 +109,7 @@ export function BonusCardTile({
               onAction()
             }}
             className="flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-bold active:scale-[0.98]"
-            style={{ background: theme.text, color: theme.bg }}
+            style={{ background: theme.text, color: theme.solid }}
           >
             <QrCode size={15} /> {t('cards.qrShort')}
           </button>
