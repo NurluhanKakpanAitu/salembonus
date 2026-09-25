@@ -52,7 +52,7 @@ export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: 
               <LogoMark size={40} />
             </div>
           </div>
-          <div className="mt-4 font-mono text-lg font-semibold tracking-[0.3em]">{qr.data?.code ?? '…'}</div>
+          <div className="mt-4 text-lg font-semibold tracking-[0.3em]">{qr.data?.code ?? '…'}</div>
           <div className="mt-1 text-xs text-ink-2">{me.data?.fullName}</div>
           <p className="mt-4 text-center text-xs text-ink-3">
             {t('qr.fallback')}
