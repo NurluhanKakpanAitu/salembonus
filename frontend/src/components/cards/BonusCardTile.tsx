@@ -65,7 +65,6 @@ export function BonusCardTile({
           style={{ background: theme.box, color: theme.text }}
         >
           <Clock3 size={12} />
-          {formatNumber(card.expiringAmount)} {t('common.bonusUnit')} ·{' '}
           {t('cards.expiring', { date: formatShortDate(card.expiringAt) })}
         </div>
       ) : null}
