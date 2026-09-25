@@ -1,6 +1,6 @@
 import { Cake, ChevronRight, CircleMinus, Gift, Info, Percent, UserCheck, type LucideIcon } from 'lucide-react'
 import type { Notification, NotificationType } from '../../lib/api'
-import { formatTime } from '../../lib/format'
+import { formatDateTime } from '../../lib/format'
 import { storeIcon, storeTheme } from '../../lib/theme'
 import { useT } from '../../lib/i18n'
 import { notificationText } from '../../lib/notificationText'
@@ -41,7 +41,7 @@ export function NotificationItem({ n, onOpen }: { n: Notification; onOpen?: (n: 
             {!n.isRead && <span className="mr-1.5 inline-block size-1.5 -translate-y-0.5 rounded-full bg-brand" />}
             {text.title}
           </div>
-          <div className="shrink-0 text-xs text-ink-3">{formatTime(n.createdAt)}</div>
+          <div className="shrink-0 text-[11px] text-ink-3">{formatDateTime(n.createdAt)}</div>
         </div>
         <div className="mt-1 text-[13px] leading-snug">{text.body}</div>
         {text.detail && <div className="mt-1 text-xs text-ink-2">{text.detail}</div>}

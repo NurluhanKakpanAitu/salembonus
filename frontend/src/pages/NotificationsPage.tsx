@@ -6,7 +6,7 @@ import { IconButton } from '../components/IconButton'
 import { NotificationItem } from '../components/notifications/NotificationItem'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import type { Notification } from '../lib/api'
-import { dayKey, dayLabel } from '../lib/format'
+import { storeIcon, storeTheme } from '../lib/theme'
 import { useMarkAllRead, useMarkRead, useNotifications, useUnreadCount } from '../lib/queries'
 import { useT } from '../lib/i18n'
 
@@ -17,12 +17,13 @@ export function NotificationsPage() {
   const markRead = useMarkRead()
   const markAll = useMarkAllRead()
 
+  /** Хабарламалар дүкен бойынша топталады, топтар соңғы хабарлама уақыты бойынша реттеледі. */
   const groups = useMemo(() => {
     const items = q.data?.pages.flatMap((p) => p.items) ?? []
     const map = new Map<string, Notification[]>()
     for (const n of items) {
-      const k = dayKey(n.createdAt)
-      map.set(k, [...(map.get(k) ?? []), n])
+      const key = n.storeName ?? ''
+      map.set(key, [...(map.get(key) ?? []), n])
     }
     return [...map.values()]
   }, [q.data])
@@ -62,8 +63,8 @@ export function NotificationsPage() {
         {q.isError && <ErrorBox message={q.error.message} onRetry={() => q.refetch()} />}
 
         {groups.map((items) => (
-          <section key={dayKey(items[0].createdAt)} className="flex flex-col gap-2.5">
-            <h2 className="text-[15px] font-bold">{dayLabel(items[0].createdAt)}</h2>
+          <section key={items[0].storeName ?? 'system'} className="flex flex-col gap-2.5">
+            <StoreHeading items={items} label={t('notif.count', { count: items.length })} systemLabel={t('notif.system')} />
             {items.map((n) => (
               <NotificationItem key={n.id} n={n} onOpen={open} />
             ))}
@@ -88,5 +89,25 @@ export function NotificationsPage() {
         )}
       </div>
     </>
+  )
+}
+
+/** Топ тақырыбы: дүкен иконкасы мен атауы, оң жақта хабарлама саны. */
+function StoreHeading({ items, label, systemLabel }: { items: Notification[]; label: string; systemLabel: string }) {
+  const first = items[0]
+  const theme = storeTheme(first.storeThemeColor ?? '#6B7280')
+  const Icon = storeIcon(first.storeIcon ?? 'store')
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div
+        className="flex size-7 shrink-0 items-center justify-center rounded-lg"
+        style={{ background: first.storeThemeColor ?? '#6B7280', color: theme.text }}
+      >
+        <Icon size={15} />
+      </div>
+      <h2 className="min-w-0 flex-1 truncate text-[15px] font-bold">{first.storeName ?? systemLabel}</h2>
+      <span className="shrink-0 text-xs text-ink-3">{label}</span>
+    </div>
   )
 }
