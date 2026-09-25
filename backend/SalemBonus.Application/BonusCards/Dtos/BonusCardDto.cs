@@ -15,4 +15,7 @@ public record BonusCardDto(
     /// <summary>Келесі мәртебенің кілті. Ең жоғарыда тұрса — бос.</summary>
     string? NextLevel,
     /// <summary>Келесі мәртебе басталатын сома.</summary>
-    decimal? NextLevelAmount);
+    decimal? NextLevelAmount,
+    /// <summary>Ең жақын жанатын бонус сомасы. Жанатыны жоқ болса — бос.</summary>
+    int? ExpiringAmount,
+    DateTime? ExpiringAt);

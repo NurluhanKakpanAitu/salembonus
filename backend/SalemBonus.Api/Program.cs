@@ -57,6 +57,8 @@ builder.Services.AddCors(options =>
         .AllowCredentials());
 });
 
+builder.Services.AddHostedService<SalemBonus.Api.BonusExpiryWorker>();
+
 var app = builder.Build();
 
 await app.Services.InitializeDatabaseAsync();

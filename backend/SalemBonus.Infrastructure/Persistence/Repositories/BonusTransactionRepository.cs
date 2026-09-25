@@ -23,5 +23,29 @@ public class BonusTransactionRepository(AppDbContext db) : IBonusTransactionRepo
             .ToListAsync(ct);
     }
 
+    public async Task<IReadOnlyList<BonusTransaction>> GetOpenLotsAsync(Guid bonusCardId, CancellationToken ct = default) =>
+        await db.BonusTransactions
+            .Where(t => t.BonusCardId == bonusCardId && t.Remaining > 0)
+            // Ең ерте жанатыны бірінші жұмсалады, мерзімсіздері соңында.
+            .OrderBy(t => t.ExpiresAt == null)
+            .ThenBy(t => t.ExpiresAt)
+            .ThenBy(t => t.CreatedAt)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<BonusTransaction>> GetExpiredLotsAsync(DateTime now, int take, CancellationToken ct = default) =>
+        await db.BonusTransactions
+            .Where(t => t.Remaining > 0 && t.ExpiresAt != null && t.ExpiresAt <= now)
+            .OrderBy(t => t.ExpiresAt)
+            .Take(take)
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<BonusTransaction>> GetNextExpiringAsync(
+        IReadOnlyCollection<Guid> cardIds, DateTime now, CancellationToken ct = default) =>
+        await db.BonusTransactions.AsNoTracking()
+            .Where(t => cardIds.Contains(t.BonusCardId) && t.Remaining > 0 && t.ExpiresAt != null && t.ExpiresAt > now)
+            .GroupBy(t => t.BonusCardId)
+            .Select(g => g.OrderBy(x => x.ExpiresAt).First())
+            .ToListAsync(ct);
+
     public void Add(BonusTransaction transaction) => db.BonusTransactions.Add(transaction);
 }

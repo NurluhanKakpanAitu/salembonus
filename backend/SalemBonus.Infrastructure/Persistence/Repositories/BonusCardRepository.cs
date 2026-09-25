@@ -25,5 +25,10 @@ public class BonusCardRepository(AppDbContext db) : IBonusCardRepository
             .Include(c => c.Store).ThenInclude(s => s!.Levels)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
 
+    public Task<BonusCard?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default) =>
+        db.BonusCards
+            .Include(c => c.Store)
+            .FirstOrDefaultAsync(c => c.Id == id, ct);
+
     public void Add(BonusCard card) => db.BonusCards.Add(card);
 }

@@ -76,7 +76,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер",
             Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.",
-            CashbackPercent = 2, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30,
+            CashbackPercent = 2, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, BonusLifetimeDays = 365,
             ApiKey = "sk_test_mkm_auto_11111111", JoinCode = "MKMAUTO",
             Address = "Алматы, Сейфуллин даңғ. 502",
             Phone = "+7 727 350 40 40",
@@ -86,7 +86,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана",
             Description = "Кофе, десерт және таңғы ас. Қалада бірнеше нүкте.",
-            CashbackPercent = 1, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50,
+            CashbackPercent = 1, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50, BonusLifetimeDays = 365,
             ApiKey = "sk_test_coffee_house_2222", JoinCode = "COFFEE",
             Address = "Алматы, Абай даңғ. 44",
             Phone = "+7 727 311 22 33",
@@ -96,7 +96,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика",
             Description = "Косметика, парфюмерия және күтім құралдары.",
-            CashbackPercent = 1, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30,
+            CashbackPercent = 1, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30, BonusLifetimeDays = 365,
             ApiKey = "sk_test_beauty_shop_33333", JoinCode = "BEAUTY",
             Address = "Алматы, Розыбакиев көш. 247",
             Phone = "+7 727 390 15 15",
@@ -106,7 +106,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары",
             Description = "Спорт киімі, аяқкиім және жаттығу жабдықтары.",
-            CashbackPercent = 1, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20,
+            CashbackPercent = 1, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20, BonusLifetimeDays = 365,
             ApiKey = "sk_test_sportlife_444444", JoinCode = "SPORT",
             Address = "Алматы, Достык даңғ. 111",
             Phone = "+7 727 264 78 90",
@@ -116,7 +116,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Name = "Дәрі-Дәрмек", Category = "Дәріхана",
             Description = "Дәрілер, витаминдер және медициналық тауарлар.",
-            CashbackPercent = 1, ThemeColor = "#0E7C66", Icon = "store", MaxRedeemPercent = 30,
+            CashbackPercent = 1, ThemeColor = "#0E7C66", Icon = "store", MaxRedeemPercent = 30, BonusLifetimeDays = 365,
             ApiKey = "sk_test_pharmacy_555555", JoinCode = "DARIHANA",
             Address = "Алматы, Толе би көш. 285",
             Phone = "+7 727 233 44 55",
@@ -126,7 +126,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("66666666-6666-6666-6666-666666666666"), Name = "Нан Үйі", Category = "Наубайхана",
             Description = "Жаңа піскен нан, тоқаш және торттар.",
-            CashbackPercent = 2, ThemeColor = "#8A5A2B", Icon = "shopping-bag", MaxRedeemPercent = 40,
+            CashbackPercent = 2, ThemeColor = "#8A5A2B", Icon = "shopping-bag", MaxRedeemPercent = 40, BonusLifetimeDays = 365,
             ApiKey = "sk_test_bakery_666666", JoinCode = "NANUI",
             Address = "Алматы, Жандосов көш. 58",
             Phone = "+7 727 276 09 09",
@@ -136,7 +136,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("77777777-7777-7777-7777-777777777777"), Name = "Достар Кафе", Category = "Мейрамхана",
             Description = "Отбасылық кафе: ұлттық және еуропалық асхана, бизнес-ланч.",
-            CashbackPercent = 2, ThemeColor = "#B3261E", Icon = "utensils", MaxRedeemPercent = 40,
+            CashbackPercent = 2, ThemeColor = "#B3261E", Icon = "utensils", MaxRedeemPercent = 40, BonusLifetimeDays = 365,
             ApiKey = "sk_test_dostar_cafe_7777", JoinCode = "DOSTAR",
             Address = "Алматы, Гоголь көш. 123",
             Phone = "+7 727 279 88 11",
@@ -177,6 +177,7 @@ public static class DbSeeder
             if (string.IsNullOrWhiteSpace(current.JoinCode)) current.JoinCode = store.JoinCode;
             if (string.IsNullOrWhiteSpace(current.Address)) current.Address = store.Address;
             if (string.IsNullOrWhiteSpace(current.Phone)) current.Phone = store.Phone;
+            current.BonusLifetimeDays ??= store.BonusLifetimeDays;
             // Баспалдағы бапталмаған дүкенге каталогтағы баспалдақты береміз.
             // Каталогтағы нысандарды тікелей байламаймыз — олар бөлек Store-ға тиесілі.
             if (current.Levels.Count == 0)

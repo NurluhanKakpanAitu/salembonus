@@ -10,6 +10,8 @@ public class BonusTransactionConfiguration : IEntityTypeConfiguration<BonusTrans
     {
         b.HasKey(x => x.Id);
         b.HasIndex(x => new { x.BonusCardId, x.CreatedAt });
+        // Жанатын партияларды іздеу үшін.
+        b.HasIndex(x => new { x.ExpiresAt, x.Remaining });
         b.Property(x => x.PurchaseAmount).HasPrecision(14, 2);
         b.Property(x => x.Comment).HasMaxLength(500);
         b.HasOne<BonusCard>().WithMany().HasForeignKey(x => x.BonusCardId);

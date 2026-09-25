@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IKatoService, KatoService>();
+        services.AddScoped<IBonusExpiryService, BonusExpiryService>();
         return services;
     }
 }

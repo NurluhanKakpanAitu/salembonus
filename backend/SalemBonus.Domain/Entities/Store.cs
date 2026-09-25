@@ -15,6 +15,8 @@ public class Store
     public string? Phone { get; set; }
     /// <summary>Дүкен беттегі суреті (URL немесе data URL). Бос болса түсті мұқаба көрсетіледі.</summary>
     public string? PhotoUrl { get; set; }
+    /// <summary>Есептелген бонус қанша күн жарамды. Бос болса — жанбайды.</summary>
+    public int? BonusLifetimeDays { get; set; }
     /// <summary>Бір сатып алуда бонуспен төлеуге болатын ең жоғары үлес (%).</summary>
     public decimal MaxRedeemPercent { get; set; } = 30;
     /// <summary>Карта фонының түсі, hex (#RRGGBB).</summary>

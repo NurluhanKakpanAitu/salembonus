@@ -12,13 +12,24 @@ public class BonusCardService(
     public async Task<IReadOnlyList<BonusCardDto>> GetMyCardsAsync(CancellationToken ct = default)
     {
         var list = await cards.GetByCustomerAsync(currentUser.CustomerId, ct);
-        return list.Select(ToDto).ToList();
+        var expiring = await NextExpiringAsync(list, ct);
+        return list.Select(c => ToDto(c, expiring)).ToList();
+    }
+
+    /// <summary>Әр картаның ең жақын жанатын партиясы.</summary>
+    private async Task<Dictionary<Guid, BonusTransaction>> NextExpiringAsync(
+        IReadOnlyList<BonusCard> list, CancellationToken ct)
+    {
+        if (list.Count == 0) return [];
+        var lots = await transactions.GetNextExpiringAsync(list.Select(c => c.Id).ToList(), DateTime.UtcNow, ct);
+        return lots.ToDictionary(x => x.BonusCardId);
     }
 
     public async Task<BonusCardDto?> GetMyCardAsync(Guid storeId, CancellationToken ct = default)
     {
         var card = await cards.GetAsync(currentUser.CustomerId, storeId, ct);
-        return card is null ? null : ToDto(card);
+        if (card is null) return null;
+        return ToDto(card, await NextExpiringAsync([card], ct));
     }
 
     public async Task<IReadOnlyList<BonusTransactionDto>> GetMyRecentTransactionsAsync(int take = 20, CancellationToken ct = default)
@@ -47,19 +58,16 @@ public class BonusCardService(
             t.CreatedAt)).ToList();
     }
 
-    public static BonusCardDto ToDto(BonusCard card)
+    private static BonusCardDto ToDto(BonusCard card, IReadOnlyDictionary<Guid, BonusTransaction> expiring)
     {
         var ladder = BonusRules.LadderOf(card.Store);
-        return ToDto(card, ladder);
-    }
-
-    private static BonusCardDto ToDto(BonusCard card, IReadOnlyList<StoreLevel> ladder)
-    {
         var next = ladder.Where(l => l.FromAmount > card.TotalSpent).OrderBy(l => l.FromAmount).FirstOrDefault();
-        return Build(card, ladder, next);
+        expiring.TryGetValue(card.Id, out var lot);
+        return Build(card, ladder, next, lot);
     }
 
-    private static BonusCardDto Build(BonusCard card, IReadOnlyList<StoreLevel> ladder, StoreLevel? next) => new(
+    private static BonusCardDto Build(
+        BonusCard card, IReadOnlyList<StoreLevel> ladder, StoreLevel? next, BonusTransaction? expiring) => new(
         card.StoreId,
         card.Store?.Name ?? string.Empty,
         card.Store?.Category ?? string.Empty,
@@ -71,5 +79,7 @@ public class BonusCardService(
         BonusRules.AmountToNextLevel(card.TotalSpent, ladder),
         card.TotalSpent,
         next is null ? null : CustomerLevels.Key(next.Level),
-        next?.FromAmount);
+        next?.FromAmount,
+        expiring?.Remaining,
+        expiring?.ExpiresAt);
 }

@@ -111,6 +111,8 @@ const kk = {
   'cards.balanceLabel': 'Бонус балансыңыз',
   'cards.brandLine': 'SALEMBONUS · BONUS CARD',
   'cards.qrShort': 'QR',
+  'cards.expiring': '{amount} — {date} дейін',
+  'cards.expiringLabel': 'Жану күні',
   'cards.levelPill': '{level} · {percent}%',
   'cards.toLevel': '«{level}» мәртебесіне дейін',
   'cards.progressOf': '{spent} / {target}',
@@ -174,6 +176,8 @@ const kk = {
   'tx.Birthday': 'Туған күн бонусы',
   'tx.Promo': 'Акция бонусы',
   'tx.Expiration': 'Бонус мерзімі өтті',
+  'notif.bonus_expired.title': 'Бонус мерзімі өтті',
+  'notif.bonus_expired.body': '{store} — {amount} Б бонустың мерзімі аяқталды.',
 
   // Хабарламалар
   'notif.title': 'Хабарламалар',
@@ -326,6 +330,8 @@ const ru: Record<TranslationKey, string> = {
   'cards.balanceLabel': 'Ваш бонусный баланс',
   'cards.brandLine': 'SALEMBONUS · BONUS CARD',
   'cards.qrShort': 'QR',
+  'cards.expiring': '{amount} — до {date}',
+  'cards.expiringLabel': 'Дата сгорания',
   'cards.levelPill': '{level} · {percent}%',
   'cards.toLevel': 'До уровня «{level}»',
   'cards.progressOf': '{spent} / {target}',
@@ -385,6 +391,8 @@ const ru: Record<TranslationKey, string> = {
   'tx.Birthday': 'Бонус на день рождения',
   'tx.Promo': 'Акционный бонус',
   'tx.Expiration': 'Срок бонуса истёк',
+  'notif.bonus_expired.title': 'Срок бонуса истёк',
+  'notif.bonus_expired.body': '{store} — срок {amount} Б бонусов истёк.',
 
   'notif.title': 'Уведомления',
   'notif.unread': 'Непрочитанных: {count}',

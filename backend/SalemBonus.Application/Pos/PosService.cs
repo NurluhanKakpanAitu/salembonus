@@ -67,6 +67,7 @@ public class PosService(
         if (request.RedeemAmount > 0)
         {
             card.Balance -= request.RedeemAmount;
+            await ConsumeLotsAsync(card.Id, request.RedeemAmount, ct);
             var tx = NewTx(card, BonusTransactionType.Redemption, -request.RedeemAmount, request.PurchaseAmount, request.Comment, now);
             transactions.Add(tx);
             redemptionId = tx.Id;
@@ -86,6 +87,8 @@ public class PosService(
         {
             card.Balance += accrued;
             var tx = NewTx(card, BonusTransactionType.Accrual, accrued, request.PurchaseAmount, request.Comment, now.AddMilliseconds(1));
+            tx.Remaining = accrued;
+            tx.ExpiresAt = store.BonusLifetimeDays is { } days ? now.AddDays(days) : null;
             transactions.Add(tx);
             accrualId = tx.Id;
             notifications.Add(NewNotification(customer, store, NotificationType.BonusAccrued,
@@ -191,6 +194,20 @@ public class PosService(
         LevelKey = levelKey,
         CreatedAt = at,
     };
+
+    /// <summary>Шегерілген бонус ең ескі партиядан бастап жұмсалады (FIFO).</summary>
+    private async Task ConsumeLotsAsync(Guid cardId, int amount, CancellationToken ct)
+    {
+        var left = amount;
+        foreach (var lot in await transactions.GetOpenLotsAsync(cardId, ct))
+        {
+            if (left <= 0) break;
+            var take = Math.Min(lot.Remaining, left);
+            lot.Remaining -= take;
+            left -= take;
+        }
+        // Партиясы жоқ ескі баланстан шегерілсе, left > 0 болуы мүмкін — бұл қалыпты жағдай.
+    }
 
     private static string MaskPhone(string phone) =>
         phone.Length >= 4 ? $"{phone[..Math.Min(5, phone.Length)]} *** ** {phone[^2..]}" : phone;

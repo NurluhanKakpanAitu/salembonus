@@ -98,6 +98,8 @@ export interface BonusCard {
   totalSpent: number
   nextLevel: string | null
   nextLevelAmount: number | null
+  expiringAmount: number | null
+  expiringAt: string | null
 }
 
 export type TransactionType = 'Accrual' | 'Redemption' | 'Birthday' | 'Promo' | 'Expiration'
