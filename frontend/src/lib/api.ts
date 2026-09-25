@@ -187,9 +187,25 @@ export interface NotificationPage {
   hasMore: boolean
 }
 
+/** Бір дүкеннің хабарламалары туралы қысқаша. storeId бос болса — жүйелік хабарламалар. */
+export interface NotificationStore {
+  storeId: string | null
+  storeName: string | null
+  storeIcon: string | null
+  storeThemeColor: string | null
+  total: number
+  unread: number
+  last: Notification
+}
+
 export const notificationsApi = {
-  list: (category: NotificationCategory | null, skip: number, take: number) =>
-    api<NotificationPage>(`/notifications?${category ? `category=${category}&` : ''}skip=${skip}&take=${take}`),
+  list: (category: NotificationCategory | null, skip: number, take: number, source?: string) =>
+    api<NotificationPage>(
+      `/notifications?${category ? `category=${category}&` : ''}${
+        source ? (source === 'system' ? 'system=true&' : `storeId=${source}&`) : ''
+      }skip=${skip}&take=${take}`,
+    ),
+  stores: () => api<NotificationStore[]>('/notifications/stores'),
   unreadCount: () => api<number>('/notifications/unread-count'),
   markRead: (id: string) => api<void>(`/notifications/${id}/read`, { method: 'POST' }),
   markAllRead: () => api<void>('/notifications/read-all', { method: 'POST' }),

@@ -18,3 +18,13 @@ public record NotificationDto(
     DateTime CreatedAt);
 
 public record NotificationPageDto(IReadOnlyList<NotificationDto> Items, bool HasMore);
+
+/// <summary>Бір дүкеннің хабарламалары туралы қысқаша. StoreId бос болса — жүйелік хабарламалар.</summary>
+public record NotificationStoreDto(
+    Guid? StoreId,
+    string? StoreName,
+    string? StoreIcon,
+    string? StoreThemeColor,
+    int Total,
+    int Unread,
+    NotificationDto Last);

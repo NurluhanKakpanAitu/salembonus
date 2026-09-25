@@ -73,13 +73,19 @@ export const useTransactions = (storeId: string | null) =>
     getNextPageParam: (last, pages) => (last.hasMore ? pages.length * PAGE : undefined),
   })
 
-export const useNotifications = (category: NotificationCategory | null) =>
+/** source: дүкен идентификаторы, жүйелік хабарламалар үшін "system", барлығы үшін бос. */
+export const useNotifications = (category: NotificationCategory | null, source?: string) =>
   useInfiniteQuery({
-    queryKey: ['notifications', category],
-    queryFn: ({ pageParam }) => notificationsApi.list(category, pageParam, PAGE),
+    queryKey: ['notifications', category, source ?? 'all'],
+    queryFn: ({ pageParam }) => notificationsApi.list(category, pageParam, PAGE, source),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last.hasMore ? pages.length * PAGE : undefined),
   })
+
+export const useNotificationStores = () => {
+  const enabled = useLoggedIn()
+  return useQuery({ queryKey: ['notifications', 'stores'], queryFn: notificationsApi.stores, enabled, ...LIVE })
+}
 
 export const useUnreadCount = () => {
   const enabled = useLoggedIn()

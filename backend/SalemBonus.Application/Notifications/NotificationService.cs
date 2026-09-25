@@ -7,11 +7,27 @@ namespace SalemBonus.Application.Notifications;
 
 public class NotificationService(INotificationRepository notifications, ICurrentUser currentUser) : INotificationService
 {
-    public async Task<NotificationPageDto> GetMyAsync(NotificationCategory? category, int skip, int take, CancellationToken ct = default)
+    public async Task<NotificationPageDto> GetMyAsync(
+        NotificationCategory? category, Guid? storeId, bool systemOnly, int skip, int take, CancellationToken ct = default)
     {
-        var list = await notifications.GetByCustomerAsync(currentUser.CustomerId, category, skip, take + 1, ct);
+        var list = await notifications.GetByCustomerAsync(currentUser.CustomerId, category, storeId, systemOnly, skip, take + 1, ct);
         var hasMore = list.Count > take;
         return new NotificationPageDto(list.Take(take).Select(ToDto).ToList(), hasMore);
+    }
+
+    public async Task<IReadOnlyList<NotificationStoreDto>> GetMyStoresAsync(CancellationToken ct = default)
+    {
+        var groups = await notifications.GetGroupsByCustomerAsync(currentUser.CustomerId, ct);
+        return groups
+            .Select(g => new NotificationStoreDto(
+                g.Last.StoreId,
+                g.Last.Store?.Name,
+                g.Last.Store?.Icon,
+                g.Last.Store?.ThemeColor,
+                g.Total,
+                g.Unread,
+                ToDto(g.Last)))
+            .ToList();
     }
 
     public Task<int> GetMyUnreadCountAsync(CancellationToken ct = default) =>

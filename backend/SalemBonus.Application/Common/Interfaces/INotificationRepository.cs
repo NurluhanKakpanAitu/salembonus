@@ -6,7 +6,11 @@ namespace SalemBonus.Application.Common.Interfaces;
 public interface INotificationRepository
 {
     Task<IReadOnlyList<Notification>> GetByCustomerAsync(
-        Guid customerId, NotificationCategory? category, int skip, int take, CancellationToken ct = default);
+        Guid customerId, NotificationCategory? category, Guid? storeId, bool systemOnly, int skip, int take,
+        CancellationToken ct = default);
+    /// <summary>Әр дүкеннің соңғы хабарламасы, жалпы саны және оқылмағандар саны.</summary>
+    Task<IReadOnlyList<(Notification Last, int Total, int Unread)>> GetGroupsByCustomerAsync(
+        Guid customerId, CancellationToken ct = default);
     Task<int> CountUnreadAsync(Guid customerId, CancellationToken ct = default);
     Task<Notification?> GetAsync(Guid customerId, Guid id, CancellationToken ct = default);
     Task MarkReadAsync(Guid customerId, Guid? id, CancellationToken ct = default);
