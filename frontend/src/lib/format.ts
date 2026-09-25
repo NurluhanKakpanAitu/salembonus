@@ -51,6 +51,12 @@ export function formatDate(iso: string, withYear = true): string {
   return withYear ? `${d} ${month(m - 1)} ${y}` : `${d} ${month(m - 1)}`
 }
 
+/** "2027-09-25" -> "25.09.2027" */
+export function formatShortDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split('-')
+  return `${d}.${m}.${y}`
+}
+
 export const initials = (fullName: string) =>
   fullName.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('')
 

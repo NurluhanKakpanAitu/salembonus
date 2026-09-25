@@ -1,7 +1,7 @@
-import { Info, QrCode } from 'lucide-react'
+import { Clock3, Info, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import type { BonusCard } from '../../lib/api'
-import { formatBonus, formatDate, formatNumber } from '../../lib/format'
+import { formatNumber, formatShortDate } from '../../lib/format'
 import { storeTheme } from '../../lib/theme'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { useQr } from '../../lib/queries'
@@ -60,11 +60,13 @@ export function BonusCardTile({
       </div>
 
       {card.expiringAt && card.expiringAmount ? (
-        <div className="mt-2 text-[12px]" style={{ color: theme.muted }}>
-          {t('cards.expiring', {
-            amount: formatBonus(card.expiringAmount),
-            date: formatDate(card.expiringAt.slice(0, 10)),
-          })}
+        <div
+          className="mt-2.5 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          style={{ background: theme.box, color: theme.text }}
+        >
+          <Clock3 size={12} />
+          {formatNumber(card.expiringAmount)} {t('common.bonusUnit')} ·{' '}
+          {t('cards.expiring', { date: formatShortDate(card.expiringAt) })}
         </div>
       ) : null}
 
