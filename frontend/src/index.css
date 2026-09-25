@@ -17,8 +17,9 @@
   --color-violet: #6d5df6;
   --color-violet-soft: #eeebff;
   --color-dark: #111113;
-  --font-sans: "Onest", system-ui, -apple-system, sans-serif;
-  --font-logo: "Onest", system-ui, sans-serif;
+  /* Құрылғының өз қарпі: iPhone-да SF Pro, Android-та Roboto. Қазақ әріптері толық. */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-logo: var(--font-sans);
   --radius-card: 20px;
 }
 
