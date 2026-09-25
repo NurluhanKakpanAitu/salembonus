@@ -204,28 +204,6 @@ const kk = {
   'notif.profile_updated.body': 'Жеке деректеріңіз сәтті жаңартылды.',
   'notif.purchaseAmount': 'Сатып алу сомасы: {amount}',
 
-  // Орнату
-  'install.title': 'SalemBonus қосымшасын орнатыңыз',
-  'install.subtitleAndroid': 'Бір басу жеткілікті. Орнатылған соң бонустарыңыз бен QR кодыңыз әрқашан басты экранда болады.',
-  'install.button': 'Қосымшаны орнату',
-  'install.free': 'Тегін, 1 МБ-тан аз, Play Market қажет емес',
-  'install.manual': 'Қолмен орнату',
-  'install.manualAndroid': 'Chrome мәзірін (жоғарғы оң жақтағы ⋮) ашып, «Қосымшаны орнату» немесе «Басты экранға қосу» таңдаңыз.',
-  'install.continueBrowser': 'Браузерде жалғастыру',
-  'install.done': 'Орнатылды!',
-  'install.doneBody': 'Басты экранда SalemBonus иконкасы пайда болды. Қосымшаны сол жерден ашыңыз.',
-  'install.open': 'Қосымшаны ашу',
-  'install.subtitleIos': 'iPhone-да орнату үш қадам, 10 секунд.',
-  'install.ios1': 'Төмендегі «Бөлісу» батырмасын басыңыз',
-  'install.ios2': '«Басты экранға қосу» таңдаңыз',
-  'install.ios3': 'Оң жақ жоғарыда «Қосу» басыңыз, сосын басты экраннан ашыңыз',
-  'install.iosShareHint': 'Бөлісу батырмасы төменде',
-  'install.safariTitle': 'Safari-де ашыңыз',
-  'install.safariBody': 'iPhone-да қосымшаны тек Safari браузері арқылы орнатуға болады. Сілтемені көшіріп, Safari-ге қойыңыз.',
-  'install.copyLink': 'Сілтемені көшіру',
-  'install.copied': 'Көшірілді',
-  'install.desktopTitle': 'Телефоныңызбен сканерлеңіз',
-  'install.desktopBody': 'SalemBonus телефонға арналған. QR кодты камерамен сканерлеп, қосымшаны орнатыңыз.',
 } as const
 
 export type TranslationKey = keyof typeof kk
@@ -418,27 +396,6 @@ const ru: Record<TranslationKey, string> = {
   'notif.profile_updated.body': 'Ваши данные успешно сохранены.',
   'notif.purchaseAmount': 'Сумма покупки: {amount}',
 
-  'install.title': 'Установите приложение SalemBonus',
-  'install.subtitleAndroid': 'Достаточно одного нажатия. После установки бонусы и QR-код всегда будут на главном экране.',
-  'install.button': 'Установить приложение',
-  'install.free': 'Бесплатно, меньше 1 МБ, Play Market не нужен',
-  'install.manual': 'Установить вручную',
-  'install.manualAndroid': 'Откройте меню Chrome (⋮ справа вверху) и выберите «Установить приложение» или «Добавить на главный экран».',
-  'install.continueBrowser': 'Продолжить в браузере',
-  'install.done': 'Установлено!',
-  'install.doneBody': 'На главном экране появилась иконка SalemBonus. Откройте приложение оттуда.',
-  'install.open': 'Открыть приложение',
-  'install.subtitleIos': 'На iPhone установка занимает три шага и 10 секунд.',
-  'install.ios1': 'Нажмите кнопку «Поделиться» внизу',
-  'install.ios2': 'Выберите «На экран «Домой»»',
-  'install.ios3': 'Нажмите «Добавить» справа вверху и откройте с главного экрана',
-  'install.iosShareHint': 'Кнопка «Поделиться» внизу',
-  'install.safariTitle': 'Откройте в Safari',
-  'install.safariBody': 'На iPhone приложение устанавливается только через Safari. Скопируйте ссылку и откройте её в Safari.',
-  'install.copyLink': 'Скопировать ссылку',
-  'install.copied': 'Скопировано',
-  'install.desktopTitle': 'Отсканируйте телефоном',
-  'install.desktopBody': 'SalemBonus сделан для телефона. Отсканируйте QR-код камерой и установите приложение.',
 }
 
 const DICTIONARIES: Record<Language, Record<TranslationKey, string>> = { kk, ru }
