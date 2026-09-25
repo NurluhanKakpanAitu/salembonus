@@ -6,6 +6,7 @@ namespace SalemBonus.Infrastructure.Persistence;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Store> Stores => Set<Store>();
+    public DbSet<StoreLevel> StoreLevels => Set<StoreLevel>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<BonusCard> BonusCards => Set<BonusCard>();
     public DbSet<BonusTransaction> BonusTransactions => Set<BonusTransaction>();

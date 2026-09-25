@@ -200,14 +200,17 @@ export interface StoreListItem {
   themeColor: string
   icon: string
   cashbackPercent: number
+  cashbackMaxPercent: number
   hasCard: boolean
   balance: number
   level: string | null
 }
 
 export interface StoreLevel {
+  /** Мәртебе кілті: New, Regular, Favorite, Vip. */
   name: string
   fromAmount: number
+  cashbackPercent: number
   isCurrent: boolean
 }
 
@@ -218,6 +221,9 @@ export interface StoreDetail {
   description: string
   themeColor: string
   icon: string
+  photoUrl: string | null
+  address: string | null
+  phone: string | null
   cashbackPercent: number
   maxRedeemPercent: number
   hasCard: boolean

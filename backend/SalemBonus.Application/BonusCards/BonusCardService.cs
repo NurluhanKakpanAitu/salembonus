@@ -47,7 +47,13 @@ public class BonusCardService(
             t.CreatedAt)).ToList();
     }
 
-    public static BonusCardDto ToDto(BonusCard card) => new(
+    public static BonusCardDto ToDto(BonusCard card)
+    {
+        var ladder = BonusRules.LadderOf(card.Store);
+        return ToDto(card, ladder);
+    }
+
+    private static BonusCardDto ToDto(BonusCard card, IReadOnlyList<StoreLevel> ladder) => new(
         card.StoreId,
         card.Store?.Name ?? string.Empty,
         card.Store?.Category ?? string.Empty,
@@ -55,6 +61,6 @@ public class BonusCardService(
         card.Store?.Icon ?? "store",
         card.Balance,
         CustomerLevels.Key(card.Level),
-        card.Store?.CashbackPercent ?? 0,
-        BonusRules.AmountToNextLevel(card));
+        BonusRules.PercentFor(card.Level, ladder),
+        BonusRules.AmountToNextLevel(card.TotalSpent, ladder));
 }

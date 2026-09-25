@@ -40,9 +40,11 @@ public class StoreService(
             .Select(store =>
             {
                 myCards.TryGetValue(store.Id, out var card);
+                var ladder = BonusRules.LadderOf(store);
                 return new StoreListItemDto(
                     store.Id, store.Name, store.Category, store.Description,
-                    store.ThemeColor, store.Icon, store.CashbackPercent,
+                    store.ThemeColor, store.Icon,
+                    ladder.Min(l => l.CashbackPercent), ladder.Max(l => l.CashbackPercent),
                     card is not null, card?.Balance ?? 0,
                     card is null ? null : CustomerLevels.Key(card.Level));
             })
@@ -118,20 +120,18 @@ public class StoreService(
     private static StoreDetailDto ToDetail(Store store, BonusCard? card)
     {
         var currentLevel = card?.Level ?? CustomerLevel.New;
-        var levels = new[]
-        {
-            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.New), 0, currentLevel == CustomerLevel.New),
-            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.Regular), LevelThresholds.Regular, currentLevel == CustomerLevel.Regular),
-            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.Favorite), LevelThresholds.Favorite, currentLevel == CustomerLevel.Favorite),
-            new StoreLevelDto(CustomerLevels.Key(CustomerLevel.Vip), LevelThresholds.Vip, currentLevel == CustomerLevel.Vip),
-        };
+        var ladder = BonusRules.LadderOf(store);
+        var levels = ladder
+            .Select(l => new StoreLevelDto(CustomerLevels.Key(l.Level), l.FromAmount, l.CashbackPercent, l.Level == currentLevel))
+            .ToList();
 
         return new StoreDetailDto(
             store.Id, store.Name, store.Category, store.Description,
-            store.ThemeColor, store.Icon, store.CashbackPercent, store.MaxRedeemPercent,
+            store.ThemeColor, store.Icon, store.PhotoUrl, store.Address, store.Phone,
+            BonusRules.PercentFor(currentLevel, ladder), store.MaxRedeemPercent,
             card is not null, card?.Balance ?? 0,
             card is null ? null : CustomerLevels.Key(card.Level),
-            card is null ? null : BonusRules.AmountToNextLevel(card),
+            card is null ? null : BonusRules.AmountToNextLevel(card.TotalSpent, ladder),
             levels);
     }
 }

@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage'
 import { CardsPage } from './pages/CardsPage'
 import { CardDetailPage } from './pages/CardDetailPage'
 import { StoresPage } from './pages/StoresPage'
+import { StorePage } from './pages/StorePage'
 import { NotificationsPage } from './pages/NotificationsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProfileEditPage } from './pages/ProfileEditPage'
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="cards/:storeId" element={<CardDetailPage />} />
           <Route path="transactions" element={<TransactionsPage />} />
           <Route path="stores" element={<StoresPage />} />
+          <Route path="stores/:storeId" element={<StorePage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/edit" element={<ProfileEditPage />} />

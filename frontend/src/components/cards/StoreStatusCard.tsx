@@ -62,7 +62,8 @@ export function StoreStatusCard({ store }: { store: StoreDetail }) {
               }`}
             >
               <div className="text-[11px] font-bold leading-tight">{shortLevel(l.name)}</div>
-              <div className="mt-0.5 text-[10px] opacity-80">
+              <div className="mt-0.5 text-[11px] font-bold">{l.cashbackPercent}%</div>
+              <div className="text-[10px] opacity-80">
                 {l.fromAmount > 0 ? `${Math.round(l.fromAmount / 1000)}K ₸` : '0 ₸'}
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Check, ChevronRight, Plus, QrCode, Search } from 'lucide-react'
+import { Check, ChevronRight, QrCode, Search } from 'lucide-react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { PageTitle } from '../components/PageTitle'
 import { QrScanner } from '../components/stores/QrScanner'
@@ -74,7 +74,7 @@ export function StoresPage() {
 
         <div className="flex flex-col gap-2.5">
           {stores.data?.map((s) => (
-            <StoreRow key={s.id} store={s} onAdd={() => addStore(s.id)} adding={join.isPending} t={t} />
+            <StoreRow key={s.id} store={s} t={t} />
           ))}
         </div>
 
@@ -94,7 +94,7 @@ export function StoresPage() {
   )
 }
 
-function StoreRow({ store, onAdd, adding, t }: { store: StoreListItem; onAdd: () => void; adding: boolean; t: Translator }) {
+function StoreRow({ store, t }: { store: StoreListItem; t: Translator }) {
   const theme = storeTheme(store.themeColor)
   const Icon = storeIcon(store.icon)
 
@@ -109,7 +109,7 @@ function StoreRow({ store, onAdd, adding, t }: { store: StoreListItem; onAdd: ()
       <div className="min-w-0 flex-1">
         <div className="truncate text-[15px] font-bold leading-tight">{store.name}</div>
         <div className="truncate text-xs text-ink-2">
-          {storeCategory(store.category)} · {t('stores.cashback', { percent: store.cashbackPercent })}
+          {storeCategory(store.category)} · {cashbackLabel(store, t)}
         </div>
         {store.hasCard ? (
           <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-green-soft px-2 py-0.5 text-[11px] font-semibold text-green">
@@ -119,26 +119,24 @@ function StoreRow({ store, onAdd, adding, t }: { store: StoreListItem; onAdd: ()
           <div className="mt-0.5 truncate text-xs text-ink-3">{store.description}</div>
         )}
       </div>
-      {store.hasCard ? (
-        <ChevronRight size={18} className="shrink-0 text-ink-3" />
-      ) : (
-        <button
-          type="button"
-          disabled={adding}
-          onClick={onAdd}
-          className="flex shrink-0 items-center gap-1 rounded-xl bg-brand-soft px-3 py-2 text-[13px] font-semibold text-brand disabled:opacity-50"
-        >
-          <Plus size={15} /> {t('stores.join')}
-        </button>
-      )}
+      <ChevronRight size={18} className="shrink-0 text-ink-3" />
     </>
   )
 
-  const cls = 'flex items-center gap-3 rounded-2xl bg-surface p-3.5'
-
-  return store.hasCard ? (
-    <Link to={`/cards/${store.id}`} className={`${cls} active:scale-[0.99]`}>{body}</Link>
-  ) : (
-    <div className={cls}>{body}</div>
+  // Қосылған дүкен картасына, қосылмағаны дүкен бетіне апарады.
+  return (
+    <Link
+      to={store.hasCard ? `/cards/${store.id}` : `/stores/${store.id}`}
+      className="flex items-center gap-3 rounded-2xl bg-surface p-3.5 active:scale-[0.99]"
+    >
+      {body}
+    </Link>
   )
+}
+
+/** Бір мәртебелі дүкенде бір сан, баспалдағы бар дүкенде аралық көрсетіледі. */
+function cashbackLabel(store: StoreListItem, t: Translator) {
+  return store.cashbackMaxPercent > store.cashbackPercent
+    ? t('stores.cashbackRange', { from: store.cashbackPercent, to: store.cashbackMaxPercent })
+    : t('stores.cashback', { percent: store.cashbackPercent })
 }

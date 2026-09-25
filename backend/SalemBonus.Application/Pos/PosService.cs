@@ -77,8 +77,10 @@ public class PosService(
                 NotificationTemplates.BonusRedeemed, request.RedeemAmount, request.PurchaseAmount));
         }
 
+        var ladder = BonusRules.LadderOf(store);
         var paid = request.PurchaseAmount - request.RedeemAmount;
-        var accrued = BonusRules.CalculateAccrual(paid, store.CashbackPercent);
+        // Пайыз клиенттің сол дүкендегі ағымдағы мәртебесі бойынша алынады.
+        var accrued = BonusRules.CalculateAccrual(paid, BonusRules.PercentFor(card.Level, ladder));
         Guid? accrualId = null;
         if (accrued > 0)
         {
@@ -94,7 +96,7 @@ public class PosService(
         }
 
         card.TotalSpent += paid;
-        var newLevel = BonusRules.LevelFor(card.TotalSpent);
+        var newLevel = BonusRules.LevelFor(card.TotalSpent, ladder);
         var upgraded = newLevel > card.Level;
         if (upgraded)
         {
@@ -159,7 +161,7 @@ public class PosService(
         card is null,
         card?.Balance ?? 0,
         CustomerLevels.Name(card?.Level ?? CustomerLevel.New, Lang),
-        store.CashbackPercent,
+        BonusRules.PercentFor(card?.Level ?? CustomerLevel.New, BonusRules.LadderOf(store)),
         store.MaxRedeemPercent);
 
     private static BonusTransaction NewTx(BonusCard card, BonusTransactionType type, int amount, decimal purchase, string? comment, DateTime at) => new()

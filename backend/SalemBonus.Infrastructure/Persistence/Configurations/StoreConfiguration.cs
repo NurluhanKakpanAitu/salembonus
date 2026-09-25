@@ -20,5 +20,9 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
         b.HasIndex(x => x.ApiKey).IsUnique();
         b.Property(x => x.JoinCode).HasMaxLength(16).IsRequired();
         b.HasIndex(x => x.JoinCode).IsUnique();
+        b.Property(x => x.Address).HasMaxLength(300);
+        b.Property(x => x.Phone).HasMaxLength(30);
+        b.Property(x => x.PhotoUrl).HasMaxLength(CustomerAvatar.MaxLength);
+        b.HasMany(x => x.Levels).WithOne(x => x.Store!).HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -8,7 +8,10 @@ public record StoreListItemDto(
     string Description,
     string ThemeColor,
     string Icon,
+    /// <summary>Бастапқы (жаңа клиент) пайызы.</summary>
     decimal CashbackPercent,
+    /// <summary>Ең жоғары мәртебедегі пайыз. Бірдей болса тізімде бір ғана сан көрсетіледі.</summary>
+    decimal CashbackMaxPercent,
     bool HasCard,
     int Balance,
     string? Level);
@@ -20,6 +23,9 @@ public record StoreDetailDto(
     string Description,
     string ThemeColor,
     string Icon,
+    string? PhotoUrl,
+    string? Address,
+    string? Phone,
     decimal CashbackPercent,
     decimal MaxRedeemPercent,
     bool HasCard,
@@ -33,5 +39,5 @@ public record JoinStoreRequest(string Code);
 
 public record JoinStoreResultDto(bool AlreadyJoined, StoreDetailDto Store);
 
-/// <summary>Дүкендегі деңгейлер баспалдағы.</summary>
-public record StoreLevelDto(string Name, decimal FromAmount, bool IsCurrent);
+/// <summary>Дүкендегі бір мәртебе: қай сомадан басталады және қанша пайыз береді.</summary>
+public record StoreLevelDto(string Name, decimal FromAmount, decimal CashbackPercent, bool IsCurrent);

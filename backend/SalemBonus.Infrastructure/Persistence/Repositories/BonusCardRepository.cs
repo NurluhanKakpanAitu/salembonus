@@ -9,7 +9,7 @@ public class BonusCardRepository(AppDbContext db) : IBonusCardRepository
     public async Task<IReadOnlyList<BonusCard>> GetByCustomerAsync(Guid customerId, CancellationToken ct = default) =>
         await db.BonusCards
             .AsNoTracking()
-            .Include(c => c.Store)
+            .Include(c => c.Store).ThenInclude(s => s!.Levels)
             .Where(c => c.CustomerId == customerId)
             .OrderByDescending(c => c.Balance)
             .ToListAsync(ct);
@@ -17,12 +17,12 @@ public class BonusCardRepository(AppDbContext db) : IBonusCardRepository
     public Task<BonusCard?> GetAsync(Guid customerId, Guid storeId, CancellationToken ct = default) =>
         db.BonusCards
             .AsNoTracking()
-            .Include(c => c.Store)
+            .Include(c => c.Store).ThenInclude(s => s!.Levels)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
 
     public Task<BonusCard?> GetForUpdateAsync(Guid customerId, Guid storeId, CancellationToken ct = default) =>
         db.BonusCards
-            .Include(c => c.Store)
+            .Include(c => c.Store).ThenInclude(s => s!.Levels)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
 
     public void Add(BonusCard card) => db.BonusCards.Add(card);

@@ -67,18 +67,91 @@ public static class DbSeeder
     /// <summary>Серіктес дүкендер каталогы. Жаңа дүкен қосылса, келесі іске қосылғанда базаға түседі.</summary>
     private static List<Store> Catalog() => new()
     {
-            new() { Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер", Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.", CashbackPercent = 5, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, ApiKey = "sk_test_mkm_auto_11111111", JoinCode = "MKMAUTO" },
-            new() { Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана", Description = "Кофе, десерт және таңғы ас. Қалада бірнеше нүкте.", CashbackPercent = 3, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50, ApiKey = "sk_test_coffee_house_2222", JoinCode = "COFFEE" },
-            new() { Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика", Description = "Косметика, парфюмерия және күтім құралдары.", CashbackPercent = 2, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30, ApiKey = "sk_test_beauty_shop_33333", JoinCode = "BEAUTY" },
-            new() { Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары", Description = "Спорт киімі, аяқкиім және жаттығу жабдықтары.", CashbackPercent = 2, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20, ApiKey = "sk_test_sportlife_444444", JoinCode = "SPORT" },
-            new() { Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Name = "Дәрі-Дәрмек", Category = "Дәріхана", Description = "Дәрілер, витаминдер және медициналық тауарлар.", CashbackPercent = 3, ThemeColor = "#0E7C66", Icon = "store", MaxRedeemPercent = 30, ApiKey = "sk_test_pharmacy_555555", JoinCode = "DARIHANA" },
-            new() { Id = Guid.Parse("66666666-6666-6666-6666-666666666666"), Name = "Нан Үйі", Category = "Наубайхана", Description = "Жаңа піскен нан, тоқаш және торттар.", CashbackPercent = 4, ThemeColor = "#8A5A2B", Icon = "shopping-bag", MaxRedeemPercent = 40, ApiKey = "sk_test_bakery_666666", JoinCode = "NANUI" },
+        new()
+        {
+            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер",
+            Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.",
+            CashbackPercent = 2, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30,
+            ApiKey = "sk_test_mkm_auto_11111111", JoinCode = "MKMAUTO",
+            Address = "Алматы, Сейфуллин даңғ. 502",
+            Phone = "+7 727 350 40 40",
+            Levels = Ladder((0, 2), (50_000, 4), (150_000, 6), (400_000, 8)),
+        },
+        new()
+        {
+            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Coffee House", Category = "Кофехана",
+            Description = "Кофе, десерт және таңғы ас. Қалада бірнеше нүкте.",
+            CashbackPercent = 1, ThemeColor = "#3B2A22", Icon = "coffee", MaxRedeemPercent = 50,
+            ApiKey = "sk_test_coffee_house_2222", JoinCode = "COFFEE",
+            Address = "Алматы, Абай даңғ. 44",
+            Phone = "+7 727 311 22 33",
+            Levels = Ladder((0, 1), (15_000, 3), (40_000, 4), (100_000, 5)),
+        },
+        new()
+        {
+            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "Beauty Shop", Category = "Косметика",
+            Description = "Косметика, парфюмерия және күтім құралдары.",
+            CashbackPercent = 1, ThemeColor = "#C2185B", Icon = "flower", MaxRedeemPercent = 30,
+            ApiKey = "sk_test_beauty_shop_33333", JoinCode = "BEAUTY",
+            Address = "Алматы, Розыбакиев көш. 247",
+            Phone = "+7 727 390 15 15",
+            Levels = Ladder((0, 1), (20_000, 2), (60_000, 4), (150_000, 6)),
+        },
+        new()
+        {
+            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "SportLife", Category = "Спорт тауарлары",
+            Description = "Спорт киімі, аяқкиім және жаттығу жабдықтары.",
+            CashbackPercent = 1, ThemeColor = "#1B8A4C", Icon = "dumbbell", MaxRedeemPercent = 20,
+            ApiKey = "sk_test_sportlife_444444", JoinCode = "SPORT",
+            Address = "Алматы, Достык даңғ. 111",
+            Phone = "+7 727 264 78 90",
+            Levels = Ladder((0, 1), (25_000, 2), (75_000, 3), (200_000, 5)),
+        },
+        new()
+        {
+            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"), Name = "Дәрі-Дәрмек", Category = "Дәріхана",
+            Description = "Дәрілер, витаминдер және медициналық тауарлар.",
+            CashbackPercent = 1, ThemeColor = "#0E7C66", Icon = "store", MaxRedeemPercent = 30,
+            ApiKey = "sk_test_pharmacy_555555", JoinCode = "DARIHANA",
+            Address = "Алматы, Толе би көш. 285",
+            Phone = "+7 727 233 44 55",
+            Levels = Ladder((0, 1), (10_000, 3), (30_000, 4), (80_000, 6)),
+        },
+        new()
+        {
+            Id = Guid.Parse("66666666-6666-6666-6666-666666666666"), Name = "Нан Үйі", Category = "Наубайхана",
+            Description = "Жаңа піскен нан, тоқаш және торттар.",
+            CashbackPercent = 2, ThemeColor = "#8A5A2B", Icon = "shopping-bag", MaxRedeemPercent = 40,
+            ApiKey = "sk_test_bakery_666666", JoinCode = "NANUI",
+            Address = "Алматы, Жандосов көш. 58",
+            Phone = "+7 727 276 09 09",
+            Levels = Ladder((0, 2), (10_000, 4), (25_000, 5), (60_000, 7)),
+        },
     };
 
-    /// <summary>Каталогтағы жаңа дүкендерді қосады, бос қосылу кодын толтырады.</summary>
+    /// <summary>Мәртебелер баспалдағы: (сома, пайыз) жұптары Жаңа → Тұрақты → Сүйікті → VIP ретімен.</summary>
+    private static List<StoreLevel> Ladder(
+        (decimal From, decimal Percent) newClient,
+        (decimal From, decimal Percent) regular,
+        (decimal From, decimal Percent) favorite,
+        (decimal From, decimal Percent) vip) =>
+    [
+        Lvl(CustomerLevel.New, newClient), Lvl(CustomerLevel.Regular, regular),
+        Lvl(CustomerLevel.Favorite, favorite), Lvl(CustomerLevel.Vip, vip),
+    ];
+
+    private static StoreLevel Lvl(CustomerLevel level, (decimal From, decimal Percent) v) => new()
+    {
+        Id = Guid.NewGuid(),
+        Level = level,
+        FromAmount = v.From,
+        CashbackPercent = v.Percent,
+    };
+
+    /// <summary>Каталогтағы жаңа дүкендерді қосады, жетіспейтін деректерін толтырады.</summary>
     private static async Task SyncStoresAsync(AppDbContext db, List<Store> catalog, CancellationToken ct)
     {
-        var existing = await db.Stores.ToDictionaryAsync(x => x.Id, ct);
+        var existing = await db.Stores.Include(x => x.Levels).ToDictionaryAsync(x => x.Id, ct);
         foreach (var store in catalog)
         {
             if (!existing.TryGetValue(store.Id, out var current))
@@ -87,6 +160,25 @@ public static class DbSeeder
                 continue;
             }
             if (string.IsNullOrWhiteSpace(current.JoinCode)) current.JoinCode = store.JoinCode;
+            if (string.IsNullOrWhiteSpace(current.Address)) current.Address = store.Address;
+            if (string.IsNullOrWhiteSpace(current.Phone)) current.Phone = store.Phone;
+            // Баспалдағы бапталмаған дүкенге каталогтағы баспалдақты береміз.
+            // Каталогтағы нысандарды тікелей байламаймыз — олар бөлек Store-ға тиесілі.
+            if (current.Levels.Count == 0)
+            {
+                foreach (var level in store.Levels)
+                {
+                    db.StoreLevels.Add(new StoreLevel
+                    {
+                        Id = Guid.NewGuid(),
+                        StoreId = current.Id,
+                        Level = level.Level,
+                        FromAmount = level.FromAmount,
+                        CashbackPercent = level.CashbackPercent,
+                    });
+                }
+                current.CashbackPercent = store.CashbackPercent;
+            }
         }
         await db.SaveChangesAsync(ct);
     }

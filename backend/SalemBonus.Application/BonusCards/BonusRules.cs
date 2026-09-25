@@ -14,23 +14,29 @@ public static class BonusRules
     public static int MaxRedeemable(decimal purchaseAmount, decimal maxRedeemPercent, int balance) =>
         Math.Min(balance, (int)Math.Floor(purchaseAmount * maxRedeemPercent / 100m));
 
-    public static CustomerLevel LevelFor(decimal totalSpent) => totalSpent switch
-    {
-        >= LevelThresholds.Vip => CustomerLevel.Vip,
-        >= LevelThresholds.Favorite => CustomerLevel.Favorite,
-        >= LevelThresholds.Regular => CustomerLevel.Regular,
-        _ => CustomerLevel.New,
-    };
+    /// <summary>Дүкеннің баспалдағы. Бапталмаған дүкенге үнсіз келісім шектері мен бірыңғай пайыз.</summary>
+    public static IReadOnlyList<StoreLevel> LadderOf(Store? store) =>
+        store is { Levels.Count: > 0 }
+            ? store.Levels.OrderBy(l => l.FromAmount).ToList()
+            : LevelThresholds.Default(store?.CashbackPercent ?? 0);
 
-    public static decimal AmountToNextLevel(BonusCard card)
+    public static CustomerLevel LevelFor(decimal totalSpent, IReadOnlyList<StoreLevel> ladder) =>
+        ladder.Where(l => totalSpent >= l.FromAmount)
+              .OrderByDescending(l => l.FromAmount)
+              .Select(l => l.Level)
+              .DefaultIfEmpty(CustomerLevel.New)
+              .First();
+
+    /// <summary>Клиенттің ағымдағы мәртебесіндегі бонус пайызы.</summary>
+    public static decimal PercentFor(CustomerLevel level, IReadOnlyList<StoreLevel> ladder) =>
+        ladder.FirstOrDefault(l => l.Level == level)?.CashbackPercent
+        ?? ladder.FirstOrDefault()?.CashbackPercent
+        ?? 0;
+
+    public static decimal AmountToNextLevel(decimal totalSpent, IReadOnlyList<StoreLevel> ladder)
     {
-        var threshold = card.Level switch
-        {
-            CustomerLevel.New => LevelThresholds.Regular,
-            CustomerLevel.Regular => LevelThresholds.Favorite,
-            _ => LevelThresholds.Vip,
-        };
-        return Math.Max(0, threshold - card.TotalSpent);
+        var next = ladder.Where(l => l.FromAmount > totalSpent).OrderBy(l => l.FromAmount).FirstOrDefault();
+        return next is null ? 0 : Math.Max(0, next.FromAmount - totalSpent);
     }
 
     public static string NormalizePhone(string raw)
