@@ -9,4 +9,10 @@ public record BonusCardDto(
     int Balance,
     string Level,
     decimal CashbackPercent,
-    decimal AmountToNextLevel);
+    decimal AmountToNextLevel,
+    /// <summary>Осы дүкендегі жалпы сатып алу сомасы.</summary>
+    decimal TotalSpent,
+    /// <summary>Келесі мәртебенің кілті. Ең жоғарыда тұрса — бос.</summary>
+    string? NextLevel,
+    /// <summary>Келесі мәртебе басталатын сома.</summary>
+    decimal? NextLevelAmount);

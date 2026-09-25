@@ -1,4 +1,4 @@
-import { ChevronRight, CircleMinus, CirclePlus } from 'lucide-react'
+import { ChevronRight, Minus, Plus } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { BonusTransaction } from '../../lib/api'
 import { formatDateTime, formatSigned, formatTenge, transactionTitle } from '../../lib/format'
@@ -29,18 +29,21 @@ export function TransactionList({ items, title, allHref }: {
               key={tx.id}
               className={`flex items-center gap-3 py-3.5 ${i < items.length - 1 ? 'border-b border-line' : ''}`}
             >
-              <div className={`flex size-11 shrink-0 items-center justify-center rounded-full ${plus ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'}`}>
-                {plus ? <CirclePlus size={22} /> : <CircleMinus size={22} />}
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-bg text-ink-2">
+                {plus ? <Plus size={20} strokeWidth={2.5} /> : <Minus size={20} strokeWidth={2.5} />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[15px] font-semibold">{transactionTitle(tx.type)}</div>
-                <div className="text-[13px] text-ink-2">{tx.storeName}</div>
-                <div className="text-xs text-ink-3">{formatDateTime(tx.createdAt)}</div>
+                <div className="truncate text-[15px] font-bold leading-tight">{transactionTitle(tx.type)}</div>
+                <div className="mt-0.5 truncate text-xs text-ink-3">
+                  {tx.storeName} · {formatDateTime(tx.createdAt)}
+                </div>
               </div>
-              <div className="text-right">
-                <div className={`text-base font-bold ${plus ? 'text-green' : 'text-danger'}`}>{formatSigned(tx.amount, 'Б')}</div>
+              <div className="shrink-0 text-right">
+                <div className={`text-[15px] font-extrabold ${plus ? 'text-green' : 'text-danger'}`}>
+                  {formatSigned(tx.amount, 'Б')}
+                </div>
                 {tx.purchaseAmount != null && (
-                  <div className="text-xs text-ink-3">{t('tx.receipt', { amount: formatTenge(tx.purchaseAmount) })}</div>
+                  <div className="text-[11px] text-ink-3">{t('tx.receipt', { amount: formatTenge(tx.purchaseAmount) })}</div>
                 )}
               </div>
             </li>

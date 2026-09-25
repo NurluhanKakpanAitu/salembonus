@@ -95,6 +95,9 @@ export interface BonusCard {
   level: string
   cashbackPercent: number
   amountToNextLevel: number
+  totalSpent: number
+  nextLevel: string | null
+  nextLevelAmount: number | null
 }
 
 export type TransactionType = 'Accrual' | 'Redemption' | 'Birthday' | 'Promo' | 'Expiration'

@@ -9,10 +9,13 @@ const PADDING = 16
 export function CardCarousel({
   cards,
   onShowQr,
+  onActiveChange,
   size = 'compact',
 }: {
   cards: BonusCard[]
   onShowQr?: (card: BonusCard) => void
+  /** Көрініп тұрған карта ауысқанда шақырылады. */
+  onActiveChange?: (card: BonusCard) => void
   size?: 'full' | 'compact'
 }) {
   const [active, setActive] = useState(0)
@@ -34,7 +37,10 @@ export function CardCarousel({
         best = i
       }
     })
+    if (best === active) return
     setActive(best)
+    const card = cards[best]
+    if (card) onActiveChange?.(card)
   }
 
   const scrollTo = (i: number) => {

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.BonusCards;
 using SalemBonus.Application.Notifications;
 using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Enums;
@@ -16,6 +17,7 @@ public static class DbSeeder
 
         var stores = Catalog();
         await SyncStoresAsync(db, stores, ct);
+        await SyncDemoCardLevelsAsync(db, ct);
 
         // Демо тұтынушы бір рет қана құрылады.
         if (await db.Customers.AnyAsync(ct)) return;
@@ -191,6 +193,29 @@ public static class DbSeeder
             }
         }
         await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Демо карталардың мәртебесі қолмен қойылған. Дүкеннің баспалдағы өзгергенде
+    /// олар сәйкес келмей қалмауы үшін мәртебені жұмсалған сома бойынша қайта есептейміз.
+    /// </summary>
+    private static async Task SyncDemoCardLevelsAsync(AppDbContext db, CancellationToken ct)
+    {
+        var cards = await db.BonusCards
+            .Include(c => c.Store)
+            .ThenInclude(s => s!.Levels)
+            .Where(c => c.CustomerId == DemoCustomerId)
+            .ToListAsync(ct);
+
+        var changed = false;
+        foreach (var card in cards)
+        {
+            var level = BonusRules.LevelFor(card.TotalSpent, BonusRules.LadderOf(card.Store));
+            if (card.Level == level) continue;
+            card.Level = level;
+            changed = true;
+        }
+        if (changed) await db.SaveChangesAsync(ct);
     }
 
     private static BonusCard Card(Store store, int balance, decimal spent, CustomerLevel level) => new()

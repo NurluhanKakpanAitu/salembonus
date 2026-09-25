@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { Avatar, PageHeader } from '../components/PageHeader'
 import { QrSheet } from '../components/QrSheet'
 import { CardCarousel } from '../components/cards/CardCarousel'
+import { LevelProgress } from '../components/cards/LevelProgress'
 import { TransactionList } from '../components/home/TransactionList'
 import { BirthdayBanner } from '../components/home/BirthdayBanner'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
@@ -16,6 +17,9 @@ export function HomePage() {
   const cards = useCards()
   const transactions = useRecentTransactions(4)
   const [qrStore, setQrStore] = useState<string | null>(null)
+  const [activeStoreId, setActiveStoreId] = useState<string | null>(null)
+  // Карусельде көрініп тұрған карта; әлі сырғытылмаса — бірінші карта.
+  const activeCard = cards.data?.find((c) => c.storeId === activeStoreId) ?? cards.data?.[0]
 
   return (
     <>
@@ -51,7 +55,16 @@ export function HomePage() {
             </div>
           )}
           {cards.data && cards.data.length > 0 && (
-            <CardCarousel cards={cards.data} onShowQr={(c) => setQrStore(c.storeName)} />
+            <CardCarousel
+              cards={cards.data}
+              onShowQr={(c) => setQrStore(c.storeName)}
+              onActiveChange={(c) => setActiveStoreId(c.storeId)}
+            />
+          )}
+          {activeCard && (
+            <div className="mt-3">
+              <LevelProgress card={activeCard} />
+            </div>
           )}
         </section>
 

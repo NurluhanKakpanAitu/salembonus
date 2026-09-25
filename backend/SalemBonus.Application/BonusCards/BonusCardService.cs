@@ -53,7 +53,13 @@ public class BonusCardService(
         return ToDto(card, ladder);
     }
 
-    private static BonusCardDto ToDto(BonusCard card, IReadOnlyList<StoreLevel> ladder) => new(
+    private static BonusCardDto ToDto(BonusCard card, IReadOnlyList<StoreLevel> ladder)
+    {
+        var next = ladder.Where(l => l.FromAmount > card.TotalSpent).OrderBy(l => l.FromAmount).FirstOrDefault();
+        return Build(card, ladder, next);
+    }
+
+    private static BonusCardDto Build(BonusCard card, IReadOnlyList<StoreLevel> ladder, StoreLevel? next) => new(
         card.StoreId,
         card.Store?.Name ?? string.Empty,
         card.Store?.Category ?? string.Empty,
@@ -62,5 +68,8 @@ public class BonusCardService(
         card.Balance,
         CustomerLevels.Key(card.Level),
         BonusRules.PercentFor(card.Level, ladder),
-        BonusRules.AmountToNextLevel(card.TotalSpent, ladder));
+        BonusRules.AmountToNextLevel(card.TotalSpent, ladder),
+        card.TotalSpent,
+        next is null ? null : CustomerLevels.Key(next.Level),
+        next?.FromAmount);
 }
