@@ -127,6 +127,16 @@ public static class DbSeeder
             Phone = "+7 727 276 09 09",
             Levels = Ladder((0, 2), (10_000, 4), (25_000, 5), (60_000, 7)),
         },
+        new()
+        {
+            Id = Guid.Parse("77777777-7777-7777-7777-777777777777"), Name = "Достар Кафе", Category = "Мейрамхана",
+            Description = "Отбасылық кафе: ұлттық және еуропалық асхана, бизнес-ланч.",
+            CashbackPercent = 2, ThemeColor = "#B3261E", Icon = "utensils", MaxRedeemPercent = 40,
+            ApiKey = "sk_test_dostar_cafe_7777", JoinCode = "DOSTAR",
+            Address = "Алматы, Гоголь көш. 123",
+            Phone = "+7 727 279 88 11",
+            Levels = Ladder((0, 2), (20_000, 4), (50_000, 6), (120_000, 8)),
+        },
     };
 
     /// <summary>Мәртебелер баспалдағы: (сома, пайыз) жұптары Жаңа → Тұрақты → Сүйікті → VIP ретімен.</summary>
