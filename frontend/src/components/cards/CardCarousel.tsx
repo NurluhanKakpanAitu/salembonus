@@ -10,13 +10,11 @@ export function CardCarousel({
   cards,
   onShowQr,
   onActiveChange,
-  size = 'compact',
 }: {
   cards: BonusCard[]
   onShowQr?: (card: BonusCard) => void
   /** Көрініп тұрған карта ауысқанда шақырылады. */
   onActiveChange?: (card: BonusCard) => void
-  size?: 'full' | 'compact'
 }) {
   const [active, setActive] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
@@ -65,7 +63,7 @@ export function CardCarousel({
             onKeyDown={(e) => e.key === 'Enter' && navigate(`/cards/${c.storeId}`)}
             className="w-full shrink-0 cursor-pointer snap-start active:scale-[0.99]"
           >
-            <BonusCardTile card={c} size={size} onAction={() => onShowQr?.(c)} />
+            <BonusCardTile card={c} onAction={() => onShowQr?.(c)} />
           </div>
         ))}
       </div>

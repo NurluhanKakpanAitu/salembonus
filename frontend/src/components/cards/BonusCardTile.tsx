@@ -12,13 +12,11 @@ import { useQr } from '../../lib/queries'
  */
 export function BonusCardTile({
   card,
-  size = 'full',
   onAction,
   expanded = false,
   onInfo,
 }: {
   card: BonusCard
-  size?: 'full' | 'compact'
   onAction?: () => void
   /** Ашық күйде QR коды картаның ішінде көрінеді. */
   expanded?: boolean
@@ -26,13 +24,12 @@ export function BonusCardTile({
 }) {
   const t = useT()
   const theme = storeTheme(card.themeColor)
-  const compact = size === 'compact'
   const qr = useQr()
 
   return (
     <div
       className={`relative flex w-full flex-col justify-between overflow-hidden rounded-[22px] px-5 py-4 ${
-        expanded ? 'min-h-[216px]' : compact ? 'h-[196px]' : 'h-[216px]'
+        expanded ? 'min-h-[216px]' : 'h-[216px]'
       }`}
       style={{ background: theme.bg, color: theme.text }}
     >
@@ -66,8 +63,8 @@ export function BonusCardTile({
       <div className="relative">
         <div className="text-[13px]" style={{ color: theme.muted }}>{t('cards.balanceLabel')}</div>
         <div className="mt-0.5 flex items-baseline gap-1.5 font-extrabold leading-none tracking-[-0.03em]">
-          <span className={compact ? 'text-[44px]' : 'text-[52px]'}>{formatNumber(card.balance)}</span>
-          <span className={compact ? 'text-[23px]' : 'text-[27px]'}>{t('common.bonusUnit')}</span>
+          <span className="text-[52px]">{formatNumber(card.balance)}</span>
+          <span className="text-[27px]">{t('common.bonusUnit')}</span>
         </div>
       </div>
 
