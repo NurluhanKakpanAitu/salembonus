@@ -39,23 +39,23 @@ export function BonusCardTile({
       {/* Әшекей: мөлдір карта пішіні мен бренд күлкісі */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px]">
         <div
-          className="absolute -right-7 top-[66px] h-[96px] w-[150px] rotate-[-9deg] rounded-[18px]"
+          className="absolute -right-10 top-[58px] h-[116px] w-[186px] rotate-[-10deg] rounded-[22px]"
           style={{ background: theme.box }}
         />
-        <svg viewBox="0 0 100 30" className="absolute right-[42px] top-[104px] h-5 w-[58px] opacity-70">
-          <path d="M8 6c15 22 69 22 84 0" fill="none" stroke={theme.text} strokeWidth="10" strokeLinecap="round" />
+        <svg viewBox="0 0 100 30" className="absolute right-[44px] top-[106px] h-7 w-[74px] opacity-90">
+          <path d="M8 6c15 22 69 22 84 0" fill="none" stroke={theme.text} strokeWidth="11" strokeLinecap="round" />
         </svg>
       </div>
 
       <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0 pt-1 text-[12px] font-bold uppercase tracking-[0.08em]" style={{ color: theme.muted }}>
+        <div className="min-w-0 truncate pt-0.5 text-[17px] font-semibold tracking-[0.02em]" style={{ color: theme.text }}>
           {card.storeName}
         </div>
         <div
           className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold"
           style={{ background: theme.text, color: theme.solid }}
         >
-          <Crown size={13} className="text-gold" />
+          <Crown size={14} className="text-brand" fill="currentColor" />
           {t('cards.levelPill', {
             level: t(`level.${card.level}` as TranslationKey),
             percent: card.cashbackPercent,

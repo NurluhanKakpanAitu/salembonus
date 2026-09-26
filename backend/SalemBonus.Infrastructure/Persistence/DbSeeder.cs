@@ -76,7 +76,7 @@ public static class DbSeeder
         {
             Id = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "MKM AUTO", Category = "Автобөлшектер",
             Description = "Көлікке арналған қосалқы бөлшектер, майлар және аксессуарлар.",
-            CashbackPercent = 2, ThemeColor = "#111113", Icon = "car", MaxRedeemPercent = 30, BonusLifetimeDays = 365,
+            CashbackPercent = 2, ThemeColor = "#1C7DE8", Icon = "car", MaxRedeemPercent = 30, BonusLifetimeDays = 365,
             ApiKey = "sk_test_mkm_auto_11111111", JoinCode = "MKMAUTO",
             Address = "Алматы, Сейфуллин даңғ. 502",
             Phone = "+7 727 350 40 40",
@@ -177,6 +177,9 @@ public static class DbSeeder
             if (string.IsNullOrWhiteSpace(current.JoinCode)) current.JoinCode = store.JoinCode;
             if (string.IsNullOrWhiteSpace(current.Address)) current.Address = store.Address;
             if (string.IsNullOrWhiteSpace(current.Phone)) current.Phone = store.Phone;
+            // Түсі мен иконкасын каталог басқарады — CRM пайда болғанша дүкен оларды өзі баптамайды.
+            current.ThemeColor = store.ThemeColor;
+            current.Icon = store.Icon;
             current.BonusLifetimeDays ??= store.BonusLifetimeDays;
             // Баспалдағы бапталмаған дүкенге каталогтағы баспалдақты береміз.
             // Каталогтағы нысандарды тікелей байламаймыз — олар бөлек Store-ға тиесілі.
