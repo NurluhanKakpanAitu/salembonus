@@ -92,7 +92,6 @@ const kk = {
   'profile.emailPlaceholder': 'name@example.kz',
 
   // Басты бет
-  'home.greeting': 'Сәлем,',
   'home.myCards': 'Менің карталарым',
   'home.noCards': 'Әзірге бонус картаңыз жоқ. Дүкенде QR кодыңызды көрсетіңіз немесе телефон нөміріңізді айтыңыз.',
   'home.birthdayTitle': 'Туған күніңіз құтты болсын!',
@@ -288,7 +287,6 @@ const ru: Record<TranslationKey, string> = {
   'profile.phoneNote': 'Номер используется для входа в аккаунт. Чтобы изменить его, напишите в поддержку.',
   'profile.emailPlaceholder': 'name@example.kz',
 
-  'home.greeting': 'Привет,',
   'home.myCards': 'Мои карты',
   'home.noCards': 'Бонусных карт пока нет. Покажите свой QR-код в магазине или назовите номер телефона.',
   'home.birthdayTitle': 'С днём рождения!',

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { Avatar, PageHeader } from '../components/PageHeader'
+import { PageHeader } from '../components/PageHeader'
 import { QrSheet } from '../components/QrSheet'
 import { CardCarousel } from '../components/cards/CardCarousel'
 import { LevelProgress } from '../components/cards/LevelProgress'
@@ -23,17 +23,7 @@ export function HomePage() {
 
   return (
     <>
-      <PageHeader
-        right={
-          <div className="flex items-center gap-2.5">
-            <div className="text-right">
-              <div className="text-xs text-ink-2">{t('home.greeting')}</div>
-              <div className="text-[15px] font-bold">{me.data ? `${me.data.firstName}!` : '…'}</div>
-            </div>
-            <Avatar />
-          </div>
-        }
-      />
+      <PageHeader />
 
       <div className="mt-3 flex flex-col gap-6">
         {me.data?.isBirthdayToday && <BirthdayBanner />}
