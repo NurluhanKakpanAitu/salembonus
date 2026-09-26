@@ -51,21 +51,21 @@ function StoreRow({ group, t }: { group: NotificationStore; t: Translator }) {
       className="flex items-center gap-3 rounded-2xl bg-surface p-3 active:scale-[0.99]"
     >
       <div
-        className="flex size-[52px] shrink-0 items-center justify-center rounded-2xl"
+        className="flex size-12 shrink-0 items-center justify-center rounded-2xl"
         style={{ background: `${color}1F`, color }}
       >
-        <Icon size={24} />
+        <Icon size={22} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <div className="min-w-0 flex-1 truncate text-[15px] font-bold leading-tight">
+          <div className="min-w-0 flex-1 truncate text-[14px] font-bold leading-tight">
             {group.storeName ?? t('notif.system')}
           </div>
           <div className={`shrink-0 text-[11px] ${unread ? 'font-semibold text-brand' : 'text-ink-3'}`}>
             {formatDateTime(group.last.createdAt)}
           </div>
         </div>
-        <div className={`mt-1 truncate text-[13px] ${unread ? 'font-semibold text-ink' : 'text-ink-2'}`}>
+        <div className={`mt-0.5 truncate text-[12px] ${unread ? 'font-semibold text-ink' : 'text-ink-2'}`}>
           {preview.title}
         </div>
       </div>
