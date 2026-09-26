@@ -200,6 +200,12 @@ const kk = {
   'notif.store_added.detail': 'Енді бұл дүкенде де бонус жинай аласыз!',
   'notif.profile_updated.title': 'Профиль жаңартылды',
   'notif.profile_updated.body': 'Жеке деректеріңіз сәтті жаңартылды.',
+  'notif.bonus_accrued.short': 'Сізге {amount} Б бонус есептелді.',
+  'notif.bonus_redeemed.short': '{amount} Б бонус шегерілді.',
+  'notif.birthday.short': 'Туған күніңізге {amount} Б бонус берілді!',
+  'notif.level_up.short': 'Құттықтаймыз, сіз енді {level} деңгейіндесіз.',
+  'notif.store_added.short': 'Дүкен сіздің карталарыңызға қосылды.',
+  'notif.bonus_expired.short': '{amount} Б бонустың мерзімі аяқталды.',
   'notif.purchaseAmount': 'Сатып алу сомасы: {amount}',
 
 } as const
@@ -390,6 +396,12 @@ const ru: Record<TranslationKey, string> = {
   'notif.store_added.detail': 'Теперь и здесь можно копить бонусы!',
   'notif.profile_updated.title': 'Профиль обновлён',
   'notif.profile_updated.body': 'Ваши данные успешно сохранены.',
+  'notif.bonus_accrued.short': 'Вам начислено {amount} Б бонусов.',
+  'notif.bonus_redeemed.short': 'Списано {amount} Б бонусов.',
+  'notif.birthday.short': 'На день рождения начислено {amount} Б бонусов!',
+  'notif.level_up.short': 'Поздравляем, теперь у вас статус «{level}».',
+  'notif.store_added.short': 'Магазин добавлен к вашим картам.',
+  'notif.bonus_expired.short': 'Срок {amount} Б бонусов истёк.',
   'notif.purchaseAmount': 'Сумма покупки: {amount}',
 
 }

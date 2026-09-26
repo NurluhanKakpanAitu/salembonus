@@ -64,7 +64,7 @@ export function NotificationStorePage() {
         <div className="size-10 shrink-0" />
       </header>
 
-      <div className="mt-2 flex flex-col gap-3">
+      <div className="mt-2 flex flex-col gap-2">
         {q.isPending && (
           <>
             <Skeleton className="h-24" />
@@ -87,7 +87,7 @@ export function NotificationStorePage() {
         )}
 
         {days.map((dayItems) => (
-          <section key={dayKey(dayItems[0].createdAt)} className="flex flex-col gap-2.5">
+          <section key={dayKey(dayItems[0].createdAt)} className="flex flex-col gap-2">
             <div className="flex justify-center">
               <span className="rounded-full bg-gray-200/70 px-3 py-1 text-[11px] font-medium text-ink-2">
                 {dayLabel(dayItems[0].createdAt)}
@@ -108,16 +108,16 @@ export function NotificationStorePage() {
 }
 
 function Bubble({ n, t }: { n: Notification; t: Translator }) {
-  const text = notificationText(n, t)
+  const text = notificationText(n, t, { short: true })
 
   return (
-    <article className="max-w-[88%] self-start rounded-2xl rounded-bl-md bg-surface px-3.5 py-3">
+    <article className="max-w-[80%] self-start rounded-2xl rounded-bl-md bg-surface px-3 py-2.5">
       <div className="flex items-baseline gap-3">
-        <h2 className="min-w-0 flex-1 text-[14px] font-bold leading-snug">{text.title}</h2>
-        <span className="shrink-0 text-[11px] text-ink-3">{formatTime(n.createdAt)}</span>
+        <h2 className="min-w-0 flex-1 text-[13px] font-bold leading-snug">{text.title}</h2>
+        <span className="shrink-0 text-[10px] text-ink-3">{formatTime(n.createdAt)}</span>
       </div>
-      <p className="mt-1 text-[13px] leading-snug text-ink">{text.body}</p>
-      {text.detail && <p className="mt-1 text-[13px] text-ink-2">{text.detail}</p>}
+      <p className="mt-0.5 text-[12px] leading-snug text-ink">{text.body}</p>
+      {text.detail && <p className="mt-0.5 text-[11px] text-ink-2">{text.detail}</p>}
     </article>
   )
 }
