@@ -52,7 +52,7 @@ export function BonusCardTile({
           className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold"
           style={{ background: theme.text, color: theme.solid }}
         >
-          <Crown size={14} className="text-brand" fill="currentColor" />
+          <Crown size={14} className="text-gold" fill="currentColor" />
           {t('cards.levelPill', {
             level: t(`level.${card.level}` as TranslationKey),
             percent: card.cashbackPercent,
