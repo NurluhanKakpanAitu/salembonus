@@ -1,4 +1,4 @@
-import { Clock3, Info, QrCode } from 'lucide-react'
+import { Clock3, Crown, Info, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import type { BonusCard } from '../../lib/api'
 import { formatNumber, formatShortDate } from '../../lib/format'
@@ -31,19 +31,31 @@ export function BonusCardTile({
 
   return (
     <div
-      className={`flex w-full flex-col justify-between rounded-[22px] px-5 py-4 ${
+      className={`relative flex w-full flex-col justify-between overflow-hidden rounded-[22px] px-5 py-4 ${
         expanded ? 'min-h-[216px]' : compact ? 'h-[196px]' : 'h-[216px]'
       }`}
       style={{ background: theme.bg, color: theme.text }}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Әшекей: мөлдір карта пішіні мен бренд күлкісі */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[22px]">
+        <div
+          className="absolute -right-7 top-[66px] h-[96px] w-[150px] rotate-[-9deg] rounded-[18px]"
+          style={{ background: theme.box }}
+        />
+        <svg viewBox="0 0 100 30" className="absolute right-[42px] top-[104px] h-5 w-[58px] opacity-70">
+          <path d="M8 6c15 22 69 22 84 0" fill="none" stroke={theme.text} strokeWidth="10" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0 pt-1 text-[12px] font-bold uppercase tracking-[0.08em]" style={{ color: theme.muted }}>
           {card.storeName}
         </div>
         <div
-          className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-bold"
+          className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold"
           style={{ background: theme.text, color: theme.solid }}
         >
+          <Crown size={13} className="text-gold" />
           {t('cards.levelPill', {
             level: t(`level.${card.level}` as TranslationKey),
             percent: card.cashbackPercent,
@@ -51,7 +63,7 @@ export function BonusCardTile({
         </div>
       </div>
 
-      <div>
+      <div className="relative">
         <div className="text-[13px]" style={{ color: theme.muted }}>{t('cards.balanceLabel')}</div>
         <div className="mt-0.5 flex items-baseline gap-1.5 font-extrabold leading-none tracking-[-0.03em]">
           <span className={compact ? 'text-[44px]' : 'text-[52px]'}>{formatNumber(card.balance)}</span>
@@ -61,7 +73,7 @@ export function BonusCardTile({
 
       {card.expiringAt && card.expiringAmount ? (
         <div
-          className="mt-2.5 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+          className="relative mt-2.5 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
           style={{ background: theme.box, color: theme.text }}
         >
           <Clock3 size={12} />
@@ -70,7 +82,7 @@ export function BonusCardTile({
       ) : null}
 
       {expanded && (
-        <div className="mt-4 flex flex-col items-center">
+        <div className="relative mt-4 flex flex-col items-center">
           <div className="rounded-2xl bg-white p-3">
             {qr.data ? (
               <QRCodeSVG value={qr.data.payload} size={168} level="H" includeMargin={false} />
@@ -82,7 +94,7 @@ export function BonusCardTile({
         </div>
       )}
 
-      <div className="mt-4 flex items-end justify-between gap-3">
+      <div className="relative mt-4 flex items-end justify-between gap-3">
         <div className="min-w-0 truncate text-[11px] font-semibold tracking-[0.06em]" style={{ color: theme.muted }}>
           {t('cards.brandLine')}
         </div>
