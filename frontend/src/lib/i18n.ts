@@ -23,7 +23,7 @@ const kk = {
   'tab.home': 'Басты бет',
   'tab.cards': 'Карталарым',
   'tab.stores': 'Магазиндер',
-  'tab.notifications': 'Хабарламалар',
+  'tab.notifications': 'Хабарлар',
   'tab.profile': 'Профиль',
 
   // Деңгейлер
@@ -225,7 +225,7 @@ const ru: Record<TranslationKey, string> = {
   'tab.home': 'Главная',
   'tab.cards': 'Мои карты',
   'tab.stores': 'Магазины',
-  'tab.notifications': 'Уведомления',
+  'tab.notifications': 'Сообщения',
   'tab.profile': 'Профиль',
 
   'level.New': 'Новый клиент',
