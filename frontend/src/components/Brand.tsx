@@ -31,7 +31,7 @@ export function Wordmark({ height = 26 }: { height?: number }) {
 export function Brand() {
   return (
     <div className="min-w-0 py-2">
-      <Wordmark height={24} />
+      <Wordmark height={20} />
     </div>
   )
 }
