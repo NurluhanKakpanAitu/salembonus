@@ -84,7 +84,7 @@ export function TabBar() {
                 >
                   <span
                     className={`relative flex size-7 items-center justify-center transition-[transform,color] duration-[450ms] ${
-                      isActive ? 'translate-y-[9px] scale-[1.15] text-white' : 'text-ink-2'
+                      isActive ? 'translate-y-[6px] scale-[1.15] text-white' : 'text-ink-2'
                     }`}
                     style={{ transitionTimingFunction: SPRING }}
                   >
