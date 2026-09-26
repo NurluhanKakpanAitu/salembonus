@@ -70,5 +70,13 @@ public class NotificationRepository(AppDbContext db) : INotificationRepository
         return q.ExecuteUpdateAsync(s => s.SetProperty(n => n.IsRead, true), ct);
     }
 
+    public Task MarkReadBySourceAsync(Guid customerId, Guid? storeId, bool systemOnly, CancellationToken ct = default)
+    {
+        var q = db.Notifications.Where(n => n.CustomerId == customerId && !n.IsRead);
+        if (storeId is { } s) q = q.Where(n => n.StoreId == s);
+        else if (systemOnly) q = q.Where(n => n.StoreId == null);
+        return q.ExecuteUpdateAsync(u => u.SetProperty(n => n.IsRead, true), ct);
+    }
+
     public void Add(Notification notification) => db.Notifications.Add(notification);
 }

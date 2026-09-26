@@ -33,10 +33,12 @@ public class NotificationsController(INotificationService service) : ControllerB
     public async Task<IActionResult> MarkRead(Guid id, CancellationToken ct) =>
         await service.MarkReadAsync(id, ct) ? NoContent() : NotFound();
 
+    /// <summary>Бәрін немесе бір дүкеннің хабарламаларын оқылды деп белгілеу.</summary>
     [HttpPost("read-all")]
-    public async Task<IActionResult> MarkAllRead(CancellationToken ct)
+    public async Task<IActionResult> MarkAllRead(
+        [FromQuery] Guid? storeId, [FromQuery] bool system = false, CancellationToken ct = default)
     {
-        await service.MarkAllReadAsync(ct);
+        await service.MarkAllReadAsync(storeId, system, ct);
         return NoContent();
     }
 }

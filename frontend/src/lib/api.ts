@@ -236,7 +236,11 @@ export const notificationsApi = {
   stores: () => api<NotificationStore[]>('/notifications/stores'),
   unreadCount: () => api<number>('/notifications/unread-count'),
   markRead: (id: string) => api<void>(`/notifications/${id}/read`, { method: 'POST' }),
-  markAllRead: () => api<void>('/notifications/read-all', { method: 'POST' }),
+  markAllRead: (source?: string) =>
+    api<void>(
+      `/notifications/read-all${source ? (source === 'system' ? '?system=true' : `?storeId=${source}`) : ''}`,
+      { method: 'POST' },
+    ),
 }
 
 export interface StoreListItem {

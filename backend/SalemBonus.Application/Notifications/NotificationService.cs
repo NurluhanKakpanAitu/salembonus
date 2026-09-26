@@ -41,8 +41,10 @@ public class NotificationService(INotificationRepository notifications, ICurrent
         return true;
     }
 
-    public Task MarkAllReadAsync(CancellationToken ct = default) =>
-        notifications.MarkReadAsync(currentUser.CustomerId, null, ct);
+    public Task MarkAllReadAsync(Guid? storeId = null, bool systemOnly = false, CancellationToken ct = default) =>
+        storeId is null && !systemOnly
+            ? notifications.MarkReadAsync(currentUser.CustomerId, null, ct)
+            : notifications.MarkReadBySourceAsync(currentUser.CustomerId, storeId, systemOnly, ct);
 
     private static NotificationDto ToDto(Notification n) => new(
         n.Id,

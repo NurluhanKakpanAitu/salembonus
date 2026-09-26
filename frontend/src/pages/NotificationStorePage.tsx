@@ -1,37 +1,70 @@
-import { ChevronDown } from 'lucide-react'
-import { useParams } from 'react-router-dom'
-import { BackHeader } from '../components/BackHeader'
-import { NotificationItem } from '../components/notifications/NotificationItem'
+import { useEffect, useMemo } from 'react'
+import { ChevronDown, ChevronLeft } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import type { Notification } from '../lib/api'
-import { useMarkRead, useNotifications, useNotificationStores } from '../lib/queries'
-import { useT } from '../lib/i18n'
+import { dayKey, dayLabel, formatTime } from '../lib/format'
+import { storeIcon } from '../lib/theme'
+import { useMarkAllRead, useNotificationStores, useNotifications } from '../lib/queries'
+import { useT, type Translator } from '../lib/i18n'
+import { notificationText } from '../lib/notificationText'
 
-/** Бір дүкеннің хабарламалары. source "system" болса — дүкенге қатысы жоқ хабарламалар. */
+/** Бір дүкенмен жазысу: хабарламалар күні бойынша топталып, көпіршік түрінде көрінеді. */
 export function NotificationStorePage() {
   const t = useT()
+  const navigate = useNavigate()
   const { source = 'system' } = useParams()
   const q = useNotifications(null, source)
-  const markRead = useMarkRead()
   const stores = useNotificationStores()
+  const markAll = useMarkAllRead()
 
-  const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const group = stores.data?.find((g) => (g.storeId ?? 'system') === source)
+  const items = q.data?.pages.flatMap((p) => p.items) ?? []
   const title = group?.storeName ?? items[0]?.storeName ?? t('notif.system')
+  const color = group?.storeThemeColor ?? '#6B7280'
+  const Icon = storeIcon(group?.storeIcon ?? 'store')
 
-  const open = (n: Notification) => {
-    if (!n.isRead) markRead.mutate(n.id)
-  }
+  // Жазысуды ашқан бойда барлық хабарлама оқылды деп белгіленеді.
+  const unread = group?.unread ?? 0
+  useEffect(() => {
+    if (unread > 0) markAll.mutate(source)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, unread > 0])
+
+  /** Ескіден жаңаға қарай, күн бойынша топтар. */
+  const days = useMemo(() => {
+    const map = new Map<string, Notification[]>()
+    for (const n of [...items].reverse()) {
+      const key = dayKey(n.createdAt)
+      map.set(key, [...(map.get(key) ?? []), n])
+    }
+    return [...map.values()]
+  }, [q.data])
 
   return (
     <>
-      <BackHeader
-        title={title}
-        subtitle={items.length > 0 ? t('notif.count', { count: group?.total ?? items.length }) : undefined}
-        fallback="/notifications"
-      />
+      <header className="flex items-center gap-3 py-2">
+        <button
+          type="button"
+          aria-label={t('common.back')}
+          onClick={() => navigate('/notifications')}
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-ink"
+        >
+          <ChevronLeft size={22} />
+        </button>
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5">
+          <div
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl"
+            style={{ background: `${color}1F`, color }}
+          >
+            <Icon size={18} />
+          </div>
+          <h1 className="min-w-0 truncate text-[17px] font-bold">{title}</h1>
+        </div>
+        <div className="size-10 shrink-0" />
+      </header>
 
-      <div className="mt-3 flex flex-col gap-2.5">
+      <div className="mt-2 flex flex-col gap-3">
         {q.isPending && (
           <>
             <Skeleton className="h-24" />
@@ -40,27 +73,51 @@ export function NotificationStorePage() {
         )}
         {q.isError && <ErrorBox message={q.error.message} onRetry={() => q.refetch()} />}
 
-        {items.map((n) => (
-          <NotificationItem key={n.id} n={n} onOpen={open} />
+        {q.hasNextPage && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              disabled={q.isFetchingNextPage}
+              onClick={() => q.fetchNextPage()}
+              className="flex items-center gap-1.5 rounded-full bg-gray-200 px-4 py-2 text-[12px] font-medium text-ink-2 disabled:opacity-60"
+            >
+              {q.isFetchingNextPage ? t('common.loadingShort') : t('notif.showOlder')} <ChevronDown size={15} />
+            </button>
+          </div>
+        )}
+
+        {days.map((dayItems) => (
+          <section key={dayKey(dayItems[0].createdAt)} className="flex flex-col gap-2.5">
+            <div className="flex justify-center">
+              <span className="rounded-full bg-gray-200/70 px-3 py-1 text-[11px] font-medium text-ink-2">
+                {dayLabel(dayItems[0].createdAt)}
+              </span>
+            </div>
+            {dayItems.map((n) => (
+              <Bubble key={n.id} n={n} t={t} />
+            ))}
+          </section>
         ))}
 
         {q.data && items.length === 0 && (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">{t('notif.empty')}</div>
         )}
-
-        {q.hasNextPage && (
-          <div className="flex justify-center pt-1">
-            <button
-              type="button"
-              disabled={q.isFetchingNextPage}
-              onClick={() => q.fetchNextPage()}
-              className="flex items-center gap-1.5 rounded-full bg-gray-200 px-4 py-2.5 text-[13px] font-medium text-ink-2 disabled:opacity-60"
-            >
-              {q.isFetchingNextPage ? t('common.loadingShort') : t('notif.showOlder')} <ChevronDown size={16} />
-            </button>
-          </div>
-        )}
       </div>
     </>
+  )
+}
+
+function Bubble({ n, t }: { n: Notification; t: Translator }) {
+  const text = notificationText(n, t)
+
+  return (
+    <article className="max-w-[88%] self-start rounded-2xl rounded-bl-md bg-surface px-3.5 py-3">
+      <div className="flex items-baseline gap-3">
+        <h2 className="min-w-0 flex-1 text-[14px] font-bold leading-snug">{text.title}</h2>
+        <span className="shrink-0 text-[11px] text-ink-3">{formatTime(n.createdAt)}</span>
+      </div>
+      <p className="mt-1 text-[13px] leading-snug text-ink">{text.body}</p>
+      {text.detail && <p className="mt-1 text-[13px] text-ink-2">{text.detail}</p>}
+    </article>
   )
 }

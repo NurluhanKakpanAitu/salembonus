@@ -120,7 +120,7 @@ export const useMarkRead = () => {
 export const useMarkAllRead = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: notificationsApi.markAllRead,
+    mutationFn: (source?: string) => notificationsApi.markAllRead(source),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   })
 }

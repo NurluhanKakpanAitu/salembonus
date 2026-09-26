@@ -14,5 +14,7 @@ public interface INotificationRepository
     Task<int> CountUnreadAsync(Guid customerId, CancellationToken ct = default);
     Task<Notification?> GetAsync(Guid customerId, Guid id, CancellationToken ct = default);
     Task MarkReadAsync(Guid customerId, Guid? id, CancellationToken ct = default);
+    /// <summary>Бір дүкеннің (немесе дүкенсіз) барлық хабарламасын оқылды деп белгілейді.</summary>
+    Task MarkReadBySourceAsync(Guid customerId, Guid? storeId, bool systemOnly, CancellationToken ct = default);
     void Add(Notification notification);
 }

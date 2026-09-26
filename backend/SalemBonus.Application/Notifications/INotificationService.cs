@@ -11,5 +11,6 @@ public interface INotificationService
     Task<IReadOnlyList<NotificationStoreDto>> GetMyStoresAsync(CancellationToken ct = default);
     Task<int> GetMyUnreadCountAsync(CancellationToken ct = default);
     Task<bool> MarkReadAsync(Guid id, CancellationToken ct = default);
-    Task MarkAllReadAsync(CancellationToken ct = default);
+    /// <summary>storeId/system берілсе сол тармақтағы хабарламалар ғана белгіленеді.</summary>
+    Task MarkAllReadAsync(Guid? storeId = null, bool systemOnly = false, CancellationToken ct = default);
 }
