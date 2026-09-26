@@ -21,8 +21,8 @@ const kk = {
 
   // Навигация
   'tab.home': 'Басты бет',
-  'tab.cards': 'Карталарым',
-  'tab.stores': 'Магазиндер',
+  'tab.cards': 'Карталар',
+  'tab.stores': 'Дүкендер',
   'tab.notifications': 'Хабарлар',
   'tab.profile': 'Профиль',
 

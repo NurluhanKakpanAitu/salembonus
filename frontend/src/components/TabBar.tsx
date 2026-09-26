@@ -135,7 +135,7 @@ export function TabBar() {
                 <NavLink
                   to={to}
                   end={end}
-                  className={`flex flex-col items-center gap-1 text-[10px] font-semibold transition-colors ${
+                  className={`flex flex-col items-center gap-1 px-1 text-[10px] font-semibold leading-none transition-colors ${
                     isActive ? 'text-brand' : 'text-ink-2'
                   }`}
                 >
