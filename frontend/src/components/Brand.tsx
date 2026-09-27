@@ -1,9 +1,15 @@
-/** Күлкі-белгі: көк дөңгелек ішінде ақ дуга. Иконка, favicon, QR ортасы үшін. */
+/** Қосымша белгісі: көк градиентті дөңгелектелген шаршы ішінде ақ күлкі. */
 export function LogoMark({ size = 44 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-      <circle cx="50" cy="50" r="50" fill="#0A84F8" />
-      <path d="M24 44c7 13 45 13 52 0" fill="none" stroke="#fff" strokeWidth="11" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="salembonus-mark" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stopColor="#0152FE" />
+          <stop offset="1" stopColor="#0297FD" />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="100" rx="24" fill="url(#salembonus-mark)" />
+      <path d="M26 46c7 15 41 15 48 0" fill="none" stroke="#fff" strokeWidth="11" strokeLinecap="round" />
     </svg>
   )
 }
