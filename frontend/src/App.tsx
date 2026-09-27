@@ -10,6 +10,7 @@ import { NotificationsPage } from './pages/NotificationsPage'
 import { NotificationStorePage } from './pages/NotificationStorePage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ProfileEditPage } from './pages/ProfileEditPage'
+import { AboutPage } from './pages/AboutPage'
 import { TransactionsPage } from './pages/TransactionsPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { VerifyPage } from './pages/auth/VerifyPage'
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="notifications/:source" element={<NotificationStorePage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="profile/edit" element={<ProfileEditPage />} />
+          <Route path="about" element={<AboutPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>
