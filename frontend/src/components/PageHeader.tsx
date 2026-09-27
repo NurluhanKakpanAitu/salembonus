@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Brand } from './Brand'
 import { useMe } from '../lib/queries'
 import { initials } from '../lib/format'
+import { avatarSrc } from '../lib/avatar'
 import { useT } from '../lib/i18n'
 
 export function PageHeader({ right }: { right?: ReactNode }) {
@@ -28,7 +29,7 @@ export function Avatar({ to = '/profile/edit' }: { to?: string }) {
       aria-label={t('profile.personal')}
       className="flex size-11 items-center justify-center overflow-hidden rounded-full bg-violet-soft text-sm font-bold text-violet active:scale-95"
     >
-      {photo ? <img src={photo} alt="" className="size-full object-cover" /> : short || (
+      {photo ? <img src={avatarSrc(photo)} alt="" className="size-full object-cover" /> : short || (
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="8" r="4" />
           <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />

@@ -8,6 +8,7 @@ import { PageTitle } from '../components/PageTitle'
 import { ProfileRow } from '../components/profile/ProfileRow'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { formatNumber, initials } from '../lib/format'
+import { avatarSrc } from '../lib/avatar'
 import { LANGUAGES, useLanguage } from '../lib/language'
 import { useMe, useQr } from '../lib/queries'
 import { useT, type TranslationKey } from '../lib/i18n'
@@ -50,7 +51,7 @@ export function ProfilePage() {
             <Link to="/profile/edit" className="flex items-center gap-3 rounded-2xl bg-surface p-3.5 active:scale-[0.99]">
               <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-soft text-lg font-bold text-violet">
                 {me.data.avatarUrl ? (
-                  <img src={me.data.avatarUrl} alt="" className="size-full object-cover" />
+                  <img src={avatarSrc(me.data.avatarUrl)} alt="" className="size-full object-cover" />
                 ) : (
                   initials(me.data.fullName)
                 )}
