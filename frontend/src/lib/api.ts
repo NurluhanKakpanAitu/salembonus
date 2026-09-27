@@ -224,6 +224,8 @@ export interface Notification {
   amount: number | null
   purchaseAmount: number | null
   levelKey: string | null
+  /** Сатып алу чегінің нөмірі. Бос болса, хабарламаның чегі жоқ. */
+  receiptId: string | null
   storeName: string | null
   storeIcon: string | null
   storeThemeColor: string | null

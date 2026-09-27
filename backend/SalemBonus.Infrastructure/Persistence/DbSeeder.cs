@@ -44,18 +44,21 @@ public static class DbSeeder
         };
 
         var now = DateTime.UtcNow;
+        // Хабарлама мен операция бір чекке сілтейді, сонда демо деректе де ЧЕК батырмасы жұмыс істейді.
+        var accrual = Tx(cards[0], BonusTransactionType.Accrual, 1250, 25_000, now.AddHours(-2));
+        var redemption = Tx(cards[1], BonusTransactionType.Redemption, -5000, 12_000, now.AddHours(-5));
         var transactions = new List<BonusTransaction>
         {
-            Tx(cards[0], BonusTransactionType.Accrual, 1250, 25_000, now.AddHours(-2)),
-            Tx(cards[0], BonusTransactionType.Redemption, -5000, 12_000, now.AddHours(-5)),
+            accrual,
+            redemption,
             Tx(cards[0], BonusTransactionType.Accrual, 850, 17_000, now.AddDays(-4)),
             Tx(cards[0], BonusTransactionType.Birthday, 3000, null, now.AddDays(-5)),
         };
 
         var notifications = new List<Notification>
         {
-            N(NotificationType.BonusAccrued, stores[0], "Бонус есептелді!", "MKM AUTO — Сізге 1 250 Б бонус есептелді.", "Сатып алу сомасы: 25 000 ₸", now.AddHours(-2), false, NotificationTemplates.BonusAccrued, 1250, 25_000),
-            N(NotificationType.BonusRedeemed, stores[1], "Бонус жұмсалды", "Coffee House — 5 000 Б бонус шегерілді.", "Сатып алу сомасы: 12 000 ₸", now.AddHours(-5), false, NotificationTemplates.BonusRedeemed, 5000, 12_000),
+            N(NotificationType.BonusAccrued, stores[0], "Бонус есептелді!", "MKM AUTO — Сізге 1 250 Б бонус есептелді.", "Сатып алу сомасы: 25 000 ₸", now.AddHours(-2), false, NotificationTemplates.BonusAccrued, 1250, 25_000, accrual.ReceiptId),
+            N(NotificationType.BonusRedeemed, stores[1], "Бонус жұмсалды", "Coffee House — 5 000 Б бонус шегерілді.", "Сатып алу сомасы: 12 000 ₸", now.AddHours(-5), false, NotificationTemplates.BonusRedeemed, 5000, 12_000, redemption.ReceiptId),
             N(NotificationType.Birthday, stores[2], "Туған күн бонусы!", "Beauty Shop — Туған күніңізге 3 000 Б бонус берілді!", "Бонус 3 күн ішінде жарамды.", now.AddHours(-7), false, NotificationTemplates.Birthday, 3000),
             N(NotificationType.Promo, stores[3], "Акция басталды!", "SportLife — Барлық кроссовкаларға 2x бонус!", "Акция 30 қыркүйекке дейін.", now.AddHours(-8), true),
             N(NotificationType.StoreAdded, stores[1], "Жаңа дүкен қосылды", "Coffee House дүкені сіздің карталарыңызға қосылды.", "Енді бұл дүкенде де бонус жинай аласыз!", now.AddDays(-1).AddHours(-3), true, NotificationTemplates.StoreAdded),
@@ -237,7 +240,7 @@ public static class DbSeeder
 
     private static Notification N(
         NotificationType type, Store? store, string title, string body, string? detail, DateTime at, bool read,
-        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null) => new()
+        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null, Guid? receiptId = null) => new()
     {
         Id = Guid.NewGuid(),
         CustomerId = DemoCustomerId,
@@ -249,6 +252,7 @@ public static class DbSeeder
         TemplateKey = templateKey,
         Amount = amount,
         PurchaseAmount = purchaseAmount,
+        ReceiptId = receiptId,
         IsRead = read,
         CreatedAt = at,
     };

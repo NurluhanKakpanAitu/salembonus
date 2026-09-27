@@ -57,6 +57,7 @@ public class NotificationService(INotificationRepository notifications, ICurrent
         n.Amount,
         n.PurchaseAmount,
         n.LevelKey,
+        n.ReceiptId,
         n.Store?.Name,
         n.Store?.Icon,
         n.Store?.ThemeColor,

@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react'
-import { ChevronDown, ChevronLeft } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronDown, ChevronLeft, ReceiptText } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
 import type { Notification } from '../lib/api'
@@ -8,6 +8,7 @@ import { storeIcon } from '../lib/theme'
 import { useMarkAllRead, useNotificationStores, useNotifications } from '../lib/queries'
 import { useT, type Translator } from '../lib/i18n'
 import { notificationText } from '../lib/notificationText'
+import { ReceiptSheet } from '../components/transactions/ReceiptSheet'
 
 /** Бір дүкенмен жазысу: хабарламалар күні бойынша топталып, көпіршік түрінде көрінеді. */
 export function NotificationStorePage() {
@@ -17,6 +18,7 @@ export function NotificationStorePage() {
   const q = useNotifications(null, source)
   const stores = useNotificationStores()
   const markAll = useMarkAllRead()
+  const [receiptId, setReceiptId] = useState<string | null>(null)
 
   const group = stores.data?.find((g) => (g.storeId ?? 'system') === source)
   const items = q.data?.pages.flatMap((p) => p.items) ?? []
@@ -94,7 +96,7 @@ export function NotificationStorePage() {
               </span>
             </div>
             {dayItems.map((n) => (
-              <Bubble key={n.id} n={n} t={t} />
+              <Bubble key={n.id} n={n} t={t} onReceipt={setReceiptId} />
             ))}
           </section>
         ))}
@@ -103,11 +105,12 @@ export function NotificationStorePage() {
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-2">{t('notif.empty')}</div>
         )}
       </div>
+      <ReceiptSheet receiptId={receiptId} onClose={() => setReceiptId(null)} />
     </>
   )
 }
 
-function Bubble({ n, t }: { n: Notification; t: Translator }) {
+function Bubble({ n, t, onReceipt }: { n: Notification; t: Translator; onReceipt: (id: string) => void }) {
   const text = notificationText(n, t, { short: true })
 
   return (
@@ -118,6 +121,16 @@ function Bubble({ n, t }: { n: Notification; t: Translator }) {
       </div>
       <p className="mt-1 text-[14px] leading-snug text-ink">{text.body}</p>
       {text.detail && <p className="mt-1 text-[13px] text-ink-2">{text.detail}</p>}
+      {/* Сатып алуға қатысты хабарламаның чегін осы жерден ашуға болады. */}
+      {n.receiptId && (
+        <button
+          type="button"
+          onClick={() => onReceipt(n.receiptId!)}
+          className="mt-2 flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[12px] font-bold tracking-[0.06em] text-ink-2 active:scale-[0.97]"
+        >
+          <ReceiptText size={14} /> {t('receipt.button')}
+        </button>
+      )}
     </article>
   )
 }

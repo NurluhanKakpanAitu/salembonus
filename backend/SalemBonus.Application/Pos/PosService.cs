@@ -77,7 +77,7 @@ public class PosService(
                 "Бонус жұмсалды",
                 $"{store.Name} — {Fmt(request.RedeemAmount)} Б бонус шегерілді.",
                 $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now,
-                NotificationTemplates.BonusRedeemed, request.RedeemAmount, request.PurchaseAmount));
+                NotificationTemplates.BonusRedeemed, request.RedeemAmount, request.PurchaseAmount, receiptId: receiptId));
         }
 
         var ladder = BonusRules.LadderOf(store);
@@ -97,7 +97,7 @@ public class PosService(
                 "Бонус есептелді!",
                 $"{store.Name} — Сізге {Fmt(accrued)} Б бонус есептелді.",
                 $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now.AddMilliseconds(1),
-                NotificationTemplates.BonusAccrued, accrued, request.PurchaseAmount));
+                NotificationTemplates.BonusAccrued, accrued, request.PurchaseAmount, receiptId: receiptId));
         }
 
         card.TotalSpent += paid;
@@ -183,7 +183,8 @@ public class PosService(
 
     private static Notification NewNotification(
         Customer c, Store s, NotificationType type, string title, string body, string? detail, DateTime at,
-        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null, string? levelKey = null) => new()
+        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null, string? levelKey = null,
+        Guid? receiptId = null) => new()
     {
         Id = Guid.NewGuid(),
         CustomerId = c.Id,
@@ -196,6 +197,7 @@ public class PosService(
         Amount = amount,
         PurchaseAmount = purchaseAmount,
         LevelKey = levelKey,
+        ReceiptId = receiptId,
         CreatedAt = at,
     };
 

@@ -11,6 +11,8 @@ public record NotificationDto(
     int? Amount,
     decimal? PurchaseAmount,
     string? LevelKey,
+    /// <summary>Сатып алу чегінің нөмірі. Бос болса, хабарламаның чегі жоқ.</summary>
+    Guid? ReceiptId,
     string? StoreName,
     string? StoreIcon,
     string? StoreThemeColor,

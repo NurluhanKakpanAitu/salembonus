@@ -23,6 +23,8 @@ public class Notification
     public decimal? PurchaseAmount { get; set; }
     /// <summary>Жаңа деңгей кілті (New, Regular, Favorite, Vip).</summary>
     public string? LevelKey { get; set; }
+    /// <summary>Хабарлама қай сатып алуға қатысты. Сатып алумен байланысы жоқ болса — бос.</summary>
+    public Guid? ReceiptId { get; set; }
     public bool IsRead { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
