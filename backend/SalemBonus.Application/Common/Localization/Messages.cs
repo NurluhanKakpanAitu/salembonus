@@ -227,4 +227,60 @@ public static class Messages
 
     public static string RegisterNotFound(AppLanguage l) => Pick(l,
         "Касса табылмады", "Касса не найдена");
+
+    // Каталог (ТЗ «Товар» §18)
+    public static string CatalogNoOrganization(AppLanguage l) => Pick(l,
+        "Дүкен бизнеске байланбаған", "Магазин не привязан к бизнесу");
+
+    public static string CatalogNameRequired(AppLanguage l) => Pick(l,
+        "Атауын енгізіңіз", "Введите название");
+
+    public static string CatalogDuplicateName(AppLanguage l) => Pick(l,
+        "Мұндай атау осы деңгейде бар", "Такое название уже есть на этом уровне");
+
+    public static string CatalogDuplicate(AppLanguage l) => Pick(l,
+        "Мұндай атау бұрыннан бар", "Такое название уже существует");
+
+    public static string CatalogIconRequired(AppLanguage l) => Pick(l,
+        "Санатқа белгіше таңдаңыз", "Выберите иконку для категории");
+
+    public static string CatalogNodeNotFound(AppLanguage l) => Pick(l,
+        "Санат не топ табылмады", "Категория или группа не найдена");
+
+    public static string CatalogCycle(AppLanguage l) => Pick(l,
+        "Түйінді өзіне не өз ұрпағына ауыстыруға болмайды",
+        "Нельзя переместить узел в самого себя или в своего потомка");
+
+    public static string CatalogParentArchived(AppLanguage l) => Pick(l,
+        "Архивтегі түйіннің ішіне белсенді түйін жасауға болмайды. Алдымен оны қалпына келтіріңіз",
+        "Нельзя создать активный узел внутри архивного. Сначала восстановите его");
+
+    public static string CatalogTooDeep(AppLanguage l, int max) => Pick(l,
+        $"Деңгейлер саны {max}-тен аспауы керек", $"Глубина не может превышать {max} уровней");
+
+    public static string CatalogDeleteBlocked(AppLanguage l, int children, int products) => Pick(l,
+        $"Өшіруге болмайды: ішінде {children} түйін және {products} тауар бар. Мазмұнын басқа жерге ауыстырыңыз немесе архивтеңіз",
+        $"Нельзя удалить: внутри {children} узлов и {products} товаров. Перенесите содержимое или архивируйте");
+
+    public static string CatalogMoveTargetInvalid(AppLanguage l) => Pick(l,
+        "Мазмұнды өз ішіне ауыстыруға болмайды", "Нельзя перенести содержимое внутрь самого узла");
+
+    public static string CatalogStatusInvalid(AppLanguage l) => Pick(l,
+        "Күйі дұрыс емес", "Неверный статус");
+
+    public static string BrandNotFound(AppLanguage l) => Pick(l, "Бренд табылмады", "Бренд не найден");
+
+    public static string UnitNotFound(AppLanguage l) => Pick(l, "Өлшем бірлігі табылмады", "Единица измерения не найдена");
+
+    public static string UnitShortRequired(AppLanguage l) => Pick(l,
+        "Қысқа белгісін енгізіңіз", "Введите краткое обозначение");
+
+    public static string CharacteristicNotFound(AppLanguage l) => Pick(l,
+        "Сипаттама табылмады", "Характеристика не найдена");
+
+    public static string CharacteristicTypeInvalid(AppLanguage l) => Pick(l,
+        "Сипаттаманың түрін таңдаңыз", "Выберите тип характеристики");
+
+    public static string CharacteristicOptionsRequired(AppLanguage l) => Pick(l,
+        "Тізімге кемінде бір мән қосыңыз", "Добавьте хотя бы одно значение списка");
 }

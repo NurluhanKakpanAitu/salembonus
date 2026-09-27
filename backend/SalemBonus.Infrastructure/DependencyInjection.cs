@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLog, AuditLog>();
         services.AddScoped<IStaffOtpRepository, StaffOtpRepository>();
         services.AddScoped<IRegisterRepository, RegisterRepository>();
+        services.AddScoped<ICatalogRepository, CatalogRepository>();
         // Meta-ның Authentication шаблоны бекітілгенше кодтар логқа жазылады.
         services.AddSingleton<IWhatsAppSender, LogWhatsAppSender>();
         return services;
@@ -80,6 +81,9 @@ public static class DependencyInjection
 
         // Демо қызметкерлер тек локал разработкада: белгілі құпиясөзбен аккаунт продакшнда болмауы керек.
         if (scope.ServiceProvider.GetRequiredService<IHostEnvironment>().IsDevelopment())
+        {
             await StaffSeeder.SeedAsync(db, ct);
+            await CatalogDemoSeeder.SeedAsync(db, ct);
+        }
     }
 }

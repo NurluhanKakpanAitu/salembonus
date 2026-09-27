@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SalemBonus.Domain.Core;
 using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Pos;
+using SalemBonus.Domain.Pos.Catalog;
 
 namespace SalemBonus.Infrastructure.Persistence;
 
@@ -27,6 +28,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     // SalemPos (pos)
     public DbSet<Register> Registers => Set<Register>();
+    public DbSet<CatalogNode> CatalogNodes => Set<CatalogNode>();
+    public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<MeasureUnit> Units => Set<MeasureUnit>();
+    public DbSet<CharacteristicDefinition> Characteristics => Set<CharacteristicDefinition>();
+    public DbSet<CharacteristicOption> CharacteristicOptions => Set<CharacteristicOption>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductBarcode> ProductBarcodes => Set<ProductBarcode>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
+    public DbSet<ProductCharacteristicValue> ProductCharacteristics => Set<ProductCharacteristicValue>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
