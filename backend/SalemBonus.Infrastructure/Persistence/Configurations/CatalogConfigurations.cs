@@ -91,6 +91,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         b.Property(x => x.Type).HasConversion<string>().HasMaxLength(16);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
         b.Property(x => x.Description).HasMaxLength(1000);
+        b.Property(x => x.Supplier).HasMaxLength(200);
+        b.Property(x => x.Manufacturer).HasMaxLength(200);
         b.Property(x => x.Country).HasMaxLength(64);
         b.Property(x => x.VatRate).HasPrecision(5, 2);
         b.Property(x => x.MaxDiscountPercent).HasPrecision(5, 2);

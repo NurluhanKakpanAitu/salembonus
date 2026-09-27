@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, Pencil, Plus, X } from 'lucide-react'
+import { Archive, ArchiveRestore, ImagePlus, Pencil, Plus, X } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Toggle } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -13,6 +13,7 @@ import { catalogApi } from '../../lib/catalogApi'
 import { catalogKeys, useCatalogAction, useCatalogPermissions } from '../../lib/catalogHooks'
 import type { Brand, CatalogStatus, Characteristic, CharacteristicType, Unit } from '../../lib/catalogTypes'
 import { useT, type TranslationKey } from '../../lib/i18n'
+import { uploadImage } from '../../lib/upload'
 
 const th = 'px-3 py-3 text-left text-[13px] font-semibold text-ink-2'
 const td = 'px-3 py-2.5 text-[14px]'
@@ -113,11 +114,7 @@ export function BrandsTab() {
       </>}>
         {list.map((b) => (
           <tr key={b.id} className="border-t border-line">
-            <td className={td}>
-              <span className="flex h-9 w-16 items-center justify-center rounded-lg bg-field text-[13px] font-extrabold tracking-tight text-ink-2">
-                {b.name.slice(0, 3).toUpperCase()}
-              </span>
-            </td>
+            <td className={td}><BrandLogo brand={b} /></td>
             <td className={`${td} font-semibold`}>{b.name}</td>
             <td className={`${td} text-right text-brand`}>{b.productCount}</td>
             <td className={td}><StatusBadge active={b.status === 'Active'} label={t(`status.${b.status}.m` as TranslationKey)} /></td>
@@ -131,8 +128,8 @@ export function BrandsTab() {
                 <div className="inline-flex items-center gap-1.5">
                   <EditButton onClick={() => setEditing(b)} />
                   <RowMenu items={[b.status === 'Active'
-                    ? { label: t('catalog.archive'), icon: <Archive size={16} />, onClick: () => void run(() => catalogApi.updateBrand(b.id, { name: b.name, status: 'Archived' }), t('catalog.archived')) }
-                    : { label: t('catalog.restore'), icon: <ArchiveRestore size={16} />, onClick: () => void run(() => catalogApi.updateBrand(b.id, { name: b.name, status: 'Active' }), t('catalog.restored')) }]} />
+                    ? { label: t('catalog.archive'), icon: <Archive size={16} />, onClick: () => void run(() => catalogApi.updateBrand(b.id, { name: b.name, logoUrl: b.logoUrl, status: 'Archived' }), t('catalog.archived')) }
+                    : { label: t('catalog.restore'), icon: <ArchiveRestore size={16} />, onClick: () => void run(() => catalogApi.updateBrand(b.id, { name: b.name, logoUrl: b.logoUrl, status: 'Active' }), t('catalog.restored')) }]} />
                 </div>
               )}
             </td>
@@ -145,16 +142,41 @@ export function BrandsTab() {
   )
 }
 
+function BrandLogo({ brand }: { brand: Pick<Brand, 'name' | 'logoUrl'> }) {
+  return brand.logoUrl
+    ? <img src={brand.logoUrl} alt="" className="h-9 w-16 rounded-lg border border-line bg-white object-contain p-1" />
+    : (
+      <span className="flex h-9 w-16 items-center justify-center rounded-lg bg-field text-[13px] font-extrabold tracking-tight text-ink-2">
+        {brand.name.slice(0, 3).toUpperCase()}
+      </span>
+    )
+}
+
 function BrandModal({ brand, onClose, onSaved }: { brand?: Brand; onClose: () => void; onSaved: (msg: string) => void }) {
   const t = useT()
   const [name, setName] = useState(brand?.name ?? '')
+  const [logoUrl, setLogoUrl] = useState<string | null>(brand?.logoUrl ?? null)
+  const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<CatalogStatus>(brand?.status ?? 'Active')
   const { errors, setErrors, loading, save } = useSave(onSaved)
+
+  const upload = async (file: File | undefined) => {
+    if (!file) return
+    setUploading(true)
+    try {
+      setLogoUrl(await uploadImage(file, 'brand'))
+    } catch (err) {
+      setErrors({ logoUrl: err instanceof Error ? err.message : String(err) })
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return setErrors({ name: t('common.required') })
-    void save(() => (brand ? catalogApi.updateBrand(brand.id, { name, status }) : catalogApi.createBrand({ name, status })), !brand)
+    const body = { name, logoUrl, status }
+    void save(() => (brand ? catalogApi.updateBrand(brand.id, body) : catalogApi.createBrand(body)), !brand)
   }
 
   return (
@@ -163,8 +185,22 @@ function BrandModal({ brand, onClose, onSaved }: { brand?: Brand; onClose: () =>
         <Field label={t('brand.name')} required error={errors.name}>
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} error={!!errors.name} maxLength={100} />
         </Field>
+        <Field label={t('brand.logo')} error={errors.logoUrl}>
+          <div className="flex items-center gap-3">
+            <BrandLogo brand={{ name: name || '—', logoUrl }} />
+            <label className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-line px-4 text-[14px] font-medium hover:bg-field ${uploading ? 'pointer-events-none opacity-60' : ''}`}>
+              <ImagePlus size={17} /> {t('brand.uploadLogo')}
+              <input type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = '' }} />
+            </label>
+            {logoUrl && (
+              <button type="button" onClick={() => setLogoUrl(null)} className="flex items-center gap-1 text-[13px] text-ink-3 hover:text-danger">
+                <X size={14} /> {t('brand.removeLogo')}
+              </button>
+            )}
+          </div>
+        </Field>
         <StatusSelect value={status} onChange={setStatus} gender="m" />
-        <FormButtons loading={loading} onClose={onClose} error={errors.form} />
+        <FormButtons loading={loading || uploading} onClose={onClose} error={errors.form} />
       </form>
     </Modal>
   )

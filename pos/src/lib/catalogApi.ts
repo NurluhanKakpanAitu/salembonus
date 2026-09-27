@@ -16,8 +16,8 @@ export const catalogApi = {
   moveContent: (id: string, targetId: string) => api<void>(`${base}/nodes/${id}/move-content`, json('POST', { targetId })),
 
   brands: () => api<Brand[]>(`${base}/brands`),
-  createBrand: (body: { name: string; status: CatalogStatus }) => api<Brand>(`${base}/brands`, json('POST', body)),
-  updateBrand: (id: string, body: { name: string; status: CatalogStatus }) => api<Brand>(`${base}/brands/${id}`, json('PUT', body)),
+  createBrand: (body: SaveBrand) => api<Brand>(`${base}/brands`, json('POST', body)),
+  updateBrand: (id: string, body: SaveBrand) => api<Brand>(`${base}/brands/${id}`, json('PUT', body)),
   reorderBrand: (id: string, direction: 'up' | 'down') => api<void>(`${base}/brands/${id}/reorder`, json('POST', { direction })),
 
   units: () => api<Unit[]>(`${base}/units`),
@@ -38,5 +38,11 @@ export interface SaveCharacteristic {
   type: CharacteristicType
   isRequired: boolean
   options: string[]
+  status: CatalogStatus
+}
+
+export interface SaveBrand {
+  name: string
+  logoUrl: string | null
   status: CatalogStatus
 }

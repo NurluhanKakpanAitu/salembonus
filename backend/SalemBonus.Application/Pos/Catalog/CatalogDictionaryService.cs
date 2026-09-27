@@ -1,12 +1,13 @@
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
+using SalemBonus.Application.Pos.Media;
 using SalemBonus.Domain.Core;
 using SalemBonus.Domain.Pos.Catalog;
 
 namespace SalemBonus.Application.Pos.Catalog;
 
-public class CatalogDictionaryService(ICatalogRepository repo, CatalogAccess access, IUnitOfWork unitOfWork)
+public class CatalogDictionaryService(ICatalogRepository repo, CatalogAccess access, IUnitOfWork unitOfWork, IFileStorage storage)
     : ICatalogDictionaryService
 {
     private AppLanguage Lang => access.Lang;
@@ -33,7 +34,7 @@ public class CatalogDictionaryService(ICatalogRepository repo, CatalogAccess acc
             Id = Guid.NewGuid(),
             OrganizationId = orgId,
             Name = name,
-            LogoUrl = CatalogAccess.Optional(request.LogoUrl, 500),
+            LogoUrl = Logo(orgId, request.LogoUrl),
             Status = access.Status(request.Status, CatalogStatus.Active),
             SortOrder = existing.Count == 0 ? 1 : existing.Max(b => b.SortOrder) + 1,
         };
@@ -53,7 +54,7 @@ public class CatalogDictionaryService(ICatalogRepository repo, CatalogAccess acc
         if (await repo.BrandNameExistsAsync(orgId, name, brand.Id, ct))
             throw new ValidationException(Messages.CatalogDuplicate(Lang), "name");
         brand.Name = name;
-        brand.LogoUrl = CatalogAccess.Optional(request.LogoUrl, 500);
+        brand.LogoUrl = Logo(orgId, request.LogoUrl);
         brand.Status = access.Status(request.Status, brand.Status);
         brand.UpdatedAt = DateTime.UtcNow;
 
@@ -72,6 +73,15 @@ public class CatalogDictionaryService(ICatalogRepository repo, CatalogAccess acc
             for (var i = 0; i < list.Count; i++) list[i].SortOrder = i + 1;
             await unitOfWork.SaveChangesAsync(ct);
         }
+    }
+
+    /// <summary>Логотип тек осы бизнестің бумасынан (бөтен сілтеме сақталмайды).</summary>
+    private string? Logo(Guid orgId, string? raw)
+    {
+        var url = CatalogAccess.Optional(raw, 500);
+        if (url is not null && !storage.IsOwnUrl(url, MediaService.BrandPrefix(orgId)))
+            throw new ValidationException(Messages.ProductImageInvalid(Lang), "logoUrl");
+        return url;
     }
 
     private static BrandDto ToDto(Brand b, IReadOnlyDictionary<Guid, int> counts) =>

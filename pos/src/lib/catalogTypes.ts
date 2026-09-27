@@ -55,3 +55,99 @@ export interface Characteristic {
   options: string[]
   productCount: number
 }
+
+export interface ProductListItem {
+  id: string
+  name: string
+  article: string | null
+  barcode: string | null
+  imageUrl: string | null
+  nodeId: string | null
+  pathNames: string[]
+  brandId: string | null
+  brandName: string | null
+  unitId: string
+  unitShortName: string | null
+  status: CatalogStatus
+  updatedAt: string
+}
+
+export interface ProductPage {
+  items: ProductListItem[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface ProductBarcode { barcode: string; isPrimary: boolean }
+export interface ProductImage { url: string; isPrimary: boolean }
+export interface ProductCharacteristicValue { definitionId: string; value: string }
+export interface ProductStock { warehouseId: string; warehouseName: string; storeName: string; quantity: number }
+
+export interface Product {
+  id: string
+  name: string
+  article: string | null
+  unitId: string
+  brandId: string | null
+  nodeId: string | null
+  pathNames: string[]
+  status: CatalogStatus
+  description: string | null
+  supplier: string | null
+  manufacturer: string | null
+  country: string | null
+  warrantyMonths: number | null
+  shelfLifeDays: number | null
+  vatRate: number | null
+  isMarked: boolean
+  notes: string | null
+  barcodes: ProductBarcode[]
+  images: ProductImage[]
+  characteristics: ProductCharacteristicValue[]
+  stock: ProductStock[]
+  salePrice: number | null
+  purchasePrice: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface OpeningStock {
+  warehouseId: string | null
+  quantity: number | null
+  purchasePrice: number | null
+  salePrice: number | null
+}
+
+export interface SaveProduct {
+  name: string
+  article: string | null
+  unitId: string | null
+  brandId: string | null
+  nodeId: string | null
+  description: string | null
+  supplier: string | null
+  manufacturer: string | null
+  country: string | null
+  warrantyMonths: number | null
+  shelfLifeDays: number | null
+  vatRate: number | null
+  isMarked: boolean
+  notes: string | null
+  barcodes: ProductBarcode[]
+  images: ProductImage[]
+  characteristics: ProductCharacteristicValue[]
+  opening: OpeningStock | null
+}
+
+export interface ProductQuery {
+  search?: string
+  status?: CatalogStatus | ''
+  nodeId?: string
+  brandId?: string
+  unitId?: string
+  page: number
+  pageSize: number
+}
+
+export interface Warehouse { id: string; name: string; isDefault: boolean }

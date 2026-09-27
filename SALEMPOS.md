@@ -233,10 +233,16 @@ Organization (иесі, бизнес)
 - `product_images` (product_id, url, is_primary, sort_order) — файлы R2-де
 - `brands`, `units`, `characteristic_definitions` (+ тізім мәндері), `product_characteristic_values`
 - `price_types` + `product_prices` (store_id, product_id, price_type_id, price) — бөлшек/көтерме,
-  макетте бар
+  макетте бар. **Қазір:** `product_prices` (product_id, store_id, sale_price, purchase_price) — баға түрі
+  кейін. Каталог бизнеске ортақ, ал баға әр дүкенде өз. Кіріс бағасын кассир көрмейді
+  (`products.edit` не `finance.view` керек)
+- Сурет: браузер R2-ге қолтаңбалы PUT сілтемесімен тікелей жүктейді (түрі мен нақты көлемі
+  қолтаңбаға кіреді, 5 МБ-қа дейін), алдын ала 1600px WebP-ке кішірейтеді. Сервер тек
+  `org/{id}/products/` не `org/{id}/brands/` ішіндегі өз сілтемесін сақтайды.
+  **Кейін:** тауардан алынған суреттерді R2-ден тазалайтын түнгі тапсырма
 
 **Inventory**
-- `warehouses` (store_id, name)
+- `warehouses` (store_id, name, is_default) — әр дүкенге «Основной склад» автоматты
 - `stock_balances` (warehouse_id, product_id, quantity, avg_cost, min_quantity)
 - `stock_movements` — **өзгермейтін журнал**: type (кіріс, сатылым, қайтару, түзету, ауыстыру),
   quantity ±, unit_cost, құжатқа сілтеме. Қалдық = журналдың қосындысы; `stock_balances` — жылдамдық

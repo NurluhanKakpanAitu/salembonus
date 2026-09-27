@@ -26,7 +26,9 @@ public class Product
     public CatalogStatus Status { get; set; } = CatalogStatus.Active;
     public string? Description { get; set; }
 
-    // «Дополнительно» (ТЗ §6.6)
+    // «Дополнительно» (ТЗ §6.6). Жеткізуші мен өндіруші әзірше мәтін: анықтамалықтары кейін.
+    public string? Supplier { get; set; }
+    public string? Manufacturer { get; set; }
     public string? Country { get; set; }
     public int? WarrantyMonths { get; set; }
     public int? ShelfLifeDays { get; set; }

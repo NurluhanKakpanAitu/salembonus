@@ -22,6 +22,17 @@ public class CatalogAccess(IStoreContext storeContext, ICurrentStaff current, IC
         return (orgId, membership);
     }
 
+    /// <summary>Бірнеше рұқсаттың кем дегенде біреуі жеткілікті (мысалы, фото жүктеу: жасау не өзгерту).</summary>
+    public async Task<(Guid OrgId, StoreMembership Membership)> RequireAnyAsync(CancellationToken ct, params string[] permissions)
+    {
+        var membership = await storeContext.GetAsync(ct);
+        if (!permissions.Any(membership.Has)) throw new ForbiddenException(Messages.StaffPermissionDenied(Lang));
+        var orgId = membership.Store?.OrganizationId ?? throw new ForbiddenException(Messages.CatalogNoOrganization(Lang));
+        return (orgId, membership);
+    }
+
+    public Guid StaffUserId => current.StaffUserId;
+
     public void Audit(Guid orgId, Guid storeId, string action, string entity, Guid entityId, object? oldValues, object? newValues) =>
         audit.Record(new AuditEntry
         {

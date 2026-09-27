@@ -11,6 +11,7 @@ using SalemBonus.Infrastructure.Identity;
 using SalemBonus.Infrastructure.Persistence;
 using SalemBonus.Infrastructure.Persistence.Repositories;
 using SalemBonus.Infrastructure.Sms;
+using SalemBonus.Infrastructure.Storage;
 
 namespace SalemBonus.Infrastructure;
 
@@ -25,6 +26,8 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.Section));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.Section));
         services.Configure<StaffAuthOptions>(configuration.GetSection(StaffAuthOptions.Section));
+        services.Configure<R2Options>(configuration.GetSection(R2Options.Section));
+        services.AddSingleton<IFileStorage, R2FileStorage>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
@@ -52,6 +55,8 @@ public static class DependencyInjection
         services.AddScoped<IStaffOtpRepository, StaffOtpRepository>();
         services.AddScoped<IRegisterRepository, RegisterRepository>();
         services.AddScoped<ICatalogRepository, CatalogRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IInventoryRepository, InventoryRepository>();
         // Meta-ның Authentication шаблоны бекітілгенше кодтар логқа жазылады.
         services.AddSingleton<IWhatsAppSender, LogWhatsAppSender>();
         return services;

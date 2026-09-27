@@ -6,6 +6,8 @@ using SalemBonus.Application.Customers;
 using SalemBonus.Application.Notifications;
 using SalemBonus.Application.Pos;
 using SalemBonus.Application.Pos.Catalog;
+using SalemBonus.Application.Pos.Inventory;
+using SalemBonus.Application.Pos.Media;
 using SalemBonus.Application.Pos.Registers;
 using SalemBonus.Application.Kato;
 using SalemBonus.Application.Stores;
@@ -31,6 +33,9 @@ public static class DependencyInjection
         services.AddScoped<CatalogAccess>();
         services.AddScoped<ICatalogNodeService, CatalogNodeService>();
         services.AddScoped<ICatalogDictionaryService, CatalogDictionaryService>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<WarehouseService>();
+        services.AddScoped<MediaService>();
         return services;
     }
 }

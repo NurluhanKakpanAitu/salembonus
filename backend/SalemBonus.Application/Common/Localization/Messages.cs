@@ -283,4 +283,70 @@ public static class Messages
 
     public static string CharacteristicOptionsRequired(AppLanguage l) => Pick(l,
         "Тізімге кемінде бір мән қосыңыз", "Добавьте хотя бы одно значение списка");
+
+    // Тауар (ТЗ «Товар» §6, §18)
+    public static string ProductNotFound(AppLanguage l) => Pick(l, "Тауар табылмады", "Товар не найден");
+
+    public static string ProductUnitRequired(AppLanguage l) => Pick(l,
+        "Өлшем бірлігін таңдаңыз", "Выберите единицу измерения");
+
+    public static string ProductUnitArchived(AppLanguage l) => Pick(l,
+        "Бұл өлшем бірлігі архивте — басқасын таңдаңыз", "Эта единица измерения в архиве — выберите другую");
+
+    public static string ProductBrandArchived(AppLanguage l) => Pick(l,
+        "Бұл бренд архивте — басқасын таңдаңыз", "Этот бренд в архиве — выберите другой");
+
+    public static string ProductNodeArchived(AppLanguage l) => Pick(l,
+        "Бұл санат не топ архивте — басқасын таңдаңыз", "Эта категория или группа в архиве — выберите другую");
+
+    public static string ProductRestoreNodeArchived(AppLanguage l) => Pick(l,
+        "Тауардың санаты архивте. Алдымен санатты қалпына келтіріңіз не классификациясын өзгертіңіз",
+        "Категория товара в архиве. Сначала восстановите её или измените классификацию");
+
+    public static string BarcodeInvalid(AppLanguage l, string code) => Pick(l,
+        $"«{code}» штрихкоды дұрыс емес: 3–64 таңба, тек әріп, сан, «-» және «.»",
+        $"Неверный штрихкод «{code}»: 3–64 символа, только буквы, цифры, «-» и «.»");
+
+    public static string BarcodeRepeated(AppLanguage l, string code) => Pick(l,
+        $"«{code}» штрихкоды екі рет енгізілген", $"Штрихкод «{code}» указан дважды");
+
+    public static string BarcodeTaken(AppLanguage l, string code, string product) => Pick(l,
+        $"«{code}» штрихкоды «{product}» тауарына тиесілі", $"Штрихкод «{code}» уже принадлежит товару «{product}»");
+
+    public static string BarcodeGenerateFailed(AppLanguage l) => Pick(l,
+        "Штрихкод жасалмады, қайталап көріңіз", "Не удалось сгенерировать штрихкод, попробуйте ещё раз");
+
+    public static string ProductImagesTooMany(AppLanguage l, int max) => Pick(l,
+        $"Фото саны {max}-тен аспауы керек", $"Не больше {max} фото");
+
+    public static string ProductImageInvalid(AppLanguage l) => Pick(l,
+        "Фото жүктелмеген не сілтемесі бөтен", "Фото не загружено или ссылка чужая");
+
+    public static string CharacteristicRequired(AppLanguage l, string name) => Pick(l,
+        $"«{name}» сипаттамасын толтырыңыз", $"Заполните характеристику «{name}»");
+
+    public static string CharacteristicValueInvalid(AppLanguage l, string name) => Pick(l,
+        $"«{name}» сипаттамасының мәні дұрыс емес", $"Неверное значение характеристики «{name}»");
+
+    public static string ValueNegative(AppLanguage l) => Pick(l,
+        "Мән теріс болмауы керек", "Значение не может быть отрицательным");
+
+    public static string ValueOutOfRange(AppLanguage l, int min, int max) => Pick(l,
+        $"Мән {min}–{max} аралығында болуы керек", $"Значение должно быть от {min} до {max}");
+
+    public static string WarehouseNotFound(AppLanguage l) => Pick(l, "Қойма табылмады", "Склад не найден");
+
+    public static string DefaultWarehouseName(AppLanguage l) => Pick(l, "Негізгі қойма", "Основной склад");
+
+    // Файл жүктеу
+    public static string UploadKindInvalid(AppLanguage l) => Pick(l, "Файл түрі белгісіз", "Неизвестный тип файла");
+
+    public static string UploadTypeInvalid(AppLanguage l) => Pick(l,
+        "Тек JPG, PNG не WebP суреті", "Только изображения JPG, PNG или WebP");
+
+    public static string UploadTooLarge(AppLanguage l, int mb) => Pick(l,
+        $"Файл {mb} МБ-тан аспауы керек", $"Файл не должен превышать {mb} МБ");
+
+    public static string StorageNotConfigured(AppLanguage l) => Pick(l,
+        "Файл қоймасы бапталмаған", "Хранилище файлов не настроено");
 }

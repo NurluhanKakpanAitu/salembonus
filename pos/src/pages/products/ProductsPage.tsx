@@ -1,6 +1,7 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom'
-import { PackageSearch } from 'lucide-react'
+import { NavLink, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { NodeTreeTable } from '../../components/catalog/NodeTreeTable'
+import { ProductListTab } from '../../components/products/ProductListTab'
+import { ProductFormPage } from './ProductFormPage'
 import { BrandsTab, CharacteristicsTab, UnitsTab } from '../../components/catalog/DictionaryTabs'
 import { useT, type TranslationKey } from '../../lib/i18n'
 
@@ -17,9 +18,27 @@ const TABS: { path: string; label: TranslationKey }[] = [
 
 /**
  * «Товар» бөлімі (ТЗ «Товар» §3): алты қойынды бір жұмыс аймағында ашылады,
- * бүкіл бетті жабатын терезе қолданылмайды.
+ * бүкіл бетті жабатын терезе қолданылмайды. Тауар карточкасы — сол аймақтағы жеке бет.
  */
 export function ProductsPage() {
+  return (
+    <Routes>
+      <Route path="new" element={<ProductFormPage />} />
+      <Route element={<TabsLayout />}>
+        <Route index element={<ProductListTab />} />
+        <Route path="categories" element={<NodeTreeTable mode="categories" />} />
+        <Route path="groups" element={<NodeTreeTable mode="groups" />} />
+        <Route path="brands" element={<BrandsTab />} />
+        <Route path="units" element={<UnitsTab />} />
+        <Route path="characteristics" element={<CharacteristicsTab />} />
+      </Route>
+      <Route path=":id" element={<ProductFormPage />} />
+      <Route path="*" element={<Navigate to="/products" replace />} />
+    </Routes>
+  )
+}
+
+function TabsLayout() {
   const t = useT()
   return (
     <div>
@@ -38,27 +57,7 @@ export function ProductsPage() {
           ))}
         </ul>
       </nav>
-      <Routes>
-        <Route index element={<ListSoon />} />
-        <Route path="categories" element={<NodeTreeTable mode="categories" />} />
-        <Route path="groups" element={<NodeTreeTable mode="groups" />} />
-        <Route path="brands" element={<BrandsTab />} />
-        <Route path="units" element={<UnitsTab />} />
-        <Route path="characteristics" element={<CharacteristicsTab />} />
-        <Route path="*" element={<Navigate to="/products" replace />} />
-      </Routes>
-    </div>
-  )
-}
-
-function ListSoon() {
-  const t = useT()
-  return (
-    <div className="flex min-h-[40vh] items-center justify-center">
-      <div className="max-w-md rounded-2xl border border-line bg-surface px-8 py-10 text-center">
-        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-brand-soft text-brand"><PackageSearch size={26} /></span>
-        <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{t('products.listSoon')}</p>
-      </div>
+      <Outlet />
     </div>
   )
 }

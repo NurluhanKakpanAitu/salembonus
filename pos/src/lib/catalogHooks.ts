@@ -10,14 +10,21 @@ export const catalogKeys = {
   brands: ['catalog', 'brands'] as const,
   units: ['catalog', 'units'] as const,
   characteristics: ['catalog', 'characteristics'] as const,
+  products: ['catalog', 'products'] as const,
 }
 
 export const useCatalogNodes = () => useQuery({ queryKey: catalogKeys.nodes, queryFn: catalogApi.nodes })
+export const useBrands = () => useQuery({ queryKey: catalogKeys.brands, queryFn: catalogApi.brands })
+export const useUnits = () => useQuery({ queryKey: catalogKeys.units, queryFn: catalogApi.units })
+export const useCharacteristics = () => useQuery({ queryKey: catalogKeys.characteristics, queryFn: catalogApi.characteristics })
 
 /** Каталогқа қатысты рұқсаттар (фронт тек жасырады, соңғы тексеріс — серверде). */
 export function useCatalogPermissions() {
   const store = useAuth(activeStore)
   return {
+    view: can(store, 'products.view'),
+    create: can(store, 'products.create'),
+    edit: can(store, 'products.edit'),
     structure: can(store, 'catalog.structure'),
     lifecycle: can(store, 'catalog.lifecycle'),
     dictionaries: can(store, 'catalog.dictionaries'),

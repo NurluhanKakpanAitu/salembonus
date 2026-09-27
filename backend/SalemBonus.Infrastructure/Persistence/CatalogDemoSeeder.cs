@@ -83,10 +83,11 @@ public static class CatalogDemoSeeder
                 Options = options.Select((v, i) => new CharacteristicOption { Id = Guid.NewGuid(), DefinitionId = id, Value = v, SortOrder = i + 1 }).ToList(),
             });
         }
-        Characteristic("Производитель", CharacteristicType.List, true, "Bosch", "Brembo", "TRW", "ATE", "Ferodo");
-        Characteristic("Модель авто", CharacteristicType.List, true, "Toyota", "Hyundai", "Kia", "Chevrolet");
+        // Міндетті сипаттама бизнестің барлық тауарына қойылады (майға да, шинаға да), сондықтан демода — жоқ.
+        Characteristic("Производитель", CharacteristicType.List, false, "Bosch", "Brembo", "TRW", "ATE", "Ferodo");
+        Characteristic("Модель авто", CharacteristicType.List, false, "Toyota", "Hyundai", "Kia", "Chevrolet");
         Characteristic("Год выпуска", CharacteristicType.Range, false);
-        Characteristic("Сторона установки", CharacteristicType.List, true, "Передние", "Задние");
+        Characteristic("Сторона установки", CharacteristicType.List, false, "Передние", "Задние");
         Characteristic("Тип", CharacteristicType.List, false, "Дисковые", "Барабанные");
         Characteristic("Артикул (OEM)", CharacteristicType.Text, false);
         Characteristic("Материал", CharacteristicType.List, false, "Керамика", "Полуметалл", "Органика");

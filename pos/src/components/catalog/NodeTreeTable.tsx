@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Archive, ArchiveRestore, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FolderInput, Pencil, Plus, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Archive, ArchiveRestore, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FolderInput, PackagePlus, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { OrderControl } from '../ui/OrderControl'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
@@ -21,6 +22,7 @@ type Mode = 'categories' | 'groups'
  */
 export function NodeTreeTable({ mode }: { mode: Mode }) {
   const t = useT()
+  const navigate = useNavigate()
   const nodesQuery = useCatalogNodes()
   const perms = useCatalogPermissions()
   const run = useCatalogAction(catalogKeys.nodes)
@@ -60,6 +62,9 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
 
   const menu = (n: CatalogNode): RowMenuItem[] => {
     const items: RowMenuItem[] = []
+    // ТЗ §22.4: «+ Товар» — карточка осы жолмен толтырылып ашылады.
+    if (perms.create && n.status === 'Active')
+      items.push({ label: t('catalog.addProduct'), icon: <PackagePlus size={16} />, onClick: () => navigate(`/products/new?nodeId=${n.id}`) })
     if (perms.structure && n.status === 'Active')
       items.push({ label: n.depth === 0 ? t('catalog.addGroup') : t('catalog.addSubgroup'), icon: <Plus size={16} />, onClick: () => setForm({ parentId: n.id }) })
     if (perms.structure && (n.childCount > 0 || n.productCount > 0))
@@ -157,7 +162,10 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
                     )}
                   </td>
                   {mode === 'groups' && <td className={`${td} text-ink-2`}>{n.pathNames[0]}</td>}
-                  <td className={`${td} text-right text-brand`}>{n.productCount}</td>
+                  <td className={`${td} text-right`}>
+                    <button type="button" title={t('catalog.showProducts')} onClick={() => navigate(`/products?nodeId=${n.id}&status=all`)}
+                      className="font-medium text-brand hover:underline">{n.productCount}</button>
+                  </td>
                   <td className={`${td} text-right`}>{n.childCount}</td>
                   {mode === 'categories' && <td className={`${td} text-right`}>{n.descendantCount - n.childCount}</td>}
                   <td className={td}>

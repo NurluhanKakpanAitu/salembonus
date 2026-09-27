@@ -21,7 +21,7 @@ export function Field({ label, error, required, children, hint }: {
 
 const control = 'w-full rounded-xl border bg-field px-3.5 text-[15px] text-ink outline-none transition-colors focus:border-brand focus:bg-surface'
 
-export function Input({ error, className = '', ...rest }: { error?: boolean } & React.InputHTMLAttributes<HTMLInputElement>) {
+export function Input({ error, className = '', ...rest }: { error?: boolean } & React.ComponentProps<'input'>) {
   return <input {...rest} className={`${control} h-11 ${error ? 'border-danger' : 'border-line'} ${className}`} />
 }
 
