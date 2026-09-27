@@ -25,6 +25,17 @@ public class MeController(ICustomerService service) : ControllerBase
     public async Task<ActionResult<CustomerDto>> UpdateAvatar([FromBody] UpdateAvatarRequest request, CancellationToken ct) =>
         Ok(await service.UpdateAvatarAsync(request, ct));
 
+    /// <summary>
+    /// Аккаунтты біржола өшіру. Барлық жеке дерек, карталар мен операциялар жойылады,
+    /// қайтару мүмкін емес.
+    /// </summary>
+    [HttpDelete]
+    public async Task<IActionResult> Delete(CancellationToken ct)
+    {
+        await service.DeleteMeAsync(ct);
+        return NoContent();
+    }
+
     /// <summary>Кассада көрсетілетін QR коды.</summary>
     [HttpGet("qr")]
     public async Task<ActionResult<QrCodeDto>> GetQr(CancellationToken ct) =>

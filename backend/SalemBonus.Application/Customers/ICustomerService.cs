@@ -8,4 +8,6 @@ public interface ICustomerService
     Task<QrCodeDto> GetMyQrAsync(CancellationToken ct = default);
     Task<CustomerDto> UpdateMeAsync(UpdateProfileRequest request, CancellationToken ct = default);
     Task<CustomerDto> UpdateAvatarAsync(UpdateAvatarRequest request, CancellationToken ct = default);
+    /// <summary>Аккаунтты және барлық жеке деректі біржола өшіру.</summary>
+    Task DeleteMeAsync(CancellationToken ct = default);
 }

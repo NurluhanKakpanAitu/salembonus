@@ -15,12 +15,19 @@ import { TransactionsPage } from './pages/TransactionsPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { VerifyPage } from './pages/auth/VerifyPage'
 import { WelcomePage } from './pages/auth/WelcomePage'
+import { PrivacyPage } from './pages/legal/PrivacyPage'
+import { TermsPage } from './pages/legal/TermsPage'
+import { DeleteAccountPage } from './pages/legal/DeleteAccountPage'
 
 export default function App() {
   return (
     <Routes>
       <Route path="login" element={<LoginPage />} />
       <Route path="verify" element={<VerifyPage />} />
+      {/* Құқықтық беттер кіруді талап етпейді: дүкендер оларды сырттан ашады. */}
+      <Route path="privacy" element={<PrivacyPage />} />
+      <Route path="terms" element={<TermsPage />} />
+      <Route path="delete-account" element={<DeleteAccountPage />} />
       <Route element={<RequireAuth />}>
         <Route path="welcome" element={<WelcomePage />} />
         <Route element={<AppShell />}>

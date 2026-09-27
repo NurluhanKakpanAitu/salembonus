@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Coins, Globe, Info, LogOut, MessageCircleMore, Palette, Pencil, ShoppingBag, User } from 'lucide-react'
+import { Coins, Globe, Info, LogOut, MessageCircleMore, Palette, Pencil, ShoppingBag, Trash2, User } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../lib/api'
@@ -10,7 +10,7 @@ import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { formatNumber, initials } from '../lib/format'
 import { avatarSrc } from '../lib/avatar'
 import { LANGUAGES, useLanguage } from '../lib/language'
-import { useMe, useQr } from '../lib/queries'
+import { useDeleteMe, useMe, useQr } from '../lib/queries'
 import { useT, type TranslationKey } from '../lib/i18n'
 import { OptionSheet } from '../components/OptionSheet'
 import { THEME_MODES, useThemeMode } from '../lib/themeMode'
@@ -23,7 +23,9 @@ export function ProfilePage() {
   const qr = useQr()
   const [lang, setLang] = useLanguage()
   const [themeMode, setThemeMode] = useThemeMode()
-  const [sheet, setSheet] = useState<'language' | 'theme' | null>(null)
+  const [sheet, setSheet] = useState<'language' | 'theme' | 'delete' | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const deleteMe = useDeleteMe()
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -33,6 +35,19 @@ export function ProfilePage() {
     clear()
     qc.clear()
     navigate('/login', { replace: true })
+  }
+
+  /** Аккаунтты өшіру: сәтті болса токендер де тазаланып, кіру бетіне қайтарылады. */
+  const removeAccount = async () => {
+    setDeleteError(null)
+    try {
+      await deleteMe.mutateAsync()
+      useAuth.getState().clear()
+      setSheet(null)
+      navigate('/login', { replace: true })
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : t('profile.deleteFailed'))
+    }
   }
 
   const currentLanguage = LANGUAGES.find((l) => l.value === lang)!
@@ -106,6 +121,22 @@ export function ProfilePage() {
         />
         <ProfileRow icon={Info} tint="#6D5DF6" title={t('profile.about')} subtitle={t('profile.aboutHint')} to="/about" />
         <ProfileRow icon={LogOut} tint="#E5484D" title={t('profile.logout')} subtitle={t('profile.logoutHint')} danger onClick={() => void logout()} />
+        <ProfileRow
+          icon={Trash2}
+          tint="#E5484D"
+          title={t('profile.deleteAccount')}
+          subtitle={t('profile.deleteAccountHint')}
+          danger
+          onClick={() => {
+            setDeleteError(null)
+            setSheet('delete')
+          }}
+        />
+
+        <nav className="flex justify-center gap-4 pt-1">
+          <Link to="/privacy" className="text-[12px] text-ink-3">{t('legal.privacy')}</Link>
+          <Link to="/terms" className="text-[12px] text-ink-3">{t('legal.terms')}</Link>
+        </nav>
 
         <footer className="py-2 text-center text-[11px] text-ink-3">SalemBonus v{APP_VERSION}</footer>
       </div>
@@ -126,6 +157,46 @@ export function ProfilePage() {
         onSelect={setThemeMode}
         onClose={() => setSheet(null)}
       />
+
+      {sheet === 'delete' && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onClick={() => !deleteMe.isPending && setSheet(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-[480px] rounded-t-[28px] bg-surface px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted" />
+            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-danger-soft text-danger">
+              <Trash2 size={22} />
+            </div>
+            <h2 className="text-center text-[18px] font-extrabold">{t('profile.deleteTitle')}</h2>
+            <p className="mt-2 text-center text-[14px] leading-snug text-ink-2">{t('profile.deleteBody')}</p>
+
+            {deleteError && <p className="mt-3 text-center text-[13px] text-danger">{deleteError}</p>}
+
+            <button
+              type="button"
+              disabled={deleteMe.isPending}
+              onClick={() => void removeAccount()}
+              className="mt-5 flex h-13 w-full items-center justify-center rounded-2xl bg-danger text-[15px] font-bold text-white active:scale-[0.99] disabled:opacity-60"
+            >
+              {deleteMe.isPending ? t('profile.deleting') : t('profile.deleteConfirm')}
+            </button>
+            <button
+              type="button"
+              disabled={deleteMe.isPending}
+              onClick={() => setSheet(null)}
+              className="mt-2 flex h-13 w-full items-center justify-center rounded-2xl text-[15px] font-semibold text-ink-2 disabled:opacity-60"
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

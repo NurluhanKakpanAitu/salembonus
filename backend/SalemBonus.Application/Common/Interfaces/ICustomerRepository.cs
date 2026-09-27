@@ -9,4 +9,9 @@ public interface ICustomerRepository
     Task<Customer?> GetByPhoneAsync(string phone, CancellationToken ct = default);
     Task<Customer?> GetByQrCodeAsync(string qrCode, CancellationToken ct = default);
     void Add(Customer customer);
+    /// <summary>
+    /// Клиентті және оған қатысты барлық деректі біржола өшіреді: карталар, операциялар,
+    /// хабарламалар, сеанстар, SMS кодтары. Қайтару мүмкін емес.
+    /// </summary>
+    Task DeleteAsync(Guid customerId, CancellationToken ct = default);
 }

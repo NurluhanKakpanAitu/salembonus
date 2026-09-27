@@ -207,6 +207,7 @@ export const meApi = {
   setAvatar: (avatarUrl: string | null) =>
     api<Customer>('/me/avatar', { method: 'PUT', body: JSON.stringify({ avatarUrl }) }),
   qr: () => api<QrCode>('/me/qr'),
+  remove: () => api<void>('/me', { method: 'DELETE' }),
 }
 
 export type NotificationType =

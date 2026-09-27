@@ -19,6 +19,9 @@ public class CustomerService(
 
     public const string QrPrefix = "SB:";
 
+    public Task DeleteMeAsync(CancellationToken ct = default) =>
+        customers.DeleteAsync(currentUser.CustomerId, ct);
+
     public async Task<CustomerDto?> GetMeAsync(CancellationToken ct = default)
     {
         var customer = await customers.GetByIdAsync(currentUser.CustomerId, ct);

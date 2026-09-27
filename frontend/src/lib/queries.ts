@@ -31,6 +31,15 @@ export const useSetAvatar = () => {
   })
 }
 
+/** Аккаунтты біржола өшіру. Сәтті болса, барлық кэш тазаланады. */
+export const useDeleteMe = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => meApi.remove(),
+    onSuccess: () => qc.clear(),
+  })
+}
+
 /** КАТО тармақтары ұзақ өзгермейді, сондықтан ұзақ сақталады. */
 export const useKatoChildren = (parent: string | null | undefined, enabled = true) =>
   useQuery({

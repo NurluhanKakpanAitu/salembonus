@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { AuthLayout, FieldError, PrimaryButton } from '../../components/auth/AuthLayout'
 import { authApi, ApiError } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
@@ -53,9 +53,13 @@ export function LoginPage() {
         />
         <FieldError message={error} />
         <PrimaryButton loading={loading} disabled={!isCompletePhone(phone)}>{t('auth.getCode')}</PrimaryButton>
-        <p className="mt-auto pt-8 text-center text-xs text-ink-3">
-          {t('auth.terms')}
-        </p>
+        <div className="mt-auto pt-8 text-center">
+          <p className="text-xs text-ink-3">{t('auth.terms')}</p>
+          <nav className="mt-1.5 flex justify-center gap-4">
+            <Link to="/terms" className="text-xs font-semibold text-brand">{t('legal.terms')}</Link>
+            <Link to="/privacy" className="text-xs font-semibold text-brand">{t('legal.privacy')}</Link>
+          </nav>
+        </div>
       </form>
     </AuthLayout>
   )
