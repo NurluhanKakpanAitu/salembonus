@@ -9,11 +9,11 @@ import { SectionPage } from './pages/SectionPage'
 import { refreshSession, useAuth } from './lib/auth'
 import { loadRegister } from './lib/register'
 import { CashierPage } from './pages/CashierPage'
+import { ProductsPage } from './pages/products/ProductsPage'
 import type { TranslationKey } from './lib/i18n'
 
 const HINTS: Record<string, TranslationKey> = {
   '/statistics': 'section.statisticsHint',
-  '/products': 'section.productsHint',
 }
 
 /** Кірмеген пайдаланушы кіру бетіне жіберіледі. Шешімді сервер қабылдайды (ТЗ §11.8). */
@@ -52,8 +52,12 @@ export default function App() {
           {NAV.map((item) => (
             <Route
               key={item.path}
-              path={item.path}
-              element={item.path === '/cashier' ? <CashierPage /> : <SectionPage item={item} hint={HINTS[item.path]} />}
+              path={item.path === '/products' ? '/products/*' : item.path}
+              element={
+                item.path === '/cashier' ? <CashierPage />
+                : item.path === '/products' ? <ProductsPage />
+                : <SectionPage item={item} hint={HINTS[item.path]} />
+              }
             />
           ))}
           <Route path="*" element={<StartPage />} />

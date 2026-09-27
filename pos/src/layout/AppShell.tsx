@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useT } from '../lib/i18n'
 import { useRegister } from '../lib/register'
 import { LockScreen } from '../components/LockScreen'
+import { Toaster } from '../components/ui/Toast'
 import { useIdleLock } from './useIdleLock'
 import { NAV } from './nav'
 import { Sidebar } from './Sidebar'
@@ -58,6 +59,7 @@ export function AppShell() {
       </div>
       {/* Бұғат беттің үстінен жабады: астындағы бет (себет т.б.) сол күйінде қалады. */}
       {locked && <LockScreen />}
+      <Toaster />
     </div>
   )
 }

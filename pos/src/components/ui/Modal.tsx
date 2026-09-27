@@ -20,7 +20,7 @@ export function Modal({ title, onClose, children, width = 440 }: {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full rounded-2xl bg-surface p-6 shadow-xl"
+        className="max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl"
         style={{ maxWidth: width }}
         onMouseDown={(e) => e.stopPropagation()}
       >
