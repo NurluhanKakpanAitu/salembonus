@@ -14,8 +14,11 @@ public record StaffSessionResponse(string AccessToken, DateTime AccessTokenExpir
 /// </summary>
 [ApiController]
 [Route("api/staff/v1/auth")]
-public class StaffAuthController(IStaffAuthService auth, IStaffPasswordResetService reset, IWebHostEnvironment env)
-    : ControllerBase
+public class StaffAuthController(
+    IStaffAuthService auth,
+    IStaffPasswordResetService reset,
+    IStaffCredentialsService credentials,
+    IWebHostEnvironment env) : ControllerBase
 {
     /// <summary>Телефон + құпиясөз.</summary>
     [HttpPost("login")]
@@ -60,6 +63,21 @@ public class StaffAuthController(IStaffAuthService auth, IStaffPasswordResetServ
     public async Task<ActionResult<StaffMeDto>> SetLanguage([FromBody] StaffLanguageRequest request, CancellationToken ct) =>
         Ok(await auth.SetLanguageAsync(request.Language, ct));
 
+    /// <summary>PIN қою не ауыстыру — қазіргі құпиясөзбен (ТЗ «Касса» §17.8).</summary>
+    [HttpPut("me/pin")]
+    [Authorize(Policy = StaffAuth.Policy)]
+    public async Task<ActionResult<StaffMeDto>> SetPin([FromBody] SetPinRequest request, CancellationToken ct) =>
+        Ok(await credentials.SetPinAsync(request, ct));
+
+    /// <summary>Құпиясөзді ауыстыру — қазіргісін растап (ТЗ «Касса» §17.7). Басқа сеанстар жабылады.</summary>
+    [HttpPut("me/password")]
+    [Authorize(Policy = StaffAuth.Policy)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken ct)
+    {
+        await credentials.ChangePasswordAsync(request, ct);
+        return NoContent();
+    }
+
     /// <summary>Құпиясөз талаптары — фронт жаңа құпиясөзді алдын ала тексеру үшін.</summary>
     [HttpGet("password-policy")]
     [AllowAnonymous]
@@ -89,16 +107,19 @@ public class StaffAuthController(IStaffAuthService auth, IStaffPasswordResetServ
         return NoContent();
     }
 
-    private StaffSessionResponse Respond(StaffSession session)
+    private StaffSessionResponse Respond(StaffSession session) => IssueSession(Response, env, session);
+
+    private void ClearCookie() =>
+        Response.Cookies.Delete(StaffAuth.RefreshCookie, CookieOptions(env, null));
+
+    /// <summary>Сеансты жауапқа жазу: refresh — httpOnly cookie-ге, қалғаны — JSON-ға.</summary>
+    internal static StaffSessionResponse IssueSession(HttpResponse response, IWebHostEnvironment env, StaffSession session)
     {
-        Response.Cookies.Append(StaffAuth.RefreshCookie, session.RefreshToken, CookieOptions(session.RefreshTokenExpiresAt));
+        response.Cookies.Append(StaffAuth.RefreshCookie, session.RefreshToken, CookieOptions(env, session.RefreshTokenExpiresAt));
         return new StaffSessionResponse(session.AccessToken, session.AccessTokenExpiresAt, session.Me);
     }
 
-    private void ClearCookie() =>
-        Response.Cookies.Delete(StaffAuth.RefreshCookie, CookieOptions(null));
-
-    private CookieOptions CookieOptions(DateTime? expires) => new()
+    private static CookieOptions CookieOptions(IWebHostEnvironment env, DateTime? expires) => new()
     {
         HttpOnly = true,
         // Локалда http, продакшнда тек https.

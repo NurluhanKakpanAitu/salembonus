@@ -123,7 +123,7 @@ public class StaffPasswordResetService(
             throw new ValidationException(Messages.StaffResetExpired(Lang));
 
         var password = request.NewPassword ?? string.Empty;
-        ValidatePassword(password);
+        CredentialRules.ValidatePassword(password, _opt, Lang);
         if (password != request.ConfirmPassword)
             throw new ValidationException(Messages.StaffPasswordsMismatch(Lang), "confirmPassword");
 
@@ -138,14 +138,6 @@ public class StaffPasswordResetService(
         await refreshTokens.RevokeAllAsync(user.Id, ct);
         audit.Record(Entry(user, "auth.password_changed", true, "reset"));
         await unitOfWork.SaveChangesAsync(ct);
-    }
-
-    private void ValidatePassword(string password)
-    {
-        if (password.Length < _opt.MinPasswordLength)
-            throw new ValidationException(Messages.StaffPasswordTooShort(Lang, _opt.MinPasswordLength), "newPassword");
-        if (_opt.RequireLetterAndDigit && !(password.Any(char.IsLetter) && password.Any(char.IsDigit)))
-            throw new ValidationException(Messages.StaffPasswordWeak(Lang), "newPassword");
     }
 
     private async Task<StaffUser> FindUserAsync(string? rawPhone, CancellationToken ct)

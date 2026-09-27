@@ -28,6 +28,8 @@ public record StaffMeDto(
     Guid OrganizationId,
     string OrganizationName,
     IReadOnlyList<StaffStoreDto> Stores,
+    /// <summary>PIN қойылған ба — кассада PIN-мен кіру мен бұғатты ашу үшін керек.</summary>
+    bool HasPin,
     /// <summary>Кіргеннен кейін ашылатын бет: "statistics" (иесі, әкімші) немесе "cashier" (кассир).</summary>
     string StartPage);
 
@@ -47,3 +49,9 @@ public record PasswordResetComplete(string? ResetToken, string? NewPassword, str
 
 /// <summary>Кіру бетіне керек құпиясөз талаптары (фронт алдын ала тексереді, соңғы шешім — серверде).</summary>
 public record PasswordPolicy(int MinLength, bool RequireLetterAndDigit);
+
+/// <summary>PIN қою немесе ауыстыру — қазіргі құпиясөзбен расталады (ТЗ «Касса» §17.8).</summary>
+public record SetPinRequest(string? CurrentPassword, string? Pin, string? ConfirmPin);
+
+/// <summary>Құпиясөзді ауыстыру — қазіргісін растап (ТЗ «Касса» §17.7).</summary>
+public record ChangePasswordRequest(string? CurrentPassword, string? NewPassword, string? ConfirmPassword);

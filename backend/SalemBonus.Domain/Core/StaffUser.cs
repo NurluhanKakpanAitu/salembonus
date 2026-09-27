@@ -8,6 +8,9 @@ public class StaffUser
 {
     public const int MaxFailedLogins = 5;
     public static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+    /// <summary>PIN 4 таңба ғана — теріп көру оңай, сондықтан шегі қатаң. Асса — құпиясөзбен кіру керек.</summary>
+    public const int MaxFailedPins = 5;
+    public static readonly TimeSpan PinLockoutDuration = TimeSpan.FromMinutes(15);
 
     public Guid Id { get; set; }
     public Guid OrganizationId { get; set; }
@@ -24,6 +27,8 @@ public class StaffUser
     public int FailedLoginCount { get; set; }
     public DateTime? LockedUntil { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public int PinFailedCount { get; set; }
+    public DateTime? PinLockedUntil { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public Organization? Organization { get; set; }
@@ -32,4 +37,8 @@ public class StaffUser
     public string FullName => $"{FirstName} {LastName}".Trim();
 
     public bool IsLockedOut(DateTime now) => LockedUntil is { } until && until > now;
+
+    public bool IsPinLockedOut(DateTime now) => PinLockedUntil is { } until && until > now;
+
+    public bool HasPin => PinHash is not null;
 }

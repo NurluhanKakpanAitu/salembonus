@@ -41,6 +41,7 @@ public class StaffUserConfiguration : IEntityTypeConfiguration<StaffUser>
         b.Property(x => x.PinHash).HasMaxLength(200);
         b.Property(x => x.Language).HasMaxLength(5).IsRequired();
         b.Ignore(x => x.FullName);
+        b.Ignore(x => x.HasPin);
         b.HasOne(x => x.Organization).WithMany().HasForeignKey(x => x.OrganizationId).OnDelete(DeleteBehavior.Restrict);
         b.HasMany(x => x.Memberships).WithOne(x => x.StaffUser!).HasForeignKey(x => x.StaffUserId).OnDelete(DeleteBehavior.Cascade);
     }

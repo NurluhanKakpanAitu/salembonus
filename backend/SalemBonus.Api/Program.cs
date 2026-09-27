@@ -65,6 +65,10 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy(StaffAuth.ResetRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1) }));
+    // PIN: әр аккаунтқа 5 қате шегі сервисте; IP бойынша — касса тұрған дүкеннің жалпы шегі.
+    o.AddPolicy(StaffAuth.PinRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));
 });
 
 builder.Services.AddControllers();

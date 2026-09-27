@@ -21,6 +21,9 @@ public static class StaffSeeder
     public const string OwnerPassword = "Demo-Owner-2026";
     public const string CashierPhone = "+77000000002";
     public const string CashierPassword = "Demo-Kassir-2026";
+    /// <summary>Тіркелген кассада PIN-мен кіру мен бұғатты ашу үшін.</summary>
+    public const string OwnerPin = "3691";
+    public const string CashierPin = "2580";
 
     public static async Task SeedAsync(AppDbContext db, CancellationToken ct = default)
     {
@@ -34,9 +37,11 @@ public static class StaffSeeder
         db.Organizations.Add(org);
         store.OrganizationId = org.Id;
 
-        db.StaffUsers.AddRange(
-            Staff(org.Id, store.Id, OwnerPhone, "Максатбек", "Абдужаббаров", hasher.Hash(OwnerPassword), StaffRole.Owner, 100),
-            Staff(org.Id, store.Id, CashierPhone, "Алишер", "Кассир", hasher.Hash(CashierPassword), StaffRole.Cashier, 5));
+        var owner = Staff(org.Id, store.Id, OwnerPhone, "Максатбек", "Абдужаббаров", hasher.Hash(OwnerPassword), StaffRole.Owner, 100);
+        owner.PinHash = hasher.Hash(OwnerPin);
+        var cashier = Staff(org.Id, store.Id, CashierPhone, "Алишер", "Кассир", hasher.Hash(CashierPassword), StaffRole.Cashier, 5);
+        cashier.PinHash = hasher.Hash(CashierPin);
+        db.StaffUsers.AddRange(owner, cashier);
 
         db.Registers.Add(new Register { Id = Guid.NewGuid(), StoreId = store.Id, Name = "Касса №1" });
 

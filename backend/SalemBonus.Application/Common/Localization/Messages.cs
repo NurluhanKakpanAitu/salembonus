@@ -189,4 +189,42 @@ public static class Messages
     public static string StaffOtpText(string language, string code) => language == "kk"
         ? $"SalemPos: құпиясөзді қалпына келтіру коды {code}. Ешкімге айтпаңыз."
         : $"SalemPos: код для восстановления пароля {code}. Никому не сообщайте.";
+
+    // PIN, касса және кассир ауысуы (ТЗ «Касса» §15, §17, §18)
+    public static string StaffPinRequired(AppLanguage l) => Pick(l,
+        "PIN-кодты енгізіңіз", "Введите PIN-код");
+
+    public static string StaffPinFormat(AppLanguage l) => Pick(l,
+        "PIN-код дәл 4 цифрдан тұруы керек", "PIN-код должен состоять ровно из 4 цифр");
+
+    public static string StaffPinSimple(AppLanguage l) => Pick(l,
+        "PIN-код тым оңай. Бірдей не қатарынан келетін цифрларды қолданбаңыз",
+        "Слишком простой PIN-код. Не используйте одинаковые или идущие подряд цифры");
+
+    public static string StaffPinMismatch(AppLanguage l) => Pick(l,
+        "PIN-кодтар сәйкес келмейді", "PIN-коды не совпадают");
+
+    public static string StaffPinWrong(AppLanguage l, int attemptsLeft) => attemptsLeft > 0
+        ? Pick(l, $"PIN-код қате, {attemptsLeft} әрекет қалды", $"Неверный PIN-код, осталось попыток: {attemptsLeft}")
+        : Pick(l, "PIN-код қате", "Неверный PIN-код");
+
+    public static string StaffPinLocked(AppLanguage l, int minutes) => Pick(l,
+        $"PIN-код {minutes} минутқа бұғатталды. Құпиясөзбен кіріңіз",
+        $"PIN-код заблокирован на {minutes} мин. Войдите по паролю");
+
+    public static string StaffPinNotSet(AppLanguage l) => Pick(l,
+        "PIN-код қойылмаған. Құпиясөзбен кіріп, PIN-код қойыңыз",
+        "PIN-код не установлен. Войдите по паролю и установите PIN-код");
+
+    public static string StaffCurrentPasswordWrong(AppLanguage l) => Pick(l,
+        "Қазіргі құпиясөз қате", "Текущий пароль неверный");
+
+    public static string StaffNotAllowedOnRegister(AppLanguage l) => Pick(l,
+        "Бұл қызметкер осы кассада жұмыс істей алмайды", "Этот сотрудник не может работать на этой кассе");
+
+    public static string RegisterNotActivated(AppLanguage l) => Pick(l,
+        "Бұл құрылғы кассаға тіркелмеген", "Это устройство не подключено как касса");
+
+    public static string RegisterNotFound(AppLanguage l) => Pick(l,
+        "Касса табылмады", "Касса не найдена");
 }

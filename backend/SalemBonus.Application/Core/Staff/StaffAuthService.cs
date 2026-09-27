@@ -140,6 +140,80 @@ public class StaffAuthService(
         return ToMe(user);
     }
 
+    public async Task<StaffSession> SignInWithPinAsync(
+        Guid staffUserId, string? pin, Guid storeId, Guid registerId, string? device, CancellationToken ct = default)
+    {
+        var user = await staff.GetByIdForUpdateAsync(staffUserId, ct);
+        if (user is null || !user.IsActive || !CanSellIn(user, storeId))
+            throw new ValidationException(Messages.StaffNotAllowedOnRegister(Lang), "staff");
+
+        var now = DateTime.UtcNow;
+        await CheckPinAsync(user, pin, storeId, registerId, "auth.pin_login", now, ct);
+
+        user.LastLoginAt = now;
+        var me = ToMe(user);
+        var session = Issue(user, me, device, now);
+        audit.Record(Entry(user, "auth.pin_login", true, null, storeId, registerId));
+        await unitOfWork.SaveChangesAsync(ct);
+        return session;
+    }
+
+    public async Task VerifyPinAsync(string? pin, Guid storeId, Guid registerId, CancellationToken ct = default)
+    {
+        var user = await staff.GetByIdForUpdateAsync(current.StaffUserId, ct)
+            ?? throw new UnauthorizedException(Messages.SessionExpired(Lang));
+        if (!CanSellIn(user, storeId))
+            throw new ForbiddenException(Messages.StaffNotAllowedOnRegister(Lang));
+
+        var now = DateTime.UtcNow;
+        await CheckPinAsync(user, pin, storeId, registerId, "register.unlock", now, ct);
+        audit.Record(Entry(user, "register.unlock", true, null, storeId, registerId));
+        await unitOfWork.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// PIN тексерісі. 4 таңбаны теріп көру оңай, сондықтан 5 қатеден кейін PIN 15 минутқа
+    /// бұғатталады — ол кезде тек құпиясөзбен кіруге болады. Сәтсіз әрекет те сақталады.
+    /// </summary>
+    private async Task CheckPinAsync(
+        StaffUser user, string? pin, Guid storeId, Guid registerId, string action, DateTime now, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(pin))
+            throw new ValidationException(Messages.StaffPinRequired(Lang), "pin");
+        if (user.PinHash is null)
+            throw new ValidationException(Messages.StaffPinNotSet(Lang), "pin");
+        if (user.IsPinLockedOut(now))
+        {
+            var minutes = (int)Math.Ceiling((user.PinLockedUntil!.Value - now).TotalMinutes);
+            throw new ValidationException(Messages.StaffPinLocked(Lang, minutes), "pin");
+        }
+
+        if (!hasher.Verify(pin, user.PinHash))
+        {
+            user.PinFailedCount++;
+            var left = StaffUser.MaxFailedPins - user.PinFailedCount;
+            string message;
+            if (left <= 0)
+            {
+                user.PinLockedUntil = now.Add(StaffUser.PinLockoutDuration);
+                user.PinFailedCount = 0;
+                message = Messages.StaffPinLocked(Lang, (int)StaffUser.PinLockoutDuration.TotalMinutes);
+            }
+            else message = Messages.StaffPinWrong(Lang, left);
+
+            audit.Record(Entry(user, action, false, "wrong_pin", storeId, registerId));
+            await unitOfWork.SaveChangesAsync(ct);
+            throw new ValidationException(message, "pin");
+        }
+
+        user.PinFailedCount = 0;
+        user.PinLockedUntil = null;
+    }
+
+    private static bool CanSellIn(StaffUser user, Guid storeId) =>
+        user.Memberships.Any(m => m.StoreId == storeId && m.IsActive && m.Store is { IsActive: true }
+                                  && m.Has(StaffPermissions.SalesCreate));
+
     private StaffSession Issue(StaffUser user, StaffMeDto me, string? device, DateTime now)
     {
         var access = tokens.CreateStaffAccessToken(user.Id, user.Phone);
@@ -166,10 +240,13 @@ public class StaffAuthService(
         await unitOfWork.SaveChangesAsync(ct);
     }
 
-    private AuditEntry Entry(StaffUser user, string action, bool success, string? details) => new()
+    private AuditEntry Entry(
+        StaffUser user, string action, bool success, string? details, Guid? storeId = null, Guid? registerId = null) => new()
     {
         Id = Guid.NewGuid(),
         OrganizationId = user.OrganizationId,
+        StoreId = storeId,
+        RegisterId = registerId,
         StaffUserId = user.Id,
         Action = action,
         Success = success,
@@ -197,7 +274,7 @@ public class StaffAuthService(
 
         return new StaffMeDto(
             user.Id, user.Phone, user.FirstName, user.LastName, user.Language,
-            user.OrganizationId, user.Organization?.Name ?? string.Empty, stores, startPage);
+            user.OrganizationId, user.Organization?.Name ?? string.Empty, stores, user.HasPin, startPage);
     }
 
     private string ParsePhone(string raw)
