@@ -22,9 +22,9 @@ export function NotificationsPage() {
       <div className="mt-1 flex flex-col gap-2.5">
         {stores.isPending && (
           <>
-            <Skeleton className="h-[74px]" />
-            <Skeleton className="h-[74px]" />
-            <Skeleton className="h-[74px]" />
+            <Skeleton className="h-[80px]" />
+            <Skeleton className="h-[80px]" />
+            <Skeleton className="h-[80px]" />
           </>
         )}
         {stores.isError && <ErrorBox message={stores.error.message} onRetry={() => stores.refetch()} />}
@@ -58,14 +58,14 @@ function StoreRow({ group, t }: { group: NotificationStore; t: Translator }) {
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <div className="min-w-0 flex-1 truncate text-[14px] font-bold leading-tight">
+          <div className="min-w-0 flex-1 truncate text-[16px] font-bold leading-tight">
             {group.storeName ?? t('notif.system')}
           </div>
-          <div className={`shrink-0 text-[11px] ${unread ? 'font-semibold text-brand' : 'text-ink-3'}`}>
+          <div className={`shrink-0 text-[12px] ${unread ? 'font-semibold text-brand' : 'text-ink-3'}`}>
             {formatDateTime(group.last.createdAt)}
           </div>
         </div>
-        <div className={`mt-0.5 truncate text-[12px] ${unread ? 'font-semibold text-ink' : 'text-ink-2'}`}>
+        <div className={`mt-1 truncate text-[14px] ${unread ? 'font-semibold text-ink' : 'text-ink-2'}`}>
           {preview.title}
         </div>
       </div>
