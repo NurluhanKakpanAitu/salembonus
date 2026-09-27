@@ -25,6 +25,18 @@
       ],
       "port": 5173,
       "autoPort": false
+    },
+    {
+      "name": "pos",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "pos"
+      ],
+      "port": 5174,
+      "autoPort": false
     }
   ]
 }

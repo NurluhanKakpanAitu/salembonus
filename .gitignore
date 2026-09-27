@@ -18,6 +18,7 @@ appsettings.Development.local.json
 node_modules/
 frontend/dist/
 frontend/dev-dist/
+pos/dist/
 *.local
 .env
 .env.*
