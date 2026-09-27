@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { Check, Phone } from 'lucide-react'
 import { BackHeader } from '../components/BackHeader'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
+import { AvatarPicker } from '../components/profile/AvatarPicker'
 import { LocationPicker, locationCode, locationFrom, type LocationValue } from '../components/profile/LocationPicker'
 import { ApiError } from '../lib/api'
-import { initials } from '../lib/format'
 import { useMe, useUpdateMe } from '../lib/queries'
 import { useT } from '../lib/i18n'
 
@@ -89,15 +89,7 @@ export function ProfileEditPage() {
 
       {me.data && (
         <form onSubmit={submit} autoComplete="off" className="mt-4 flex flex-col pb-4">
-          <div className="flex justify-center">
-            <div className="flex size-20 items-center justify-center overflow-hidden rounded-full bg-violet-soft text-2xl font-bold text-violet">
-              {me.data.avatarUrl ? (
-                <img src={me.data.avatarUrl} alt="" className="size-full object-cover" />
-              ) : (
-                initials(`${firstName} ${lastName}`) || '·'
-              )}
-            </div>
-          </div>
+          <AvatarPicker me={me.data} name={`${firstName} ${lastName}`} />
 
           <label className="mt-6 text-xs font-medium text-ink-2" htmlFor="profile-firstname">
             {t('profile.firstName')} *
