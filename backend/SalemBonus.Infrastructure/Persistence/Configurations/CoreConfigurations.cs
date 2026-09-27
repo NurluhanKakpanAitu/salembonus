@@ -72,6 +72,22 @@ public class StaffRefreshTokenConfiguration : IEntityTypeConfiguration<StaffRefr
     }
 }
 
+public class StaffOtpCodeConfiguration : IEntityTypeConfiguration<StaffOtpCode>
+{
+    public void Configure(EntityTypeBuilder<StaffOtpCode> b)
+    {
+        b.ToTable("staff_otp_codes", Schemas.Core);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Purpose).HasMaxLength(32).IsRequired();
+        b.Property(x => x.CodeHash).HasMaxLength(64).IsRequired();
+        b.Property(x => x.ResetTokenHash).HasMaxLength(64);
+        b.HasIndex(x => x.ResetTokenHash).IsUnique();
+        b.Property(x => x.Ip).HasMaxLength(64);
+        b.HasIndex(x => new { x.StaffUserId, x.Purpose, x.CreatedAt });
+        b.HasOne<StaffUser>().WithMany().HasForeignKey(x => x.StaffUserId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEntry>
 {
     public void Configure(EntityTypeBuilder<AuditEntry> b)

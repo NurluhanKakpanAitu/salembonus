@@ -157,4 +157,36 @@ public static class Messages
 
     public static string StaffLanguageInvalid(AppLanguage l) => Pick(l,
         "Бұл тіл қолдау көрсетілмейді", "Этот язык не поддерживается");
+
+    // Құпиясөзді қалпына келтіру (ТЗ «Авторизация» §5–7, §10)
+    public static string StaffCodeSendFailed(AppLanguage l) => Pick(l,
+        "Кодты жіберу мүмкін болмады. Кейінірек қайталаңыз", "Не удалось отправить код. Попробуйте ещё раз позже");
+
+    public static string StaffCodeTooMany(AppLanguage l) => Pick(l,
+        "Код тым көп сұралды. Бір сағаттан кейін қайталаңыз", "Код запрашивался слишком часто. Попробуйте через час");
+
+    public static string StaffCodeWrong(AppLanguage l) => Pick(l,
+        "Растау коды қате", "Неверный код подтверждения");
+
+    public static string StaffCodeExpired(AppLanguage l) => Pick(l,
+        "Кодтың мерзімі өтті", "Срок действия кода истёк");
+
+    public static string StaffCodeRequired(AppLanguage l) => Pick(l,
+        "4 таңбалы кодты енгізіңіз", "Введите 4-значный код");
+
+    public static string StaffResetExpired(AppLanguage l) => Pick(l,
+        "Қалпына келтіру уақыты өтті. Қайтадан бастаңыз", "Время на восстановление истекло. Начните заново");
+
+    public static string StaffPasswordTooShort(AppLanguage l, int min) => Pick(l,
+        $"Құпиясөз кемінде {min} таңба болуы керек", $"Пароль должен содержать не менее {min} символов");
+
+    public static string StaffPasswordWeak(AppLanguage l) => Pick(l,
+        "Құпиясөзде әріп те, сан да болуы керек", "Пароль должен содержать буквы и цифры");
+
+    public static string StaffPasswordsMismatch(AppLanguage l) => Pick(l,
+        "Құпиясөздер сәйкес келмейді", "Пароли не совпадают");
+
+    public static string StaffOtpText(string language, string code) => language == "kk"
+        ? $"SalemPos: құпиясөзді қалпына келтіру коды {code}. Ешкімге айтпаңыз."
+        : $"SalemPos: код для восстановления пароля {code}. Никому не сообщайте.";
 }

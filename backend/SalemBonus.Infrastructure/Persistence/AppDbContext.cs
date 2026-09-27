@@ -22,6 +22,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<StaffUser> StaffUsers => Set<StaffUser>();
     public DbSet<StoreMembership> StoreMemberships => Set<StoreMembership>();
     public DbSet<StaffRefreshToken> StaffRefreshTokens => Set<StaffRefreshToken>();
+    public DbSet<StaffOtpCode> StaffOtpCodes => Set<StaffOtpCode>();
     public DbSet<AuditEntry> AuditLog => Set<AuditEntry>();
 
     // SalemPos (pos)

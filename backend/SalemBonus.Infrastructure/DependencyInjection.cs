@@ -2,7 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using SalemBonus.Application.Auth;
+using SalemBonus.Application.Core.Staff;
+using SalemBonus.Infrastructure.WhatsApp;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Infrastructure.Identity;
 using SalemBonus.Infrastructure.Persistence;
@@ -21,6 +24,7 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.Section));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.Section));
+        services.Configure<StaffAuthOptions>(configuration.GetSection(StaffAuthOptions.Section));
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
@@ -45,6 +49,9 @@ public static class DependencyInjection
         services.AddScoped<IStaffRepository, StaffRepository>();
         services.AddScoped<IStaffRefreshTokenRepository, StaffRefreshTokenRepository>();
         services.AddScoped<IAuditLog, AuditLog>();
+        services.AddScoped<IStaffOtpRepository, StaffOtpRepository>();
+        // Meta-ның Authentication шаблоны бекітілгенше кодтар логқа жазылады.
+        services.AddSingleton<IWhatsAppSender, LogWhatsAppSender>();
         return services;
     }
 
@@ -52,7 +59,23 @@ public static class DependencyInjection
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await DbSeeder.SeedAsync(db, ct);
+
+        // Базаға бірінші қосылу кейде сәтсіз болады: VPS-те база контейнері API-дан кеш көтеріледі,
+        // ал Neon-ға кейбір желіде IPv6 бағыты уақытша жоқ. Бірнеше рет қайталаймыз.
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                await DbSeeder.SeedAsync(db, ct);
+                break;
+            }
+            catch (Npgsql.NpgsqlException ex) when (attempt < 5 && ex.IsTransient)
+            {
+                scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>()
+                    .LogWarning("Базаға қосылу сәтсіз ({Attempt}/5): {Message}", attempt, ex.Message);
+                await Task.Delay(TimeSpan.FromSeconds(2 * attempt), ct);
+            }
+        }
 
         // Демо қызметкерлер тек локал разработкада: белгілі құпиясөзбен аккаунт продакшнда болмауы керек.
         if (scope.ServiceProvider.GetRequiredService<IHostEnvironment>().IsDevelopment())

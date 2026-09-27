@@ -35,6 +35,28 @@ public class StaffRefreshTokenRepository(AppDbContext db) : IStaffRefreshTokenRe
         db.StaffRefreshTokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
 
     public void Add(StaffRefreshToken token) => db.StaffRefreshTokens.Add(token);
+
+    public Task RevokeAllAsync(Guid staffUserId, CancellationToken ct = default) =>
+        db.StaffRefreshTokens
+            .Where(t => t.StaffUserId == staffUserId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), ct);
+}
+
+public class StaffOtpRepository(AppDbContext db) : IStaffOtpRepository
+{
+    public Task<StaffOtpCode?> GetLatestAsync(Guid staffUserId, string purpose, CancellationToken ct = default) =>
+        db.StaffOtpCodes
+            .Where(o => o.StaffUserId == staffUserId && o.Purpose == purpose)
+            .OrderByDescending(o => o.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+    public Task<int> CountSinceAsync(Guid staffUserId, string purpose, DateTime since, CancellationToken ct = default) =>
+        db.StaffOtpCodes.CountAsync(o => o.StaffUserId == staffUserId && o.Purpose == purpose && o.CreatedAt >= since, ct);
+
+    public Task<StaffOtpCode?> GetByResetTokenHashAsync(string tokenHash, CancellationToken ct = default) =>
+        db.StaffOtpCodes.FirstOrDefaultAsync(o => o.ResetTokenHash == tokenHash, ct);
+
+    public void Add(StaffOtpCode code) => db.StaffOtpCodes.Add(code);
 }
 
 public class AuditLog(AppDbContext db) : IAuditLog

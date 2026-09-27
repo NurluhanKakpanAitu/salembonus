@@ -17,6 +17,16 @@ public interface IStaffRefreshTokenRepository
 {
     Task<StaffRefreshToken?> GetByHashAsync(string tokenHash, CancellationToken ct = default);
     void Add(StaffRefreshToken token);
+    /// <summary>Қызметкердің барлық ашық сеансын жабу (мысалы, құпиясөз ауысқанда).</summary>
+    Task RevokeAllAsync(Guid staffUserId, CancellationToken ct = default);
+}
+
+public interface IStaffOtpRepository
+{
+    Task<StaffOtpCode?> GetLatestAsync(Guid staffUserId, string purpose, CancellationToken ct = default);
+    Task<int> CountSinceAsync(Guid staffUserId, string purpose, DateTime since, CancellationToken ct = default);
+    Task<StaffOtpCode?> GetByResetTokenHashAsync(string tokenHash, CancellationToken ct = default);
+    void Add(StaffOtpCode code);
 }
 
 /// <summary>Әрекет журналы. Жазба келесі SaveChanges-пен бірге сақталады.</summary>

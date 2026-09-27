@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { AppShell } from './layout/AppShell'
 import { NAV } from './layout/nav'
 import { LoginPage } from './pages/LoginPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { SectionPage } from './pages/SectionPage'
 import { refreshSession, useAuth } from './lib/auth'
 import type { TranslationKey } from './lib/i18n'
@@ -41,6 +42,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<AppShell />}>
           <Route index element={<StartPage />} />

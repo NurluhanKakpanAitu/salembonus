@@ -1,14 +1,12 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { ArrowRight, Lock, Phone } from 'lucide-react'
-import { Logo } from '../components/Logo'
-import { LanguageSelect } from '../components/LanguageSelect'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { ArrowRight, CheckCircle2, Lock, Phone } from 'lucide-react'
+import { AuthLayout } from '../components/AuthLayout'
 import { Button } from '../components/ui/Button'
 import { TextField } from '../components/ui/TextField'
 import { ApiError } from '../lib/api'
 import { applySession, useAuth } from '../lib/auth'
 import { useT } from '../lib/i18n'
-import { useLanguageStore } from '../lib/language'
 import { formatPhoneInput, isCompletePhone, phoneDigits } from '../lib/phone'
 import { staffApi } from '../lib/staffApi'
 
@@ -23,8 +21,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const status = useAuth((s) => s.status)
   const startPage = useAuth((s) => s.me?.startPage)
-  const lang = useLanguageStore((s) => s.lang)
-  const setLang = useLanguageStore((s) => s.set)
+  // Қалпына келтіруден кейін: «Пароль успешно изменён» (ТЗ §7.10).
+  const passwordChanged = (useLocation().state as { passwordChanged?: boolean } | null)?.passwordChanged
 
   const [phone, setPhone] = useState('+7 ')
   const [password, setPassword] = useState('')
@@ -62,6 +60,12 @@ export function LoginPage() {
       <h1 className="text-center text-[30px] font-extrabold tracking-tight text-ink">{t('login.title')}</h1>
       <p className="mt-1.5 text-center text-[15px] text-ink-2">{t('login.subtitle')}</p>
 
+      {passwordChanged && (
+        <p role="status" className="mt-6 flex items-center gap-2.5 rounded-xl bg-success-soft px-4 py-3 text-[14px] text-success">
+          <CheckCircle2 size={18} className="shrink-0" /> {t('login.passwordChanged')}
+        </p>
+      )}
+
       <div className="mt-8 flex flex-col gap-4">
         <TextField
           label={t('login.phone')}
@@ -93,6 +97,12 @@ export function LoginPage() {
         />
       </div>
 
+      <div className="mt-2.5 text-right">
+        <Link to="/forgot-password" className="text-[14px] font-semibold text-brand hover:underline">
+          {t('login.forgot')}
+        </Link>
+      </div>
+
       {errors.form && (
         <p role="alert" className="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-[14px] text-danger">
           {errors.form}
@@ -102,7 +112,7 @@ export function LoginPage() {
       <Button
         type="submit"
         loading={loading}
-        className="mt-6 h-13 w-full justify-between! px-6 text-[16px]"
+        className="mt-5 h-13 w-full justify-between! px-6 text-[16px]"
         iconRight={<ArrowRight size={20} />}
       >
         <span className="flex-1 text-center">{t('login.submit')}</span>
@@ -110,25 +120,5 @@ export function LoginPage() {
     </form>
   )
 
-  return (
-    <div className="flex min-h-full flex-col bg-surface lg:flex-row">
-      {/* Брендтік аймақ: қара-көк фон, тек логотип (ТЗ §2.1–2.3) */}
-      <section className="relative flex shrink-0 flex-col items-center justify-center overflow-hidden bg-[radial-gradient(120%_90%_at_30%_20%,#0d3a8f_0%,#071a3d_45%,#040c1f_100%)] px-6 pb-16 pt-24 lg:w-1/2 lg:pb-0 lg:pt-0">
-        <div className="absolute right-4 top-4 lg:hidden">
-          <LanguageSelect value={lang} onChange={setLang} tone="light" />
-        </div>
-        <div className="scale-75 sm:scale-90 lg:scale-100">
-          <Logo size={72} tone="light" tagline={t('login.tagline')} />
-        </div>
-      </section>
-
-      {/* Форма: мобильдіде қара аймақтың үстіне шығатын ақ карточка */}
-      <section className="relative -mt-8 flex flex-1 flex-col items-center rounded-t-[28px] bg-surface px-6 pb-10 pt-10 lg:mt-0 lg:justify-center lg:rounded-none lg:pt-0">
-        <div className="absolute right-6 top-6 hidden lg:block">
-          <LanguageSelect value={lang} onChange={setLang} />
-        </div>
-        {form}
-      </section>
-    </div>
-  )
+  return <AuthLayout>{form}</AuthLayout>
 }

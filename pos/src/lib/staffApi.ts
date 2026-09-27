@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { StaffMe, StaffSession } from './types'
+import type { PasswordPolicy, ResetRequested, ResetVerified, StaffMe, StaffSession } from './types'
 
 const base = '/staff/v1/auth'
 
@@ -10,6 +10,16 @@ export const staffApi = {
       body: JSON.stringify({ phone, password, device: navigator.userAgent }),
     }),
   logout: () => api<void>(`${base}/logout`, { method: 'POST' }),
+  passwordPolicy: () => api<PasswordPolicy>(`${base}/password-policy`),
+  requestReset: (phone: string) =>
+    api<ResetRequested>(`${base}/password-reset/request`, { method: 'POST', body: JSON.stringify({ phone }) }),
+  verifyReset: (phone: string, code: string) =>
+    api<ResetVerified>(`${base}/password-reset/verify`, { method: 'POST', body: JSON.stringify({ phone, code }) }),
+  completeReset: (resetToken: string, newPassword: string, confirmPassword: string) =>
+    api<void>(`${base}/password-reset/complete`, {
+      method: 'POST',
+      body: JSON.stringify({ resetToken, newPassword, confirmPassword }),
+    }),
   setLanguage: (language: string) =>
     api<StaffMe>(`${base}/me/language`, { method: 'PUT', body: JSON.stringify({ language }) }),
 }

@@ -14,7 +14,8 @@ public record StaffSessionResponse(string AccessToken, DateTime AccessTokenExpir
 /// </summary>
 [ApiController]
 [Route("api/staff/v1/auth")]
-public class StaffAuthController(IStaffAuthService auth, IWebHostEnvironment env) : ControllerBase
+public class StaffAuthController(IStaffAuthService auth, IStaffPasswordResetService reset, IWebHostEnvironment env)
+    : ControllerBase
 {
     /// <summary>Телефон + құпиясөз.</summary>
     [HttpPost("login")]
@@ -58,6 +59,35 @@ public class StaffAuthController(IStaffAuthService auth, IWebHostEnvironment env
     [Authorize(Policy = StaffAuth.Policy)]
     public async Task<ActionResult<StaffMeDto>> SetLanguage([FromBody] StaffLanguageRequest request, CancellationToken ct) =>
         Ok(await auth.SetLanguageAsync(request.Language, ct));
+
+    /// <summary>Құпиясөз талаптары — фронт жаңа құпиясөзді алдын ала тексеру үшін.</summary>
+    [HttpGet("password-policy")]
+    [AllowAnonymous]
+    public ActionResult<PasswordPolicy> PasswordPolicy() => Ok(reset.Policy);
+
+    /// <summary>Қалпына келтіру, 1-қадам: тіркелген нөмірге WhatsApp арқылы 4 таңбалы код.</summary>
+    [HttpPost("password-reset/request")]
+    [AllowAnonymous]
+    [EnableRateLimiting(StaffAuth.ResetRateLimit)]
+    public async Task<ActionResult<PasswordResetRequested>> RequestReset([FromBody] PasswordResetRequest request, CancellationToken ct) =>
+        Ok(await reset.RequestAsync(request, ct));
+
+    /// <summary>2-қадам: кодты тексеру. Дұрыс болса — жаңа құпиясөз қоюға рұқсат токені.</summary>
+    [HttpPost("password-reset/verify")]
+    [AllowAnonymous]
+    [EnableRateLimiting(StaffAuth.ResetRateLimit)]
+    public async Task<ActionResult<PasswordResetVerified>> VerifyReset([FromBody] PasswordResetVerify request, CancellationToken ct) =>
+        Ok(await reset.VerifyAsync(request, ct));
+
+    /// <summary>3-қадам: жаңа құпиясөз. Барлық ескі сеанс жабылады.</summary>
+    [HttpPost("password-reset/complete")]
+    [AllowAnonymous]
+    [EnableRateLimiting(StaffAuth.ResetRateLimit)]
+    public async Task<IActionResult> CompleteReset([FromBody] PasswordResetComplete request, CancellationToken ct)
+    {
+        await reset.CompleteAsync(request, ct);
+        return NoContent();
+    }
 
     private StaffSessionResponse Respond(StaffSession session)
     {

@@ -59,6 +59,12 @@ builder.Services.AddRateLimiter(o =>
     o.AddPolicy(StaffAuth.LoginRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+    // Код сұрау, тексеру, жаңа құпиясөз: бір IP-ден минутына 20 сұраныс. Дүкендегі бірнеше кассир
+    // көбіне бір IP-ден шығады, ал бір адамның қалыпты қалпына келтіруі 10-ға оңай жетеді.
+    // Негізгі қорғаныс — аккаунт деңгейінде: сағатына 5 код, әр кодқа 5 әрекет (сервисте).
+    o.AddPolicy(StaffAuth.ResetRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1) }));
 });
 
 builder.Services.AddControllers();

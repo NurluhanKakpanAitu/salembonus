@@ -32,3 +32,18 @@ public record StaffMeDto(
     string StartPage);
 
 public record StaffLanguageRequest(string Language);
+
+public record PasswordResetRequest(string? Phone);
+
+/// <summary>DevCode тек Development-те толады — WhatsApp шаблоны бекітілгенше тест үшін.</summary>
+public record PasswordResetRequested(int CodeLength, int ExpiresInSeconds, int RetryAfterSeconds, string? DevCode);
+
+public record PasswordResetVerify(string? Phone, string? Code);
+
+/// <summary>Код расталды: жаңа құпиясөз тек осы токенмен қабылданады.</summary>
+public record PasswordResetVerified(string ResetToken, int ExpiresInSeconds);
+
+public record PasswordResetComplete(string? ResetToken, string? NewPassword, string? ConfirmPassword);
+
+/// <summary>Кіру бетіне керек құпиясөз талаптары (фронт алдын ала тексереді, соңғы шешім — серверде).</summary>
+public record PasswordPolicy(int MinLength, bool RequireLetterAndDigit);

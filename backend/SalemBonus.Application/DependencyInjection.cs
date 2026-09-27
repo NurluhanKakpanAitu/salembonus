@@ -23,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<IKatoService, KatoService>();
         services.AddScoped<IBonusExpiryService, BonusExpiryService>();
         services.AddScoped<IStaffAuthService, StaffAuthService>();
+        services.AddScoped<IStaffPasswordResetService, StaffPasswordResetService>();
         return services;
     }
 }

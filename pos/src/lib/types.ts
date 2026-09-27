@@ -36,3 +36,21 @@ export const Permission = {
   StaffManage: 'staff.manage',
   SettingsManage: 'settings.manage',
 } as const
+
+export interface PasswordPolicy {
+  minLength: number
+  requireLetterAndDigit: boolean
+}
+
+export interface ResetRequested {
+  codeLength: number
+  expiresInSeconds: number
+  retryAfterSeconds: number
+  /** Тек разработкада: WhatsApp шаблоны бекітілгенше код жауапта келеді. */
+  devCode: string | null
+}
+
+export interface ResetVerified {
+  resetToken: string
+  expiresInSeconds: number
+}
