@@ -1,7 +1,7 @@
 import { useT } from '../lib/i18n'
 
 export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-card bg-gray-200/70 ${className}`} />
+  return <div className={`animate-pulse rounded-card bg-muted ${className}`} />
 }
 
 export function ErrorBox({ message, onRetry }: { message: string; onRetry?: () => void }) {

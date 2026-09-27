@@ -30,7 +30,7 @@ export function NotificationItem({ n, onOpen }: { n: Notification; onOpen?: (n: 
     <button
       type="button"
       onClick={() => onOpen?.(n)}
-      className="flex w-full items-start gap-3 rounded-2xl bg-surface p-3.5 text-left active:bg-gray-50"
+      className="flex w-full items-start gap-3 rounded-2xl bg-surface p-3.5 text-left active:bg-muted"
     >
       <div className="flex size-11 shrink-0 items-center justify-center rounded-full" style={{ background: bg, color }}>
         <Icon size={22} />

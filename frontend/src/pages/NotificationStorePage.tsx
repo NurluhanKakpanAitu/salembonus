@@ -79,7 +79,7 @@ export function NotificationStorePage() {
               type="button"
               disabled={q.isFetchingNextPage}
               onClick={() => q.fetchNextPage()}
-              className="flex items-center gap-1.5 rounded-full bg-gray-200 px-4 py-2 text-[12px] font-medium text-ink-2 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-full bg-muted px-4 py-2 text-[12px] font-medium text-ink-2 disabled:opacity-60"
             >
               {q.isFetchingNextPage ? t('common.loadingShort') : t('notif.showOlder')} <ChevronDown size={15} />
             </button>
@@ -89,7 +89,7 @@ export function NotificationStorePage() {
         {days.map((dayItems) => (
           <section key={dayKey(dayItems[0].createdAt)} className="flex flex-col gap-2">
             <div className="flex justify-center">
-              <span className="rounded-full bg-gray-200/70 px-3 py-1 text-[11px] font-medium text-ink-2">
+              <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-medium text-ink-2">
                 {dayLabel(dayItems[0].createdAt)}
               </span>
             </div>

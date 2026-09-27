@@ -30,7 +30,7 @@ export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: 
         className="w-full max-w-[480px] rounded-t-[28px] bg-surface px-6 pb-[max(24px,env(safe-area-inset-bottom))] pt-3"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-gray-300" />
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-muted" />
         <div className="flex items-center justify-between">
           <div>
             <div className="text-lg font-bold">{t('qr.myTitle')}</div>

@@ -26,7 +26,7 @@ export function TransactionsPage() {
               type="button"
               disabled={q.isFetchingNextPage}
               onClick={() => q.fetchNextPage()}
-              className="flex items-center gap-1.5 rounded-full bg-gray-200 px-4 py-2.5 text-[13px] font-medium text-ink-2 disabled:opacity-60"
+              className="flex items-center gap-1.5 rounded-full bg-muted px-4 py-2.5 text-[13px] font-medium text-ink-2 disabled:opacity-60"
             >
               {q.isFetchingNextPage ? t('common.loadingShort') : t('tx.showOlder')} <ChevronDown size={16} />
             </button>

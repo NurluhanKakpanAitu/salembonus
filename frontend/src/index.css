@@ -11,6 +11,7 @@
   --color-ink-2: #6b7280;
   --color-ink-3: #9ca3af;
   --color-line: #e8eaf0;
+  --color-muted: #e5e7eb;
   --color-green: #16a34a;
   --color-green-soft: #e8f7ee;
   --color-gold: #f5b301;
@@ -23,6 +24,29 @@
   --radius-card: 20px;
 }
 
+/*
+  Қараңғы тема. Нақты мәнді JS қояды: "system" таңдалса құрылғының баптауы бойынша
+  light/dark деп жазылады, сондықтан мұнда бір ғана блок жеткілікті.
+*/
+:root[data-theme="dark"] {
+  --color-brand: #3b9bff;
+  --color-brand-soft: #14304f;
+  --color-danger: #ff6b70;
+  --color-danger-soft: #3a1f21;
+  --color-bg: #0f1116;
+  --color-surface: #191c23;
+  --color-ink: #f2f4f8;
+  --color-ink-2: #9aa2ae;
+  --color-ink-3: #6b7280;
+  --color-line: #2a2e37;
+  --color-muted: #272b34;
+  --color-green: #34d399;
+  --color-green-soft: #11291f;
+  --color-gold: #fbbf24;
+  --color-violet: #8b7cff;
+  --color-violet-soft: #241f45;
+}
+
 html, body, #root {
   height: 100%;
 }
@@ -31,7 +55,12 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-ink);
+  color-scheme: light;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+}
+
+:root[data-theme="dark"] body {
+  color-scheme: dark;
 }

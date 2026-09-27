@@ -75,7 +75,7 @@ export function CardCarousel({
               type="button"
               aria-label={c.storeName}
               onClick={() => scrollTo(i)}
-              className={`h-1.5 rounded-full transition-all ${i === active ? 'w-[18px] bg-brand' : 'w-1.5 bg-gray-300'}`}
+              className={`h-1.5 rounded-full transition-all ${i === active ? 'w-[18px] bg-brand' : 'w-1.5 bg-muted'}`}
             />
           ))}
         </div>

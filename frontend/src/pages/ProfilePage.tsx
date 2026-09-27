@@ -1,4 +1,5 @@
-import { ChevronRight, Coins, Globe, Info, LogOut, MessageCircleMore, Pencil, ShoppingBag, User } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronRight, Coins, Globe, Info, LogOut, MessageCircleMore, Palette, Pencil, ShoppingBag, User } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../lib/api'
@@ -9,7 +10,9 @@ import { ErrorBox, Skeleton } from '../components/Skeleton'
 import { formatNumber, initials } from '../lib/format'
 import { LANGUAGES, useLanguage } from '../lib/language'
 import { useMe, useQr } from '../lib/queries'
-import { useT } from '../lib/i18n'
+import { useT, type TranslationKey } from '../lib/i18n'
+import { OptionSheet } from '../components/OptionSheet'
+import { THEME_MODES, useThemeMode } from '../lib/themeMode'
 
 const APP_VERSION = '1.0.0'
 
@@ -18,6 +21,8 @@ export function ProfilePage() {
   const me = useMe()
   const qr = useQr()
   const [lang, setLang] = useLanguage()
+  const [themeMode, setThemeMode] = useThemeMode()
+  const [sheet, setSheet] = useState<'language' | 'theme' | null>(null)
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -29,8 +34,8 @@ export function ProfilePage() {
     navigate('/login', { replace: true })
   }
 
-  const otherLanguage = LANGUAGES.find((l) => l.value !== lang)!
   const currentLanguage = LANGUAGES.find((l) => l.value === lang)!
+  const themeLabel = (mode: (typeof THEME_MODES)[number]) => t(`theme.${mode}` as TranslationKey)
 
   return (
     <>
@@ -92,13 +97,37 @@ export function ProfilePage() {
           tint="#0A84F8"
           title={currentLanguage.label}
           subtitle={t('profile.languageHint')}
-          onClick={() => setLang(otherLanguage.value)}
+          onClick={() => setSheet('language')}
         />
-        <ProfileRow icon={Info} tint="#F5B301" title={t('profile.about')} subtitle={t('profile.aboutHint')} to="/about" />
+        <ProfileRow
+          icon={Palette}
+          tint="#F5B301"
+          title={t('profile.theme')}
+          subtitle={themeLabel(themeMode)}
+          onClick={() => setSheet('theme')}
+        />
+        <ProfileRow icon={Info} tint="#6D5DF6" title={t('profile.about')} subtitle={t('profile.aboutHint')} to="/about" />
         <ProfileRow icon={LogOut} tint="#E5484D" title={t('profile.logout')} subtitle={t('profile.logoutHint')} danger onClick={() => void logout()} />
 
         <footer className="py-2 text-center text-[11px] text-ink-3">SalemBonus v{APP_VERSION}</footer>
       </div>
+
+      <OptionSheet
+        open={sheet === 'language'}
+        title={t('profile.languageHint')}
+        value={lang}
+        options={LANGUAGES.map((l) => ({ value: l.value, label: l.label }))}
+        onSelect={setLang}
+        onClose={() => setSheet(null)}
+      />
+      <OptionSheet
+        open={sheet === 'theme'}
+        title={t('profile.theme')}
+        value={themeMode}
+        options={THEME_MODES.map((m) => ({ value: m, label: themeLabel(m) }))}
+        onSelect={setThemeMode}
+        onClose={() => setSheet(null)}
+      />
     </>
   )
 }
