@@ -10,8 +10,8 @@ public class TransactionsController(IBonusCardService service) : ControllerBase
 {
     [HttpGet("recent")]
     public async Task<ActionResult<IReadOnlyList<BonusTransactionDto>>> GetRecent(
-        [FromQuery] int take = 20, CancellationToken ct = default) =>
-        Ok(await service.GetMyRecentTransactionsAsync(Math.Clamp(take, 1, 100), ct));
+        [FromQuery] int take = 20, [FromQuery] Guid? storeId = null, CancellationToken ct = default) =>
+        Ok(await service.GetMyRecentTransactionsAsync(Math.Clamp(take, 1, 100), storeId, ct));
 
     /// <summary>Барлық операциялар, беттеп. storeId берілсе тек сол дүкен бойынша.</summary>
     [HttpGet]

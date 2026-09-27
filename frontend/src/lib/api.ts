@@ -194,7 +194,8 @@ export const cardsApi = {
 }
 
 export const transactionsApi = {
-  recent: (take = 20) => api<BonusTransaction[]>(`/transactions/recent?take=${take}`),
+  recent: (take = 20, storeId?: string | null) =>
+    api<BonusTransaction[]>(`/transactions/recent?take=${take}${storeId ? `&storeId=${storeId}` : ''}`),
   list: (storeId: string | null, skip: number, take: number) =>
     api<TransactionPage>(`/transactions?${storeId ? `storeId=${storeId}&` : ''}skip=${skip}&take=${take}`),
   receipt: (receiptId: string) => api<Receipt>(`/transactions/receipt/${receiptId}`),

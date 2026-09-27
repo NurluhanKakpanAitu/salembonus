@@ -77,9 +77,18 @@ export const useJoinStore = () => {
 
 export const useQr = () => useQuery({ queryKey: ['me', 'qr'], queryFn: meApi.qr, staleTime: Infinity })
 
-export const useRecentTransactions = (take = 20) => {
-  const enabled = useLoggedIn()
-  return useQuery({ queryKey: ['transactions', 'recent', take], queryFn: () => transactionsApi.recent(take), enabled, ...LIVE })
+/**
+ * storeId берілсе тек сол дүкеннің операциялары, null болса — барлығы.
+ * undefined болса сұраныс жіберілмейді: қай карта ашық екені әлі белгісіз деген сөз.
+ */
+export const useRecentTransactions = (take = 20, storeId?: string | null) => {
+  const loggedIn = useLoggedIn()
+  return useQuery({
+    queryKey: ['transactions', 'recent', take, storeId ?? 'all'],
+    queryFn: () => transactionsApi.recent(take, storeId),
+    enabled: loggedIn && storeId !== undefined,
+    ...LIVE,
+  })
 }
 
 export const useTransactions = (storeId: string | null) =>

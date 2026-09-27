@@ -15,11 +15,12 @@ export function HomePage() {
   const t = useT()
   const me = useMe()
   const cards = useCards()
-  const transactions = useRecentTransactions(4)
   const [qrStore, setQrStore] = useState<string | null>(null)
   const [activeStoreId, setActiveStoreId] = useState<string | null>(null)
   // Карусельде көрініп тұрған карта; әлі сырғытылмаса — бірінші карта.
   const activeCard = cards.data?.find((c) => c.storeId === activeStoreId) ?? cards.data?.[0]
+  // Операциялар тізімі ашық тұрған картаға байланады. Карталар жүктелгенше сұраныс жіберілмейді.
+  const transactions = useRecentTransactions(4, cards.data ? (activeCard?.storeId ?? null) : undefined)
 
   return (
     <>
@@ -59,7 +60,12 @@ export function HomePage() {
         </section>
 
         {transactions.isPending && <Skeleton className="h-64" />}
-        {transactions.data && <TransactionList items={transactions.data} allHref="/transactions" />}
+        {transactions.data && (
+          <TransactionList
+            items={transactions.data}
+            allHref={activeCard ? `/transactions?storeId=${activeCard.storeId}` : '/transactions'}
+          />
+        )}
       </div>
       <QrSheet open={qrStore !== null} onClose={() => setQrStore(null)} storeName={qrStore ?? undefined} />
     </>

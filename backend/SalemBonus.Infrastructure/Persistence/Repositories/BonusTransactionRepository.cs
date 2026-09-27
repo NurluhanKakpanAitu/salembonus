@@ -6,9 +6,6 @@ namespace SalemBonus.Infrastructure.Persistence.Repositories;
 
 public class BonusTransactionRepository(AppDbContext db) : IBonusTransactionRepository
 {
-    public Task<IReadOnlyList<BonusTransaction>> GetRecentByCustomerAsync(Guid customerId, int take, CancellationToken ct = default) =>
-        GetByCustomerAsync(customerId, null, 0, take, ct);
-
     public async Task<IReadOnlyList<BonusTransaction>> GetByCustomerAsync(Guid customerId, Guid? storeId, int skip, int take, CancellationToken ct = default)
     {
         var cardIds = db.BonusCards.Where(c => c.CustomerId == customerId);

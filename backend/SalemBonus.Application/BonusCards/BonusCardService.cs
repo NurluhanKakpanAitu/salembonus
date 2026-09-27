@@ -32,9 +32,10 @@ public class BonusCardService(
         return ToDto(card, await NextExpiringAsync([card], ct));
     }
 
-    public async Task<IReadOnlyList<BonusTransactionDto>> GetMyRecentTransactionsAsync(int take = 20, CancellationToken ct = default)
+    public async Task<IReadOnlyList<BonusTransactionDto>> GetMyRecentTransactionsAsync(
+        int take = 20, Guid? storeId = null, CancellationToken ct = default)
     {
-        var list = await transactions.GetRecentByCustomerAsync(currentUser.CustomerId, take, ct);
+        var list = await transactions.GetByCustomerAsync(currentUser.CustomerId, storeId, 0, take, ct);
         return await MapAsync(list, ct);
     }
 
