@@ -7,6 +7,9 @@ export const AVATAR_SEEDS = [
   'aybek', 'azamat', 'bekzat', 'dana', 'daulet', 'dinara',
   'erlan', 'gulnaz', 'kamila', 'madi', 'nurlan', 'saltanat',
   'sanzhar', 'symbat', 'timur', 'zhanel', 'zhanibek', 'zarina',
+  'adil', 'aknur', 'almas', 'aruzhan', 'bagdat', 'balnur',
+  'damir', 'diana', 'ilyas', 'karina', 'meiirbek', 'nazerke',
+  'olzhas', 'rauan', 'tomiris', 'yerkebulan',
 ]
 
 const BACKGROUNDS = ['dbeafe', 'dcfce7', 'fef3c7', 'fae8ff', 'ffe4e6', 'e0e7ff']
