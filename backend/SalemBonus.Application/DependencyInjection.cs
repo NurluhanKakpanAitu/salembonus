@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SalemBonus.Application.Auth;
 using SalemBonus.Application.BonusCards;
+using SalemBonus.Application.Core.Staff;
 using SalemBonus.Application.Customers;
 using SalemBonus.Application.Notifications;
 using SalemBonus.Application.Pos;
@@ -21,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IStoreService, StoreService>();
         services.AddScoped<IKatoService, KatoService>();
         services.AddScoped<IBonusExpiryService, BonusExpiryService>();
+        services.AddScoped<IStaffAuthService, StaffAuthService>();
         return services;
     }
 }

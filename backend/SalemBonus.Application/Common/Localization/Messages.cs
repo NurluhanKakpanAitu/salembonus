@@ -13,6 +13,7 @@ public static class Messages
     public static string TitleNotFound(AppLanguage l) => Pick(l, "Табылмады", "Не найдено");
     public static string TitleBadRequest(AppLanguage l) => Pick(l, "Қате сұраныс", "Неверный запрос");
     public static string TitleUnauthorized(AppLanguage l) => Pick(l, "Рұқсат жоқ", "Нет доступа");
+    public static string TitleForbidden(AppLanguage l) => Pick(l, "Рұқсат жоқ", "Недостаточно прав");
 
     // Аутентификация
     public static string PhoneInvalid(AppLanguage l) => Pick(l,
@@ -121,4 +122,39 @@ public static class Messages
     public static string RedeemTooMuch(AppLanguage l, int maxRedeem, int balance, decimal limitPercent) => Pick(l,
         $"Ең көп {maxRedeem} Б шегеруге болады (баланс {balance} Б, лимит {limitPercent}%)",
         $"Можно списать максимум {maxRedeem} Б (баланс {balance} Б, лимит {limitPercent}%)");
+
+    // Қызметкер кіруі (SalemPos). Мәтіндер ТЗ «Авторизация» §10 бойынша.
+    public static string StaffPhoneRequired(AppLanguage l) => Pick(l,
+        "Телефон нөмірін енгізіңіз", "Введите номер телефона");
+
+    public static string StaffPhoneInvalid(AppLanguage l) => Pick(l,
+        "Телефон нөмірін дұрыс енгізіңіз", "Введите корректный номер телефона");
+
+    public static string StaffPasswordRequired(AppLanguage l) => Pick(l,
+        "Құпиясөзді енгізіңіз", "Введите пароль");
+
+    public static string StaffNotFound(AppLanguage l) => Pick(l,
+        "Бұл нөмірмен пайдаланушы табылмады", "Пользователь с таким номером телефона не найден");
+
+    public static string StaffWrongPassword(AppLanguage l) => Pick(l,
+        "Құпиясөз қате", "Неверный пароль");
+
+    public static string StaffLockedOut(AppLanguage l, int minutes) => Pick(l,
+        $"Тым көп сәтсіз әрекет. {minutes} минуттан кейін қайталаңыз",
+        $"Слишком много неудачных попыток. Повторите через {minutes} мин.");
+
+    public static string StaffDisabled(AppLanguage l) => Pick(l,
+        "Аккаунт өшірілген. Иесіне хабарласыңыз", "Учётная запись отключена. Обратитесь к владельцу");
+
+    public static string StaffNoStores(AppLanguage l) => Pick(l,
+        "Сізге бірде-бір дүкенге рұқсат берілмеген", "У вас нет доступа ни к одному магазину");
+
+    public static string StaffStoreForbidden(AppLanguage l) => Pick(l,
+        "Бұл дүкенге рұқсатыңыз жоқ", "Нет доступа к этому магазину");
+
+    public static string StaffPermissionDenied(AppLanguage l) => Pick(l,
+        "Бұл әрекетке рұқсатыңыз жоқ", "Недостаточно прав для этого действия");
+
+    public static string StaffLanguageInvalid(AppLanguage l) => Pick(l,
+        "Бұл тіл қолдау көрсетілмейді", "Этот язык не поддерживается");
 }

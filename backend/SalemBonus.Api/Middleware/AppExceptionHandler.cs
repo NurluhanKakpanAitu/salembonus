@@ -17,18 +17,23 @@ public class AppExceptionHandler : IExceptionHandler
             NotFoundException => (StatusCodes.Status404NotFound, Messages.TitleNotFound(lang)),
             ValidationException => (StatusCodes.Status400BadRequest, Messages.TitleBadRequest(lang)),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, Messages.TitleUnauthorized(lang)),
+            ForbiddenException => (StatusCodes.Status403Forbidden, Messages.TitleForbidden(lang)),
             _ => (0, string.Empty),
         };
         if (status == 0) return false;
 
         http.Response.StatusCode = status;
-        await http.Response.WriteAsJsonAsync(new ProblemDetails
+        var problem = new ProblemDetails
         {
             Status = status,
             Title = title,
             Detail = exception.Message,
             Instance = http.Request.Path,
-        }, ct);
+        };
+        // Қате нақты өріске қатысты болса, фронт оны сол өрістің астында көрсетеді.
+        if (exception is ValidationException { Field: { } field })
+            problem.Extensions["field"] = field;
+        await http.Response.WriteAsJsonAsync(problem, ct);
         return true;
     }
 }

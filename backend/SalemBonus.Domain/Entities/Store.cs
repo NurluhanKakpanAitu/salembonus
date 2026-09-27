@@ -27,6 +27,14 @@ public class Store
     public string ApiKey { get; set; } = string.Empty;
     /// <summary>Дүкен плакатындағы QR-ға салынатын қысқа код. Тұтынушы сканерлеп карта ашады.</summary>
     public string JoinCode { get; set; } = string.Empty;
+    /// <summary>Дүкен қай бизнеске тиесілі. SalemPos қолданбайтын серіктесте бос.</summary>
+    public Guid? OrganizationId { get; set; }
+    /// <summary>
+    /// Дүкен тұрған елді мекеннің КАТО коды. Кассада тіркелген клиенттің өңірі осыдан алынады.
+    /// </summary>
+    public string? KatoCode { get; set; }
+    /// <summary>Тәулік шекарасы осы белдеу бойынша есептеледі (статистика, күндік есеп).</summary>
+    public string TimeZone { get; set; } = "Asia/Almaty";
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

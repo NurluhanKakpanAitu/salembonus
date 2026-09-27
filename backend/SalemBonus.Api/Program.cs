@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using SalemBonus.Api;
 using SalemBonus.Api.Middleware;
 using SalemBonus.Application;
 using SalemBonus.Infrastructure;
@@ -15,25 +18,48 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 var jwt = builder.Configuration.GetSection(JwtOptions.Section).Get<JwtOptions>() ?? new JwtOptions();
+TokenValidationParameters TokenParameters(string audience) => new()
+{
+    ValidIssuer = jwt.Issuer,
+    ValidAudience = audience,
+    IssuerSigningKey = JwtTokenService.SigningKey(jwt.Key),
+    ValidateIssuer = true,
+    ValidateAudience = true,
+    ValidateLifetime = true,
+    ValidateIssuerSigningKey = true,
+    ClockSkew = TimeSpan.FromSeconds(30),
+};
+
+// Екі бөлек схема: клиент токені (SalemBonus) және қызметкер токені (SalemPos, кейін SalemZapis).
+// Audience әртүрлі, сондықтан бірінің токені екіншісінің эндпоинтіне жарамайды.
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
         o.MapInboundClaims = false;
-        o.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidIssuer = jwt.Issuer,
-            ValidAudience = jwt.Audience,
-            IssuerSigningKey = JwtTokenService.SigningKey(jwt.Key),
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ClockSkew = TimeSpan.FromSeconds(30),
-        };
+        o.TokenValidationParameters = TokenParameters(jwt.Audience);
+    })
+    .AddJwtBearer(StaffAuth.Scheme, o =>
+    {
+        o.MapInboundClaims = false;
+        o.TokenValidationParameters = TokenParameters(jwt.StaffAudience);
     });
 builder.Services.AddAuthorizationBuilder()
-    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+    .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
+    .AddPolicy(StaffAuth.Policy, p => p
+        .AddAuthenticationSchemes(StaffAuth.Scheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim(JwtTokenService.StaffTypeClaim, JwtTokenService.StaffTypeValue));
+
+// Құпиясөзді теріп көрудің алдын алу: бір IP-ден минутына 10 кіру әрекеті.
+// Бұған қоса әр аккаунт 5 қатеден кейін 15 минутқа бұғатталады (StaffAuthService).
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.AddPolicy(StaffAuth.LoginRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+});
 
 builder.Services.AddControllers();
 builder.Services.AddHealthChecks();
@@ -73,6 +99,7 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health").AllowAnonymous();
 app.UseExceptionHandler();
 app.UseCors(FrontendCors);
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

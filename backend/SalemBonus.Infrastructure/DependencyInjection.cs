@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using SalemBonus.Application.Auth;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Infrastructure.Identity;
@@ -36,6 +37,14 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+        // Ортақ ядро: қызметкерлер, дүкен контексі, аудит
+        services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddScoped<ICurrentStaff, HttpCurrentStaff>();
+        services.AddScoped<IStoreContext, HttpStoreContext>();
+        services.AddScoped<IStaffRepository, StaffRepository>();
+        services.AddScoped<IStaffRefreshTokenRepository, StaffRefreshTokenRepository>();
+        services.AddScoped<IAuditLog, AuditLog>();
         return services;
     }
 
@@ -44,5 +53,9 @@ public static class DependencyInjection
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await DbSeeder.SeedAsync(db, ct);
+
+        // Демо қызметкерлер тек локал разработкада: белгілі құпиясөзбен аккаунт продакшнда болмауы керек.
+        if (scope.ServiceProvider.GetRequiredService<IHostEnvironment>().IsDevelopment())
+            await StaffSeeder.SeedAsync(db, ct);
     }
 }

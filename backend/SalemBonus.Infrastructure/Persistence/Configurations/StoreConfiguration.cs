@@ -23,6 +23,9 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
         b.Property(x => x.Address).HasMaxLength(300);
         b.Property(x => x.Phone).HasMaxLength(30);
         b.Property(x => x.PhotoUrl).HasMaxLength(CustomerAvatar.MaxLength);
+        b.Property(x => x.KatoCode).HasMaxLength(9);
+        b.Property(x => x.TimeZone).HasMaxLength(64).IsRequired().HasDefaultValue("Asia/Almaty");
+        b.HasOne<SalemBonus.Domain.Core.Organization>().WithMany().HasForeignKey(x => x.OrganizationId).OnDelete(DeleteBehavior.Restrict);
         b.HasMany(x => x.Levels).WithOne(x => x.Store!).HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
     }
 }
