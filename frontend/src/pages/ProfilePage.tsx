@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, Coins, Globe, Info, LogOut, MessageCircleMore, Palette, Pencil, ShoppingBag, User } from 'lucide-react'
+import { Coins, Globe, Info, LogOut, MessageCircleMore, Palette, Pencil, ShoppingBag, User } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../lib/api'
@@ -67,9 +67,9 @@ export function ProfilePage() {
               </span>
             </Link>
 
-            <Link
-              to="/cards"
-              className="relative flex items-center gap-3.5 overflow-hidden rounded-2xl p-4 text-white active:scale-[0.99]"
+            {/* Тек ақпарат үшін: басылмайды, ешқайда апармайды. */}
+            <div
+              className="relative flex items-center gap-3.5 overflow-hidden rounded-2xl p-4 text-white"
               style={{ background: 'linear-gradient(135deg, #3B9BFF 0%, #0A84F8 55%, #0062CC 100%)' }}
             >
               <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/20">
@@ -83,10 +83,7 @@ export function ProfilePage() {
                   <span className="text-[17px]">{t('common.bonusUnit')}</span>
                 </div>
               </div>
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/20">
-                <ChevronRight size={20} />
-              </span>
-            </Link>
+            </div>
           </>
         )}
 
