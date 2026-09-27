@@ -7,13 +7,17 @@ import { useRef, useState } from 'react'
  * (әр өріс ескі мәнді көреді). Бір өріс мұны толық шешеді: цифр келесі ұяшыққа өзі «өтеді»,
  * Backspace алдыңғысына қайтарады, көшіріп қою мен телефонның кодты автоматты ұсынуы жұмыс істейді.
  */
-export function CodeInput({ length = 4, value, onChange, error, autoFocus, label }: {
+export function CodeInput({ length = 4, value, onChange, error, autoFocus, label, mask = false, dark = false }: {
   length?: number
   value: string
   onChange: (value: string) => void
   error?: boolean
   autoFocus?: boolean
   label: string
+  /** PIN үшін: цифрдың орнына нүкте көрсетіледі. */
+  mask?: boolean
+  /** Қара фонда (бұғат экраны). */
+  dark?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
@@ -25,11 +29,17 @@ export function CodeInput({ length = 4, value, onChange, error, autoFocus, label
         <span
           key={i}
           aria-hidden="true"
-          className={`flex size-15 items-center justify-center rounded-xl border bg-field text-[26px] font-bold text-ink transition-colors ${
-            error ? 'border-danger' : focused && i === active ? 'border-brand bg-surface' : 'border-line'
+          className={`flex size-15 items-center justify-center rounded-xl border text-[26px] font-bold transition-colors ${
+            dark ? 'bg-white/10 text-white' : 'bg-field text-ink'
+          } ${
+            error
+              ? 'border-danger'
+              : focused && i === active
+                ? `border-brand ${dark ? 'bg-white/15' : 'bg-surface'}`
+                : dark ? 'border-white/15' : 'border-line'
           }`}
         >
-          {value[i] ?? ''}
+          {value[i] ? (mask ? '•' : value[i]) : ''}
         </span>
       ))}
       <input
@@ -39,7 +49,7 @@ export function CodeInput({ length = 4, value, onChange, error, autoFocus, label
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         inputMode="numeric"
-        autoComplete="one-time-code"
+        autoComplete={mask ? 'off' : 'one-time-code'}
         autoFocus={autoFocus}
         maxLength={length}
         aria-label={label}

@@ -20,6 +20,13 @@ export const staffApi = {
       method: 'POST',
       body: JSON.stringify({ resetToken, newPassword, confirmPassword }),
     }),
+  setPin: (currentPassword: string, pin: string, confirmPin: string) =>
+    api<StaffMe>(`${base}/me/pin`, { method: 'PUT', body: JSON.stringify({ currentPassword, pin, confirmPin }) }),
+  changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) =>
+    api<void>(`${base}/me/password`, {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+    }),
   setLanguage: (language: string) =>
     api<StaffMe>(`${base}/me/language`, { method: 'PUT', body: JSON.stringify({ language }) }),
 }

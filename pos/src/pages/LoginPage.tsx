@@ -2,6 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, CheckCircle2, Lock, Phone } from 'lucide-react'
 import { AuthLayout } from '../components/AuthLayout'
+import { CashierPicker } from '../components/CashierPicker'
+import { useRegister } from '../lib/register'
+import type { StaffSession } from '../lib/types'
 import { Button } from '../components/ui/Button'
 import { TextField } from '../components/ui/TextField'
 import { ApiError } from '../lib/api'
@@ -24,6 +27,8 @@ export function LoginPage() {
   // Қалпына келтіруден кейін: «Пароль успешно изменён» (ТЗ §7.10).
   const passwordChanged = (useLocation().state as { passwordChanged?: boolean } | null)?.passwordChanged
 
+  const register = useRegister((s) => s.register)
+  const [mode, setMode] = useState<'pin' | 'password'>('pin')
   const [phone, setPhone] = useState('+7 ')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Errors>({})
@@ -120,5 +125,27 @@ export function LoginPage() {
     </form>
   )
 
-  return <AuthLayout>{form}</AuthLayout>
+  const signedIn = (session: StaffSession) => {
+    applySession(session)
+    navigate(`/${session.me.startPage}`, { replace: true })
+  }
+
+  // Тіркелген кассада әдепкі бойынша қызметкерлер тізімі мен PIN (ТЗ «Касса» §15).
+  if (!register) return <AuthLayout>{form}</AuthLayout>
+
+  return (
+    <AuthLayout>
+      <div className="w-full max-w-[410px]">
+        <div role="tablist" className="mb-8 grid grid-cols-2 rounded-xl bg-field p-1">
+          {(['pin', 'password'] as const).map((m) => (
+            <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}
+              className={`h-10 rounded-lg text-[14px] font-semibold transition-colors ${mode === m ? 'bg-surface text-ink shadow-sm' : 'text-ink-2'}`}>
+              {m === 'pin' ? t('login.byPin') : t('login.byPassword')}
+            </button>
+          ))}
+        </div>
+        {mode === 'pin' ? <CashierPicker register={register} onSignedIn={signedIn} /> : form}
+      </div>
+    </AuthLayout>
+  )
 }

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useT } from '../lib/i18n'
+import { useRegister } from '../lib/register'
+import { LockScreen } from '../components/LockScreen'
+import { useIdleLock } from './useIdleLock'
 import { NAV } from './nav'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
@@ -21,6 +24,8 @@ export function AppShell() {
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const locked = useRegister((s) => s.locked && !!s.register)
+  useIdleLock()
 
   const current = NAV.find((i) => location.pathname.startsWith(i.path))
 
@@ -51,6 +56,8 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      {/* Бұғат беттің үстінен жабады: астындағы бет (себет т.б.) сол күйінде қалады. */}
+      {locked && <LockScreen />}
     </div>
   )
 }

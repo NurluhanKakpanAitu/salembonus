@@ -17,6 +17,8 @@ export interface StaffMe {
   organizationId: string
   organizationName: string
   stores: StaffStore[]
+  /** PIN қойылған ба — кассада PIN-мен кіру мен бұғатты ашу үшін. */
+  hasPin: boolean
   /** Кіргеннен кейінгі бет: иесі — статистика, кассир — касса. */
   startPage: 'statistics' | 'cashier'
 }
@@ -53,4 +55,25 @@ export interface ResetRequested {
 export interface ResetVerified {
   resetToken: string
   expiresInSeconds: number
+}
+
+/** Касса (құрылғы). */
+export interface Register {
+  id: string
+  name: string
+  storeId: string
+  storeName: string
+  storeAddress: string | null
+  /** Әрекетсіз неше минуттан кейін бұғатталады; null — автоблок өшірулі. */
+  autoLockMinutes: number | null
+  isBound: boolean
+  activatedAt: string | null
+}
+
+export interface RegisterCashier {
+  id: string
+  firstName: string
+  lastName: string
+  role: StaffRole
+  hasPin: boolean
 }

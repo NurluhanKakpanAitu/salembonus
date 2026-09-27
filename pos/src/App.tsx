@@ -7,11 +7,12 @@ import { LoginPage } from './pages/LoginPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { SectionPage } from './pages/SectionPage'
 import { refreshSession, useAuth } from './lib/auth'
+import { loadRegister } from './lib/register'
+import { CashierPage } from './pages/CashierPage'
 import type { TranslationKey } from './lib/i18n'
 
 const HINTS: Record<string, TranslationKey> = {
   '/statistics': 'section.statisticsHint',
-  '/cashier': 'section.cashierHint',
   '/products': 'section.productsHint',
 }
 
@@ -37,6 +38,8 @@ export default function App() {
   // Бет ашылғанда сеансты cookie-дегі refresh арқылы қалпына келтіреміз.
   useEffect(() => {
     if (useAuth.getState().status === 'loading') void refreshSession()
+    // Бұл құрылғы касса ма — кірмей тұрып та керек (кіру бетінде кассирлер тізімі).
+    void loadRegister()
   }, [])
 
   return (
@@ -47,7 +50,11 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route index element={<StartPage />} />
           {NAV.map((item) => (
-            <Route key={item.path} path={item.path} element={<SectionPage item={item} hint={HINTS[item.path]} />} />
+            <Route
+              key={item.path}
+              path={item.path}
+              element={item.path === '/cashier' ? <CashierPage /> : <SectionPage item={item} hint={HINTS[item.path]} />}
+            />
           ))}
           <Route path="*" element={<StartPage />} />
         </Route>

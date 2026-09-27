@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, Check, ChevronDown, LogOut, Menu, Store } from 'lucide-react'
-import { activeStore, applyMe, clearSession, setActiveStore, useAuth } from '../lib/auth'
+import { CalendarDays, Check, ChevronDown, KeyRound, Lock, LockKeyhole, LogOut, Menu, Store, UsersRound } from 'lucide-react'
+import { activeStore, applyMe, setActiveStore, useAuth } from '../lib/auth'
+import { setLocked, useRegister } from '../lib/register'
+import { registerApi } from '../lib/registerApi'
+import { endSession } from '../lib/session'
+import { PasswordModal, PinModal } from '../components/CredentialModals'
 import { useT, type TranslationKey } from '../lib/i18n'
 import { useLanguageStore, type Language } from '../lib/language'
 import { staffApi } from '../lib/staffApi'
+import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 const MONTHS: Record<Language, string[]> = {
@@ -35,6 +40,8 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
   const setLang = useLanguageStore((s) => s.set)
   const storeMenu = usePopover()
   const profileMenu = usePopover()
+  const register = useRegister((s) => s.register)
+  const [modal, setModal] = useState<'pin' | 'password' | null>(null)
 
   const now = new Date()
   const today = `${t('common.today')}, ${now.getDate()} ${MONTHS[lang][now.getMonth()]} ${now.getFullYear()}`
@@ -53,13 +60,16 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
   }
 
   const logout = async () => {
-    try {
-      await staffApi.logout()
-    } finally {
-      clearSession()
-      qc.clear()
-      navigate('/login', { replace: true })
-    }
+    profileMenu.setOpen(false)
+    await endSession()
+    qc.clear()
+    navigate('/login', { replace: true })
+  }
+
+  const lockNow = () => {
+    profileMenu.setOpen(false)
+    setLocked(true)
+    registerApi.lock().catch(() => undefined)
   }
 
   return (
@@ -147,10 +157,24 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
                   {l === lang && <Check size={16} className="text-brand" />}
                 </button>
               ))}
+              <div className="mt-1 border-t border-line py-1">
+                <MenuItem icon={<KeyRound size={16} />} onClick={() => { profileMenu.setOpen(false); setModal('pin') }}>
+                  {me?.hasPin ? t('top.changePin') : t('top.setPin')}
+                </MenuItem>
+                <MenuItem icon={<LockKeyhole size={16} />} onClick={() => { profileMenu.setOpen(false); setModal('password') }}>
+                  {t('top.changePassword')}
+                </MenuItem>
+                {register && (
+                  <>
+                    <MenuItem icon={<Lock size={16} />} onClick={lockNow}>{t('top.lock')}</MenuItem>
+                    <MenuItem icon={<UsersRound size={16} />} onClick={() => void logout()}>{t('top.switchCashier')}</MenuItem>
+                  </>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => void logout()}
-                className="mt-1 flex w-full items-center gap-2 border-t border-line px-3.5 py-2.5 text-left text-[14px] text-danger hover:bg-field"
+                className="flex w-full items-center gap-2 border-t border-line px-3.5 py-2.5 text-left text-[14px] text-danger hover:bg-field"
               >
                 <LogOut size={16} /> {t('top.logout')}
               </button>
@@ -158,6 +182,17 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
           )}
         </div>
       </div>
+      {modal === 'pin' && <PinModal hasPin={!!me?.hasPin} onClose={() => setModal(null)} />}
+      {modal === 'password' && <PasswordModal onClose={() => setModal(null)} />}
     </header>
+  )
+}
+
+function MenuItem({ icon, onClick, children }: { icon: ReactNode; onClick: () => void; children: ReactNode }) {
+  return (
+    <button type="button" onClick={onClick}
+      className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-[14px] text-ink hover:bg-field">
+      <span className="text-ink-3">{icon}</span> {children}
+    </button>
   )
 }
