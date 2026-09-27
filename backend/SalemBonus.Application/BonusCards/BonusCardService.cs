@@ -45,6 +45,41 @@ public class BonusCardService(
         return new TransactionPageDto(await MapAsync(list.Take(take).ToList(), ct), hasMore);
     }
 
+    public async Task<ReceiptDto?> GetMyReceiptAsync(Guid receiptId, CancellationToken ct = default)
+    {
+        var list = await transactions.GetByReceiptAsync(currentUser.CustomerId, receiptId, ct);
+        if (list.Count == 0) return null;
+
+        var card = (await cards.GetByCustomerAsync(currentUser.CustomerId, ct))
+            .FirstOrDefault(c => c.Id == list[0].BonusCardId);
+        if (card is null) return null;
+
+        var redeemed = -list.Where(t => t.Amount < 0).Sum(t => t.Amount);
+        var accrual = list.FirstOrDefault(t => t.Amount > 0);
+        var accrued = accrual?.Amount ?? 0;
+        var purchase = list.Max(t => t.PurchaseAmount) ?? 0m;
+        var paid = purchase - redeemed;
+        // Чектен кейінгі операцияларды ағымдағы балансттан шегергенде сол кездегі баланс шығады.
+        var last = list.Max(t => t.CreatedAt);
+        var balanceAfter = card.Balance - await transactions.SumAmountAfterAsync(card.Id, last, ct);
+
+        return new ReceiptDto(
+            receiptId,
+            receiptId.ToString("N")[..8].ToUpperInvariant(),
+            card.StoreId,
+            card.Store?.Name ?? string.Empty,
+            card.Store?.ThemeColor ?? "#111113",
+            list[0].CreatedAt,
+            purchase,
+            redeemed,
+            accrued,
+            paid,
+            paid > 0 ? Math.Round(accrued / paid * 100, 1) : 0m,
+            balanceAfter,
+            accrual?.ExpiresAt,
+            list.Select(t => t.Comment).FirstOrDefault(c => !string.IsNullOrWhiteSpace(c)));
+    }
+
     private async Task<IReadOnlyList<BonusTransactionDto>> MapAsync(IReadOnlyList<BonusTransaction> list, CancellationToken ct)
     {
         var myCards = await cards.GetByCustomerAsync(currentUser.CustomerId, ct);
@@ -55,7 +90,8 @@ public class BonusCardService(
             t.Type.ToString(),
             t.Amount,
             t.PurchaseAmount,
-            t.CreatedAt)).ToList();
+            t.CreatedAt,
+            t.ReceiptId)).ToList();
     }
 
     private static BonusCardDto ToDto(BonusCard card, IReadOnlyDictionary<Guid, BonusTransaction> expiring)

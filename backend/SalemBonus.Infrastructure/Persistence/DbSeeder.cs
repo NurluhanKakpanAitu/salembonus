@@ -260,6 +260,8 @@ public static class DbSeeder
         Type = type,
         Amount = amount,
         PurchaseAmount = purchase,
+        // Сатып алумен байланысты демо операциялардың да чегі болады.
+        ReceiptId = purchase is null ? null : Guid.NewGuid(),
         CreatedAt = at,
     };
 }

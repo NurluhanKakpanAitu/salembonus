@@ -47,5 +47,21 @@ public class BonusTransactionRepository(AppDbContext db) : IBonusTransactionRepo
             .Select(g => g.OrderBy(x => x.ExpiresAt).First())
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyList<BonusTransaction>> GetByReceiptAsync(Guid customerId, Guid receiptId, CancellationToken ct = default)
+    {
+        var ids = db.BonusCards.Where(c => c.CustomerId == customerId).Select(c => c.Id);
+        return await db.BonusTransactions
+            .AsNoTracking()
+            .Where(t => t.ReceiptId == receiptId && ids.Contains(t.BonusCardId))
+            .OrderBy(t => t.CreatedAt)
+            .ToListAsync(ct);
+    }
+
+    public async Task<int> SumAmountAfterAsync(Guid bonusCardId, DateTime after, CancellationToken ct = default) =>
+        await db.BonusTransactions
+            .AsNoTracking()
+            .Where(t => t.BonusCardId == bonusCardId && t.CreatedAt > after)
+            .SumAsync(t => t.Amount, ct);
+
     public void Add(BonusTransaction transaction) => db.BonusTransactions.Add(transaction);
 }

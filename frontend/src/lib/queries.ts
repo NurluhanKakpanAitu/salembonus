@@ -90,6 +90,14 @@ export const useTransactions = (storeId: string | null) =>
     getNextPageParam: (last, pages) => (last.hasMore ? pages.length * PAGE : undefined),
   })
 
+export const useReceipt = (receiptId: string | null) =>
+  useQuery({
+    queryKey: ['transactions', 'receipt', receiptId],
+    queryFn: () => transactionsApi.receipt(receiptId!),
+    enabled: receiptId !== null,
+    staleTime: Infinity,
+  })
+
 /** source: дүкен идентификаторы, жүйелік хабарламалар үшін "system", барлығы үшін бос. */
 export const useNotifications = (category: NotificationCategory | null, source?: string) =>
   useInfiniteQuery({

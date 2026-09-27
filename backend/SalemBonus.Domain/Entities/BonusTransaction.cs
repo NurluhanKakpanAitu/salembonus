@@ -10,6 +10,11 @@ public class BonusTransaction
     /// <summary>Оң сан — есептеу, теріс сан — шегеру.</summary>
     public int Amount { get; set; }
     public decimal? PurchaseAmount { get; set; }
+    /// <summary>
+    /// Бір сатып алудың чек нөмірі. Бір сатып алу екі операция жасай алады (бонус шегеру
+    /// және есептеу) — олар бір чекке жатады. Сатып алумен байланысы жоқ операцияларда бос.
+    /// </summary>
+    public Guid? ReceiptId { get; set; }
     /// <summary>Есептелген бонустың жану күні. Бос болса — жанбайды.</summary>
     public DateTime? ExpiresAt { get; set; }
     /// <summary>

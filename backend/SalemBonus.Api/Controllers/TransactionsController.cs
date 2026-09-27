@@ -18,4 +18,9 @@ public class TransactionsController(IBonusCardService service) : ControllerBase
     public async Task<ActionResult<TransactionPageDto>> Get(
         [FromQuery] Guid? storeId, [FromQuery] int skip = 0, [FromQuery] int take = 20, CancellationToken ct = default) =>
         Ok(await service.GetMyTransactionsAsync(storeId, Math.Max(0, skip), Math.Clamp(take, 1, 100), ct));
+
+    /// <summary>Бір сатып алудың чегі.</summary>
+    [HttpGet("receipt/{receiptId:guid}")]
+    public async Task<ActionResult<ReceiptDto>> GetReceipt(Guid receiptId, CancellationToken ct = default) =>
+        await service.GetMyReceiptAsync(receiptId, ct) is { } receipt ? Ok(receipt) : NotFound();
 }

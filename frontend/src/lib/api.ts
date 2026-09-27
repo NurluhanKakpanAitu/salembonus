@@ -111,6 +111,26 @@ export interface BonusTransaction {
   amount: number
   purchaseAmount: number | null
   createdAt: string
+  /** Сатып алу чегінің нөмірі. Бос болса, операцияның чегі жоқ. */
+  receiptId: string | null
+}
+
+/** Бір сатып алудың чегі: бонус шегеру мен есептеу бірге. */
+export interface Receipt {
+  receiptId: string
+  number: string
+  storeId: string
+  storeName: string
+  themeColor: string
+  createdAt: string
+  purchaseAmount: number
+  redeemed: number
+  accrued: number
+  paid: number
+  cashbackPercent: number
+  balanceAfter: number
+  expiresAt: string | null
+  comment: string | null
 }
 
 export interface TransactionPage {
@@ -177,6 +197,7 @@ export const transactionsApi = {
   recent: (take = 20) => api<BonusTransaction[]>(`/transactions/recent?take=${take}`),
   list: (storeId: string | null, skip: number, take: number) =>
     api<TransactionPage>(`/transactions?${storeId ? `storeId=${storeId}&` : ''}skip=${skip}&take=${take}`),
+  receipt: (receiptId: string) => api<Receipt>(`/transactions/receipt/${receiptId}`),
 }
 
 export const meApi = {

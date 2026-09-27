@@ -1,8 +1,10 @@
-import { ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { ChevronRight, ReceiptText } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { BonusTransaction } from '../../lib/api'
 import { formatDateTime, formatSigned, formatTenge, transactionTitle } from '../../lib/format'
 import { useT } from '../../lib/i18n'
+import { ReceiptSheet } from '../transactions/ReceiptSheet'
 
 export function TransactionList({ items, title, allHref }: {
   items: BonusTransaction[]
@@ -10,6 +12,8 @@ export function TransactionList({ items, title, allHref }: {
   allHref?: string
 }) {
   const t = useT()
+  const [receiptId, setReceiptId] = useState<string | null>(null)
+
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
@@ -27,35 +31,46 @@ export function TransactionList({ items, title, allHref }: {
           return (
             <li
               key={tx.id}
-              className={`flex items-center gap-3 py-3.5 ${i < items.length - 1 ? 'border-b border-line' : ''}`}
+              className={`py-3.5 ${i < items.length - 1 ? 'border-b border-line' : ''}`}
             >
-              <div
-                className={`flex size-12 shrink-0 items-center justify-center rounded-2xl text-[15px] font-extrabold ${
-                  plus ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'
-                }`}
-              >
-                {plus ? '+' : '−'}{t('common.bonusUnit')}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[15px] font-bold leading-tight">{transactionTitle(tx.type)}</div>
-                <div className="mt-0.5 truncate text-[13px] text-ink-2">{tx.storeName}</div>
-                <div className="truncate text-xs text-ink-3">{formatDateTime(tx.createdAt)}</div>
-              </div>
-              <div className="shrink-0 text-right">
-                <div className={`text-[15px] font-extrabold ${plus ? 'text-green' : 'text-danger'}`}>
-                  {formatSigned(tx.amount, 'Б')}
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex size-12 shrink-0 items-center justify-center rounded-2xl text-[15px] font-extrabold ${
+                    plus ? 'bg-green-soft text-green' : 'bg-danger-soft text-danger'
+                  }`}
+                >
+                  {plus ? '+' : '−'}{t('common.bonusUnit')}
                 </div>
-                {tx.purchaseAmount != null && (
-                  <div className="mt-0.5 text-[11px] text-ink-3">
-                    {t('tx.receipt', { amount: formatTenge(tx.purchaseAmount) })}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[15px] font-bold leading-tight">{transactionTitle(tx.type)}</div>
+                  <div className="mt-0.5 truncate text-[13px] text-ink-2">{tx.storeName}</div>
+                  <div className="truncate text-xs text-ink-3">{formatDateTime(tx.createdAt)}</div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className={`text-[15px] font-extrabold ${plus ? 'text-green' : 'text-danger'}`}>
+                    {formatSigned(tx.amount, 'Б')}
                   </div>
-                )}
+                  {tx.purchaseAmount != null && (
+                    <div className="mt-0.5 text-[12px] text-ink-3">{formatTenge(tx.purchaseAmount)}</div>
+                  )}
+                </div>
               </div>
-              <ChevronRight size={18} className="-mr-1 shrink-0 text-ink-3" />
+
+              {/* Сатып алудың чегі: басқанда толық чек ашылады. */}
+              {tx.receiptId && (
+                <button
+                  type="button"
+                  onClick={() => setReceiptId(tx.receiptId)}
+                  className="mt-2 ml-15 flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[12px] font-bold tracking-[0.06em] text-ink-2 active:scale-[0.97]"
+                >
+                  <ReceiptText size={14} /> {t('receipt.button')}
+                </button>
+              )}
             </li>
           )
         })}
       </ul>
+      <ReceiptSheet receiptId={receiptId} onClose={() => setReceiptId(null)} />
     </section>
   )
 }

@@ -63,12 +63,14 @@ public class PosService(
             throw new ValidationException(Messages.RedeemTooMuch(Lang, maxRedeem, card.Balance, store.MaxRedeemPercent));
 
         var now = DateTime.UtcNow;
+        // Бір сатып алудың барлық операциясы бір чекке жатады.
+        var receiptId = Guid.NewGuid();
         Guid? redemptionId = null;
         if (request.RedeemAmount > 0)
         {
             card.Balance -= request.RedeemAmount;
             await ConsumeLotsAsync(card.Id, request.RedeemAmount, ct);
-            var tx = NewTx(card, BonusTransactionType.Redemption, -request.RedeemAmount, request.PurchaseAmount, request.Comment, now);
+            var tx = NewTx(card, BonusTransactionType.Redemption, -request.RedeemAmount, request.PurchaseAmount, request.Comment, now, receiptId);
             transactions.Add(tx);
             redemptionId = tx.Id;
             notifications.Add(NewNotification(customer, store, NotificationType.BonusRedeemed,
@@ -86,7 +88,7 @@ public class PosService(
         if (accrued > 0)
         {
             card.Balance += accrued;
-            var tx = NewTx(card, BonusTransactionType.Accrual, accrued, request.PurchaseAmount, request.Comment, now.AddMilliseconds(1));
+            var tx = NewTx(card, BonusTransactionType.Accrual, accrued, request.PurchaseAmount, request.Comment, now.AddMilliseconds(1), receiptId);
             tx.Remaining = accrued;
             tx.ExpiresAt = store.BonusLifetimeDays is { } days ? now.AddDays(days) : null;
             transactions.Add(tx);
@@ -166,13 +168,15 @@ public class PosService(
         BonusRules.PercentFor(card?.Level ?? CustomerLevel.New, BonusRules.LadderOf(store)),
         store.MaxRedeemPercent);
 
-    private static BonusTransaction NewTx(BonusCard card, BonusTransactionType type, int amount, decimal purchase, string? comment, DateTime at) => new()
+    private static BonusTransaction NewTx(
+        BonusCard card, BonusTransactionType type, int amount, decimal purchase, string? comment, DateTime at, Guid receiptId) => new()
     {
         Id = Guid.NewGuid(),
         BonusCardId = card.Id,
         Type = type,
         Amount = amount,
         PurchaseAmount = purchase,
+        ReceiptId = receiptId,
         Comment = comment,
         CreatedAt = at,
     };
