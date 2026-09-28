@@ -4,6 +4,7 @@ using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Pos;
 using SalemBonus.Domain.Pos.Catalog;
 using SalemBonus.Domain.Pos.Inventory;
+using SalemBonus.Domain.Pos.Sales;
 
 namespace SalemBonus.Infrastructure.Persistence;
 
@@ -42,6 +43,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<StockBalance> StockBalances => Set<StockBalance>();
     public DbSet<ProductPrice> ProductPrices => Set<ProductPrice>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<SalePayment> SalePayments => Set<SalePayment>();
+    public DbSet<ReceiptCounter> ReceiptCounters => Set<ReceiptCounter>();
+    public DbSet<TransferRecipient> TransferRecipients => Set<TransferRecipient>();
+    public DbSet<StoreCashierSettings> CashierSettings => Set<StoreCashierSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

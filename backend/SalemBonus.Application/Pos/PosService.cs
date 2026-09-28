@@ -14,8 +14,7 @@ public class PosService(
     IStoreRepository stores,
     ICustomerRepository customers,
     IBonusCardRepository cards,
-    IBonusTransactionRepository transactions,
-    INotificationRepository notifications,
+    BonusLedger ledger,
     IUnitOfWork unitOfWork,
     ICurrentLanguage language) : IPosService
 {
@@ -50,77 +49,22 @@ public class PosService(
         var store = await GetStoreAsync(storeId, ct);
         var customer = await FindCustomerAsync(request.CustomerCode, ct) ?? await RegisterByPhoneAsync(request.CustomerCode, ct);
 
-        var card = await cards.GetForUpdateAsync(customer.Id, storeId, ct);
-        var isNewCard = card is null;
-        if (card is null)
-        {
-            card = new BonusCard { Id = Guid.NewGuid(), CustomerId = customer.Id, StoreId = storeId, Store = store };
-            cards.Add(card);
-        }
+        var now = DateTime.UtcNow;
+        var card = await ledger.GetOrCreateCardAsync(customer, store, now, ct);
 
         var maxRedeem = BonusRules.MaxRedeemable(request.PurchaseAmount, store.MaxRedeemPercent, card.Balance);
         if (request.RedeemAmount > maxRedeem)
             throw new ValidationException(Messages.RedeemTooMuch(Lang, maxRedeem, card.Balance, store.MaxRedeemPercent));
 
-        var now = DateTime.UtcNow;
         // Бір сатып алудың барлық операциясы бір чекке жатады.
         var receiptId = Guid.NewGuid();
-        Guid? redemptionId = null;
-        if (request.RedeemAmount > 0)
-        {
-            card.Balance -= request.RedeemAmount;
-            await ConsumeLotsAsync(card.Id, request.RedeemAmount, ct);
-            var tx = NewTx(card, BonusTransactionType.Redemption, -request.RedeemAmount, request.PurchaseAmount, request.Comment, now, receiptId);
-            transactions.Add(tx);
-            redemptionId = tx.Id;
-            notifications.Add(NewNotification(customer, store, NotificationType.BonusRedeemed,
-                "Бонус жұмсалды",
-                $"{store.Name} — {Fmt(request.RedeemAmount)} Б бонус шегерілді.",
-                $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now,
-                NotificationTemplates.BonusRedeemed, request.RedeemAmount, request.PurchaseAmount, receiptId: receiptId));
-        }
+        Guid? redemptionId = request.RedeemAmount > 0
+            ? await ledger.RedeemAsync(card, customer, store, request.RedeemAmount, request.PurchaseAmount, request.Comment, receiptId, now, ct)
+            : null;
 
-        var ladder = BonusRules.LadderOf(store);
         var paid = request.PurchaseAmount - request.RedeemAmount;
         // Пайыз клиенттің сол дүкендегі ағымдағы мәртебесі бойынша алынады.
-        var accrued = BonusRules.CalculateAccrual(paid, BonusRules.PercentFor(card.Level, ladder));
-        Guid? accrualId = null;
-        if (accrued > 0)
-        {
-            card.Balance += accrued;
-            var tx = NewTx(card, BonusTransactionType.Accrual, accrued, request.PurchaseAmount, request.Comment, now.AddMilliseconds(1), receiptId);
-            tx.Remaining = accrued;
-            tx.ExpiresAt = store.BonusLifetimeDays is { } days ? now.AddDays(days) : null;
-            transactions.Add(tx);
-            accrualId = tx.Id;
-            notifications.Add(NewNotification(customer, store, NotificationType.BonusAccrued,
-                "Бонус есептелді!",
-                $"{store.Name} — Сізге {Fmt(accrued)} Б бонус есептелді.",
-                $"Сатып алу сомасы: {Fmt(request.PurchaseAmount)} ₸", now.AddMilliseconds(1),
-                NotificationTemplates.BonusAccrued, accrued, request.PurchaseAmount, receiptId: receiptId));
-        }
-
-        card.TotalSpent += paid;
-        var newLevel = BonusRules.LevelFor(card.TotalSpent, ladder);
-        var upgraded = newLevel > card.Level;
-        if (upgraded)
-        {
-            card.Level = newLevel;
-            notifications.Add(NewNotification(customer, store, NotificationType.System,
-                "Жаңа деңгей!",
-                $"{store.Name} — Құттықтаймыз, сіз енді {CustomerLevels.Name(newLevel, Lang)} деңгейіндесіз.",
-                null, now.AddMilliseconds(2),
-                NotificationTemplates.LevelUp, levelKey: CustomerLevels.Key(newLevel)));
-        }
-
-        if (isNewCard)
-        {
-            notifications.Add(NewNotification(customer, store, NotificationType.StoreAdded,
-                "Жаңа дүкен қосылды",
-                $"{store.Name} дүкені сіздің карталарыңызға қосылды.",
-                "Енді бұл дүкенде де бонус жинай аласыз!", now.AddMilliseconds(-1),
-                NotificationTemplates.StoreAdded));
-        }
+        var (accrued, accrualId, upgraded) = ledger.Accrue(card, customer, store, paid, request.PurchaseAmount, request.Comment, receiptId, now);
 
         await unitOfWork.SaveChangesAsync(ct);
 
@@ -168,55 +112,7 @@ public class PosService(
         BonusRules.PercentFor(card?.Level ?? CustomerLevel.New, BonusRules.LadderOf(store)),
         store.MaxRedeemPercent);
 
-    private static BonusTransaction NewTx(
-        BonusCard card, BonusTransactionType type, int amount, decimal purchase, string? comment, DateTime at, Guid receiptId) => new()
-    {
-        Id = Guid.NewGuid(),
-        BonusCardId = card.Id,
-        Type = type,
-        Amount = amount,
-        PurchaseAmount = purchase,
-        ReceiptId = receiptId,
-        Comment = comment,
-        CreatedAt = at,
-    };
-
-    private static Notification NewNotification(
-        Customer c, Store s, NotificationType type, string title, string body, string? detail, DateTime at,
-        string? templateKey = null, int? amount = null, decimal? purchaseAmount = null, string? levelKey = null,
-        Guid? receiptId = null) => new()
-    {
-        Id = Guid.NewGuid(),
-        CustomerId = c.Id,
-        StoreId = s.Id,
-        Type = type,
-        Title = title,
-        Body = body,
-        Detail = detail,
-        TemplateKey = templateKey,
-        Amount = amount,
-        PurchaseAmount = purchaseAmount,
-        LevelKey = levelKey,
-        ReceiptId = receiptId,
-        CreatedAt = at,
-    };
-
-    /// <summary>Шегерілген бонус ең ескі партиядан бастап жұмсалады (FIFO).</summary>
-    private async Task ConsumeLotsAsync(Guid cardId, int amount, CancellationToken ct)
-    {
-        var left = amount;
-        foreach (var lot in await transactions.GetOpenLotsAsync(cardId, ct))
-        {
-            if (left <= 0) break;
-            var take = Math.Min(lot.Remaining, left);
-            lot.Remaining -= take;
-            left -= take;
-        }
-        // Партиясы жоқ ескі баланстан шегерілсе, left > 0 болуы мүмкін — бұл қалыпты жағдай.
-    }
-
     private static string MaskPhone(string phone) =>
         phone.Length >= 4 ? $"{phone[..Math.Min(5, phone.Length)]} *** ** {phone[^2..]}" : phone;
 
-    private static string Fmt(decimal n) => string.Format(new System.Globalization.CultureInfo("ru-RU"), "{0:N0}", n).Replace(' ', ' ');
 }

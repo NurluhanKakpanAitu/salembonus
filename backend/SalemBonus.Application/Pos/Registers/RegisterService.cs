@@ -63,6 +63,9 @@ public class RegisterService(
         return register is null ? null : ToDto(register);
     }
 
+    public async Task<RegisterDto> RequireCurrentAsync(string? deviceToken, CancellationToken ct = default) =>
+        ToDto(await RequireRegisterAsync(deviceToken, forUpdate: false, ct));
+
     public async Task<IReadOnlyList<RegisterCashierDto>> GetCashiersAsync(string? deviceToken, CancellationToken ct = default)
     {
         var register = await RequireRegisterAsync(deviceToken, forUpdate: false, ct);

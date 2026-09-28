@@ -34,7 +34,10 @@ public static class DependencyInjection
         services.AddScoped<ICatalogNodeService, CatalogNodeService>();
         services.AddScoped<ICatalogDictionaryService, CatalogDictionaryService>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<SalemBonus.Application.BonusCards.BonusLedger>();
         services.AddScoped<ProductExchangeService>();
+        services.AddScoped<SalemBonus.Application.Pos.Sales.CashierService>();
+        services.AddScoped<SalemBonus.Application.Pos.Sales.SaleService>();
         services.AddScoped<WarehouseService>();
         services.AddScoped<MediaService>();
         return services;

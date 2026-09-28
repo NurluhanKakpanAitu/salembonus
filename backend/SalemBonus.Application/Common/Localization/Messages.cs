@@ -391,4 +391,70 @@ public static class Messages
 
     public static string ImportNumberInvalid(AppLanguage l, string column) => Pick(l,
         $"«{column}» бағанындағы мән дұрыс емес", $"Неверное значение в колонке «{column}»");
+
+    // Касса (ТЗ «Касса» §21)
+    public static string ApproverNotAllowed(AppLanguage l) => Pick(l,
+        "Бұл қызметкер жеңілдікті растай алмайды", "Этот сотрудник не может подтверждать скидки");
+
+    public static string RegisterOtherStore(AppLanguage l) => Pick(l,
+        "Бұл касса басқа дүкенге тіркелген", "Эта касса подключена к другому магазину");
+
+    public static string CustomerPhoneExists(AppLanguage l) => Pick(l,
+        "Бұл нөмірмен клиент бар — іздеу арқылы табыңыз", "Клиент с таким номером уже есть — найдите его через поиск");
+
+    public static string BirthDateRequired(AppLanguage l) => Pick(l, "Туған күнін енгізіңіз", "Укажите дату рождения");
+
+    public static string SaleRequestIdRequired(AppLanguage l) => Pick(l, "Сұраныс кілті жоқ", "Нет ключа запроса");
+
+    public static string SaleEmpty(AppLanguage l) => Pick(l, "Себет бос", "Корзина пуста");
+
+    public static string SaleTooManyLines(AppLanguage l, int max) => Pick(l,
+        $"Бір чекте {max} позициядан артық болмайды", $"В одном чеке не больше {max} позиций");
+
+    public static string SaleQuantityInvalid(AppLanguage l) => Pick(l, "Саны дұрыс емес", "Неверное количество");
+
+    public static string SaleProductUnavailable(AppLanguage l) => Pick(l,
+        "Тауар сатылымда жоқ (архивте не кассада жасырылған)", "Товар недоступен для продажи (в архиве или скрыт в кассе)");
+
+    public static string SaleNoPrice(AppLanguage l, string name) => Pick(l,
+        $"«{name}» тауарының бағасы көрсетілмеген", $"У товара «{name}» не указана цена");
+
+    public static string SaleStockInsufficient(AppLanguage l, string name, decimal available) => Pick(l,
+        $"«{name}» жеткіліксіз: қалдығы {available:0.###}", $"Недостаточно «{name}»: в наличии {available:0.###}");
+
+    public static string DiscountKindInvalid(AppLanguage l) => Pick(l, "Жеңілдік түрі дұрыс емес", "Неверный тип скидки");
+
+    public static string DiscountTooLarge(AppLanguage l) => Pick(l,
+        "Жеңілдік сомадан артық болмауы керек", "Скидка не может быть больше суммы чека");
+
+    public static string DiscountNeedsApproval(AppLanguage l, decimal limit) => Pick(l,
+        $"Жеңілдік сіздің шегіңізден ({limit:0.##}%) асады — әкімшінің растауы керек",
+        $"Скидка превышает ваш лимит ({limit:0.##}%) — нужно подтверждение администратора");
+
+    public static string SaleBonusNeedsCustomer(AppLanguage l) => Pick(l,
+        "Бонус шегеру үшін клиентті таңдаңыз", "Чтобы списать бонусы, выберите клиента");
+
+    public static string PaymentRequired(AppLanguage l) => Pick(l, "Төлем түрін таңдаңыз", "Выберите способ оплаты");
+
+    public static string PaymentMethodInvalid(AppLanguage l) => Pick(l, "Төлем түрі белгісіз", "Неизвестный способ оплаты");
+
+    public static string PaymentMethodDisabled(AppLanguage l) => Pick(l,
+        "Бұл төлем түрі дүкенде қосылмаған", "Этот способ оплаты не включён в магазине");
+
+    public static string PaymentMethodRepeated(AppLanguage l) => Pick(l,
+        "Бір төлем түрі екі рет көрсетілген", "Способ оплаты указан дважды");
+
+    public static string PaymentAmountInvalid(AppLanguage l) => Pick(l, "Төлем сомасы дұрыс емес", "Неверная сумма оплаты");
+
+    public static string TransferRecipientRequired(AppLanguage l) => Pick(l,
+        "Аударым алушысын таңдаңыз", "Выберите получателя перевода");
+
+    public static string PaymentMismatch(AppLanguage l, decimal total, decimal sum) => sum < total
+        ? Pick(l, $"Төлем жетпейді: тағы {total - sum:0.##} ₸", $"Недостаточно оплаты: осталось {total - sum:0.##} ₸")
+        : Pick(l, $"Төлем артық: {sum - total:0.##} ₸", $"Оплата превышает итог на {sum - total:0.##} ₸");
+
+    public static string CashNotEnough(AppLanguage l, decimal missing) => Pick(l,
+        $"Жеткіліксіз {missing:0.##} ₸", $"Недостаточно {missing:0.##} ₸");
+
+    public static string SaleNotFound(AppLanguage l) => Pick(l, "Чек табылмады", "Чек не найден");
 }

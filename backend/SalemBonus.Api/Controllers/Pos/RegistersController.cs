@@ -39,14 +39,22 @@ public class RegistersController(IRegisterService registers, IWebHostEnvironment
     {
         await registers.DeactivateAsync(DeviceToken, ct);
         Response.Cookies.Delete(StaffAuth.RegisterCookie, DeviceCookie(null));
+        Response.Cookies.Delete(StaffAuth.RegisterCookie, DeviceCookie(null, StaffAuth.LegacyRegisterCookiePath));
         return NoContent();
     }
 
     /// <summary>Бұл құрылғы касса ма. Кірмей тұрып та сұралады — кіру бетінде кассирлерді көрсету үшін.</summary>
     [HttpGet("current")]
     [AllowAnonymous]
-    public async Task<ActionResult<RegisterDto>> Current(CancellationToken ct) =>
-        await registers.GetCurrentAsync(DeviceToken, ct) is { } register ? Ok(register) : NoContent();
+    public async Task<ActionResult<RegisterDto>> Current(CancellationToken ct)
+    {
+        if (await registers.GetCurrentAsync(DeviceToken, ct) is not { } register) return NoContent();
+        // Бұрын cookie тек /registers жолында берілген. Оны бүкіл POS API-ға көшіреміз,
+        // әйтпесе сатылым қай кассадан екенін білмейді.
+        Response.Cookies.Delete(StaffAuth.RegisterCookie, DeviceCookie(null, StaffAuth.LegacyRegisterCookiePath));
+        Response.Cookies.Append(StaffAuth.RegisterCookie, DeviceToken!, DeviceCookie(DateTime.UtcNow.AddYears(1)));
+        return Ok(register);
+    }
 
     [HttpGet("current/cashiers")]
     [AllowAnonymous]
@@ -82,12 +90,12 @@ public class RegistersController(IRegisterService registers, IWebHostEnvironment
         return NoContent();
     }
 
-    private CookieOptions DeviceCookie(DateTime? expires) => new()
+    private CookieOptions DeviceCookie(DateTime? expires, string path = StaffAuth.RegisterCookiePath) => new()
     {
         HttpOnly = true,
         Secure = !env.IsDevelopment(),
         SameSite = SameSiteMode.Strict,
-        Path = StaffAuth.RegisterCookiePath,
+        Path = path,
         Expires = expires,
     };
 }

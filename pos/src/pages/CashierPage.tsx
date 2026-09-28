@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Loader2, Monitor, Unplug } from 'lucide-react'
+import { Loader2, Monitor, Unplug } from 'lucide-react'
+import { PosScreen } from '../components/cashier/PosScreen'
 import { Button } from '../components/ui/Button'
 import { ApiError } from '../lib/api'
 import { activeStore, can, useAuth } from '../lib/auth'
@@ -9,8 +10,8 @@ import { registerApi } from '../lib/registerApi'
 import { Permission, type Register } from '../lib/types'
 
 /**
- * Касса бөлімі. Әзірге — осы құрылғыны кассаға қосу (ТЗ «Касса» §15, §18 үшін қажет).
- * Каталог, себет және төлем экраны келесі кезеңде осы бетте болады.
+ * Касса бөлімі. Құрылғы кассаға қосылған болса — касса экраны; әйтпесе — қосу (ТЗ «Касса» §15, §18).
+ * Сатылым тек тіркелген кассадан: сервер қай кассадан сатылғанын cookie арқылы біледі.
  */
 export function CashierPage() {
   const t = useT()
@@ -52,30 +53,11 @@ export function CashierPage() {
     }
   }
 
+  if (onThisStore)
+    return <PosScreen menu={canManage ? [{ label: t('register.disconnect'), icon: <Unplug size={16} />, danger: true, onClick: () => void deactivate() }] : []} />
+
   return (
     <div className="mx-auto max-w-2xl">
-      {onThisStore ? (
-        <section className="rounded-2xl border border-line bg-surface p-6">
-          <div className="flex items-start gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-success-soft text-success">
-              <CheckCircle2 size={24} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-[18px] font-bold">{t('register.connected', { name: register.name })}</h2>
-              <p className="mt-0.5 text-[14px] text-ink-2">{register.storeName}</p>
-              <p className="mt-1 text-[13px] text-ink-3">
-                {register.autoLockMinutes ? t('register.autoLock', { min: register.autoLockMinutes }) : t('register.autoLockOff')}
-              </p>
-            </div>
-          </div>
-          <p className="mt-5 rounded-xl bg-field px-4 py-3 text-[14px] text-ink-2">{t('register.screenSoon')}</p>
-          {canManage && (
-            <Button variant="secondary" className="mt-5" icon={<Unplug size={17} />} loading={busy === 'off'} onClick={() => void deactivate()}>
-              {t('register.disconnect')}
-            </Button>
-          )}
-        </section>
-      ) : (
         <section className="rounded-2xl border border-line bg-surface p-6">
           <div className="flex items-start gap-4">
             <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand">
@@ -113,7 +95,6 @@ export function CashierPage() {
           )}
           {error && <p className="mt-3 text-[14px] text-danger">{error}</p>}
         </section>
-      )}
     </div>
   )
 }

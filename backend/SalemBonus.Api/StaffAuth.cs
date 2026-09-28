@@ -12,7 +12,10 @@ public static class StaffAuth
     public const string PinRateLimit = "staff-pin";
     /// <summary>Касса құрылғысының кілті — тек осы cookie-де, JavaScript оны оқи алмайды.</summary>
     public const string RegisterCookie = "salem_register";
-    public const string RegisterCookiePath = "/api/pos/v1/registers";
+    /// <summary>Бүкіл POS API-ға: сатылым да қай кассадан жасалғанын білуі керек.</summary>
+    public const string RegisterCookiePath = "/api/pos/v1";
+    /// <summary>Бұрынғы тар жол — ескі cookie-ді жаңа жолға көшіру үшін.</summary>
+    public const string LegacyRegisterCookiePath = "/api/pos/v1/registers";
     /// <summary>Refresh токені тек осы cookie-де: JavaScript оны оқи алмайды.</summary>
     public const string RefreshCookie = "salem_staff_rt";
     public const string RefreshCookiePath = "/api/staff/v1/auth";

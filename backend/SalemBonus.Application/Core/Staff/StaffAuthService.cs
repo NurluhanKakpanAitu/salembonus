@@ -171,6 +171,15 @@ public class StaffAuthService(
         await unitOfWork.SaveChangesAsync(ct);
     }
 
+    public async Task ApproveWithPinAsync(Guid approverId, string? pin, Guid storeId, Guid registerId, string permission, CancellationToken ct = default)
+    {
+        var user = await staff.GetByIdForUpdateAsync(approverId, ct);
+        var allowed = user is { IsActive: true }
+                      && user.Memberships.Any(m => m.StoreId == storeId && m.IsActive && m.Has(permission));
+        if (!allowed) throw new ValidationException(Messages.ApproverNotAllowed(Lang), "approval");
+        await CheckPinAsync(user!, pin, storeId, registerId, "sale.approve", DateTime.UtcNow, ct);
+    }
+
     /// <summary>
     /// PIN тексерісі. 4 таңбаны теріп көру оңай, сондықтан 5 қатеден кейін PIN 15 минутқа
     /// бұғатталады — ол кезде тек құпиясөзбен кіруге болады. Сәтсіз әрекет те сақталады.

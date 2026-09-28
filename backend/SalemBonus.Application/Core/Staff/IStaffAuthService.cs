@@ -18,4 +18,10 @@ public interface IStaffAuthService
 
     /// <summary>Бұғатталған кассаны ашу: қазіргі қызметкердің PIN-і (ТЗ «Касса» §18).</summary>
     Task VerifyPinAsync(string? pin, Guid storeId, Guid registerId, CancellationToken ct = default);
+    /// <summary>
+    /// Басқа қызметкердің PIN-імен растау (мысалы, кассир шегінен асқан жеңілдік). Растаушының осы
+    /// дүкенде <paramref name="permission"/> құқығы болуы керек; қате PIN бұғат есептегішін арттырады.
+    /// Сәтті болса — ештеңе сақталмайды, шақырушы өз транзакциясымен сақтайды.
+    /// </summary>
+    Task ApproveWithPinAsync(Guid approverId, string? pin, Guid storeId, Guid registerId, string permission, CancellationToken ct = default);
 }

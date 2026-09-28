@@ -14,6 +14,8 @@ public interface IRegisterService
 
     /// <summary>Бұл құрылғы тіркелген касса болса — оның мәліметі, әйтпесе бос.</summary>
     Task<RegisterDto?> GetCurrentAsync(string? deviceToken, CancellationToken ct = default);
+    /// <summary>Осы құрылғының кассасы; тіркелмеген болса — 403 (сатылым тек кассадан).</summary>
+    Task<RegisterDto> RequireCurrentAsync(string? deviceToken, CancellationToken ct = default);
     Task<IReadOnlyList<RegisterCashierDto>> GetCashiersAsync(string? deviceToken, CancellationToken ct = default);
     Task<StaffSession> PinLoginAsync(string? deviceToken, PinLoginRequest request, string? device, CancellationToken ct = default);
     Task UnlockAsync(string? deviceToken, string? pin, CancellationToken ct = default);

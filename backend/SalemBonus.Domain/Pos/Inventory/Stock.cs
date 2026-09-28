@@ -4,6 +4,10 @@ public enum StockMovementType
 {
     /// <summary>Тауар жасалғанда енгізілген бастапқы қалдық.</summary>
     Opening,
+    /// <summary>Кассадағы сатылым (теріс).</summary>
+    Sale,
+    /// <summary>Сатылымды қайтару (оң).</summary>
+    Return,
 }
 
 /// <summary>
@@ -22,6 +26,8 @@ public class StockMovement
     /// <summary>Бір бірліктің өзіндік құны (кіріс кезінде).</summary>
     public decimal? UnitCost { get; set; }
     public Guid? StaffUserId { get; set; }
+    /// <summary>Құжат: сатылым не қайтару.</summary>
+    public Guid? DocumentId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 

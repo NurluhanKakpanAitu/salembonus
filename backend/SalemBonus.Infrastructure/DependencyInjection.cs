@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<ICatalogRepository, CatalogRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
+        services.AddScoped<ISalesRepository, SalesRepository>();
         // Meta-ның Authentication шаблоны бекітілгенше кодтар логқа жазылады.
         services.AddSingleton<IWhatsAppSender, LogWhatsAppSender>();
         return services;
@@ -90,6 +91,7 @@ public static class DependencyInjection
         {
             await StaffSeeder.SeedAsync(db, ct);
             await CatalogDemoSeeder.SeedAsync(db, ct);
+            await CashierDemoSeeder.SeedAsync(db, ct);
         }
     }
 }
