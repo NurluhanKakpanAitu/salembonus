@@ -122,3 +122,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+/// <summary>Интеграциялық тесттер үшін (WebApplicationFactory).</summary>
+public partial class Program;

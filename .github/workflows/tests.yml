@@ -1,0 +1,35 @@
+# Әр push/PR-да: бэкендтің интеграциялық тесттері (шын PostgreSQL, Testcontainers) және SalemPos жинағы.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Integration tests
+        run: dotnet test backend/SalemBonus.Api.Tests --logger "console;verbosity=normal"
+
+  pos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pos/package-lock.json
+      - run: npm ci
+        working-directory: pos
+      - name: Typecheck and build
+        run: npm run build
+        working-directory: pos
