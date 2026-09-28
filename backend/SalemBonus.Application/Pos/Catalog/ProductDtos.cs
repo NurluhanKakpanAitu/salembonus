@@ -76,7 +76,12 @@ public record SaveProductRequest(
     IReadOnlyList<ProductBarcodeDto>? Barcodes,
     IReadOnlyList<ProductImageDto>? Images,
     IReadOnlyList<ProductCharacteristicDto>? Characteristics,
-    OpeningStockRequest? Opening);
+    OpeningStockRequest? Opening,
+    /// <summary>
+    /// Тек өзгертуде: ағымдағы дүкеннің сату бағасы. «Склад» модулі жасалғанша баға карточкада
+    /// өзгертіледі; қалдық пен кіріс бағасы — тек «Склад» арқылы. null — өзгермейді.
+    /// </summary>
+    decimal? SalePrice = null);
 
 public record ChangeClassificationRequest(Guid? NodeId);
 

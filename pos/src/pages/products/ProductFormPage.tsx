@@ -25,6 +25,7 @@ const NUMERIC: { field: string; get: (d: ProductDraft) => string }[] = [
   { field: 'opening.quantity', get: (d) => d.opening.quantity },
   { field: 'opening.purchasePrice', get: (d) => d.opening.purchasePrice },
   { field: 'opening.salePrice', get: (d) => d.opening.salePrice },
+  { field: 'salePrice', get: (d) => d.salePrice },
   { field: 'warrantyMonths', get: (d) => d.warrantyMonths },
   { field: 'shelfLifeDays', get: (d) => d.shelfLifeDays },
   { field: 'vatRate', get: (d) => d.vatRate },
@@ -200,7 +201,7 @@ function ProductForm({ product }: { product?: import('../../lib/catalogTypes').P
 
         <div className="min-w-0 rounded-2xl border border-line bg-surface p-5 lg:p-7">
           {section === 'main' && <MainSection {...common} units={units} brands={brands} />}
-          {section === 'stock' && <StockSection {...common} warehouses={warehouses} product={product} />}
+          {section === 'stock' && <StockSection {...common} warehouses={warehouses} product={product} canEditPrice={perms.edit} />}
           {section === 'classification' && <ClassificationSection {...common} nodes={nodes} />}
           {section === 'characteristics' && <CharacteristicsSection {...common} definitions={definitions} />}
           {section === 'media' && <MediaSection {...common} productId={product?.id} canUpload={canSave} />}

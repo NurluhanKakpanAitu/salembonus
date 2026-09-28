@@ -136,9 +136,12 @@ public partial class ProductService(
         var images = ValidateImages(orgId, request.Images);
         var values = await ValidateCharacteristicsAsync(orgId, request.Characteristics, ct);
         SyncChildren(product, barcodes, images, values);
+        var price = await ApplySalePriceAsync(product.Id, m.StoreId, request.SalePrice, ct);
         product.UpdatedAt = DateTime.UtcNow;
 
         access.Audit(orgId, m.StoreId, "catalog.product.update", "product", product.Id, before, Snapshot(product, barcodes, null));
+        if (price is { } p)
+            access.Audit(orgId, m.StoreId, "catalog.product.price", "product", product.Id, new { SalePrice = p.Old }, new { SalePrice = p.New });
         await unitOfWork.SaveChangesAsync(ct);
         return await GetAsync(product.Id, ct);
     }
@@ -397,6 +400,29 @@ public partial class ProductService(
             inventory.AddPrice(new ProductPrice { ProductId = product.Id, StoreId = warehouse.StoreId, SalePrice = sale ?? 0, PurchasePrice = purchase, UpdatedAt = now });
 
         return new { WarehouseId = warehouse.Id, Quantity = quantity, PurchasePrice = purchase, SalePrice = sale };
+    }
+
+    /// <summary>
+    /// Ағымдағы дүкеннің сату бағасын өзгерту (уақытша, «Склад» модулі келгенше). Өзгермесе — null.
+    /// Кіріс бағасына тимейміз: ол қоймалық кіріспен ғана өзгереді.
+    /// </summary>
+    private async Task<(decimal? Old, decimal New)?> ApplySalePriceAsync(Guid productId, Guid storeId, decimal? salePrice, CancellationToken ct)
+    {
+        if (salePrice is not { } raw) return null;
+        if (raw < 0) throw new ValidationException(Messages.ValueNegative(Lang), "salePrice");
+        var value = Math.Round(raw, 2);
+
+        var price = await inventory.GetPriceForUpdateAsync(productId, storeId, ct);
+        if (price is null)
+        {
+            inventory.AddPrice(new ProductPrice { ProductId = productId, StoreId = storeId, SalePrice = value });
+            return (null, value);
+        }
+        if (price.SalePrice == value) return null;
+        var old = price.SalePrice;
+        price.SalePrice = value;
+        price.UpdatedAt = DateTime.UtcNow;
+        return (old, value);
     }
 
     // ---------- Көрсету ----------

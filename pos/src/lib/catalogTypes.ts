@@ -138,6 +138,8 @@ export interface SaveProduct {
   images: ProductImage[]
   characteristics: ProductCharacteristicValue[]
   opening: OpeningStock | null
+  /** Тек өзгертуде: ағымдағы дүкеннің сату бағасы («Склад» жасалғанша). */
+  salePrice?: number | null
 }
 
 export interface ProductQuery {

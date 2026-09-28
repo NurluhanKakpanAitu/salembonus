@@ -24,6 +24,8 @@ export interface ProductDraft {
   images: string[]
   primaryImage: string | null
   characteristics: Record<string, string>
+  /** Жасалған тауардың сату бағасы (ағымдағы дүкен). Жаңа тауарда баға opening ішінде. */
+  salePrice: string
   opening: { warehouseId: string; quantity: string; purchasePrice: string; salePrice: string }
 }
 
@@ -34,7 +36,7 @@ export const SECTIONS: SectionKey[] = ['main', 'stock', 'classification', 'chara
 /** Сервер қайтарған қате өрісі қай бөлімде. */
 export function sectionOfField(field: string | null): SectionKey {
   if (!field) return 'main'
-  if (field.startsWith('opening')) return 'stock'
+  if (field.startsWith('opening') || field === 'salePrice') return 'stock'
   if (field === 'nodeId') return 'classification'
   if (field === 'characteristics') return 'characteristics'
   if (field === 'barcodes' || field === 'images') return 'media'
@@ -46,7 +48,7 @@ export function emptyDraft(nodeId: string | null, unitId: string, warehouseId: s
   return {
     name: '', article: '', unitId, brandId: '', nodeId, description: '',
     supplier: '', manufacturer: '', country: '', warrantyMonths: '', shelfLifeDays: '', vatRate: '', isMarked: false, notes: '',
-    primaryBarcode: '', extraBarcodes: [], images: [], primaryImage: null, characteristics: {},
+    primaryBarcode: '', extraBarcodes: [], images: [], primaryImage: null, characteristics: {}, salePrice: '',
     opening: { warehouseId, quantity: '', purchasePrice: '', salePrice: '' },
   }
 }
@@ -63,6 +65,7 @@ export function draftFromProduct(p: Product): ProductDraft {
     images: p.images.map((i) => i.url),
     primaryImage: p.images.find((i) => i.isPrimary)?.url ?? p.images[0]?.url ?? null,
     characteristics: Object.fromEntries(p.characteristics.map((c) => [c.definitionId, c.value])),
+    salePrice: p.salePrice?.toString() ?? '',
     opening: { warehouseId: '', quantity: '', purchasePrice: '', salePrice: '' },
   }
 }
@@ -111,5 +114,6 @@ export function toRequest(d: ProductDraft, isNew: boolean): SaveProduct {
           salePrice: toNumber(d.opening.salePrice),
         }
       : null,
+    salePrice: isNew ? null : toNumber(d.salePrice),
   }
 }

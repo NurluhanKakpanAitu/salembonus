@@ -26,6 +26,9 @@ public class InventoryRepository(AppDbContext db) : IInventoryRepository
     public Task<ProductPrice?> GetPriceAsync(Guid productId, Guid storeId, CancellationToken ct = default) =>
         db.ProductPrices.AsNoTracking().FirstOrDefaultAsync(p => p.ProductId == productId && p.StoreId == storeId, ct);
 
+    public Task<ProductPrice?> GetPriceForUpdateAsync(Guid productId, Guid storeId, CancellationToken ct = default) =>
+        db.ProductPrices.FirstOrDefaultAsync(p => p.ProductId == productId && p.StoreId == storeId, ct);
+
     public void AddMovement(StockMovement movement) => db.StockMovements.Add(movement);
     public void AddBalance(StockBalance balance) => db.StockBalances.Add(balance);
     public void AddPrice(ProductPrice price) => db.ProductPrices.Add(price);

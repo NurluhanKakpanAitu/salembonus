@@ -9,6 +9,7 @@ import { productApi } from '../../lib/productApi'
 import { uploadImage } from '../../lib/upload'
 import { ApiError } from '../../lib/api'
 import { toast } from '../ui/Toast'
+import { activeStore, useAuth } from '../../lib/auth'
 import { useT } from '../../lib/i18n'
 
 type Patch = (patch: Partial<ProductDraft>) => void
@@ -72,20 +73,29 @@ export function MainSection({ draft, patch, errors, units, brands }: {
 
 // ---------------- 6.2 Остатки и цены ----------------
 
-export function StockSection({ draft, patch, errors, warehouses, product }: {
-  draft: ProductDraft; patch: Patch; errors: Errors; warehouses: Warehouse[]; product?: Product
+export function StockSection({ draft, patch, errors, warehouses, product, canEditPrice }: {
+  draft: ProductDraft; patch: Patch; errors: Errors; warehouses: Warehouse[]; product?: Product; canEditPrice: boolean
 }) {
   const t = useT()
+  const store = useAuth(activeStore)
   const o = draft.opening
   const set = (p: Partial<ProductDraft['opening']>) => patch({ opening: { ...o, ...p } })
 
-  // Жасалған тауарда қалдық пен баға тек көрсетіледі: кейінгі өзгерістер «Склад» арқылы (ТЗ §6.2).
+  // Жасалған тауарда қалдық пен кіріс бағасы тек көрсетіледі — олар «Склад» арқылы (ТЗ §6.2).
+  // Сату бағасын «Склад» модулі жасалғанша осында өзгертуге болады (ағымдағы дүкен үшін).
   if (product) {
     return (
       <div>
         <SectionTitle title={t('product.section.stock')} hint={t('product.stockReadonly')} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Info label={t('product.salePrice')} value={product.salePrice != null ? `${money(product.salePrice)} ₸` : '—'} />
+          {canEditPrice
+            ? (
+              <Field label={t('product.salePrice')} error={errors.salePrice} hint={t('product.salePriceStore', { store: store?.name ?? '' })}>
+                <Input inputMode="decimal" value={draft.salePrice} onChange={(e) => patch({ salePrice: e.target.value })}
+                  placeholder="0 ₸" error={!!errors.salePrice} />
+              </Field>
+            )
+            : <Info label={t('product.salePrice')} value={product.salePrice != null ? `${money(product.salePrice)} ₸` : '—'} />}
           {product.purchasePrice != null && <Info label={t('product.purchasePrice')} value={`${money(product.purchasePrice)} ₸`} />}
         </div>
         <div className="mt-5 overflow-hidden rounded-xl border border-line">
