@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Monitor, ReceiptText, ShoppingCart } from 'lucide-react'
+import { BarChart3, Loader2, Monitor, ReceiptText, Settings, ShoppingCart } from 'lucide-react'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
@@ -15,6 +15,8 @@ import { PaymentModal } from './PaymentModal'
 import { ApprovalModal, ReceiptDoneModal } from './PosDialogs'
 import { SearchBox, useBarcodeScanner } from './SearchBox'
 import { ReceiptsPanel } from './ReceiptsPanel'
+import { FinancePanel } from './FinancePanel'
+import { SettingsModal } from './SettingsModal'
 import { printReceipt, ReceiptModal, ReturnModal } from './ReceiptView'
 
 const VIEW_KEY = 'salempos.pos.view'
@@ -45,7 +47,8 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
   const [approval, setApproval] = useState<{ payments: SalePaymentInput[]; error: string | null } | null>(null)
   const [done, setDone] = useState<Receipt | null>(null)
   // Оң жақта себет не чектер тарихы (ТЗ §2.2: «Чеки» режимінде себеттің орнында тізім).
-  const [panel, setPanel] = useState<'cart' | 'receipts'>('cart')
+  const [panel, setPanel] = useState<'cart' | 'receipts' | 'finance'>('cart')
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [viewing, setViewing] = useState<string | null>(null)
   const [returning, setReturning] = useState<string | null>(null)
 
@@ -108,6 +111,8 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
       setPay(null)
       setApproval(null)
       setDone(receipt)
+      // ТЗ §17.10: баптауда қосулы болса — чек төлемнен кейін бірден басылады.
+      if (ctx.autoPrint) printReceipt(receipt, t)
       void qc.invalidateQueries({ queryKey: ['cashier', 'catalog'] })
       void qc.invalidateQueries({ queryKey: ['cashier', 'search'] })
     } catch (err) {
@@ -134,18 +139,25 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
     <div className="-m-4 flex h-[calc(100%+2rem)] flex-col gap-3 overflow-y-auto bg-bg p-3 lg:-m-6 lg:h-[calc(100%+3rem)] lg:overflow-hidden">
       <div className="flex items-center gap-3">
         <SearchBox onAdd={add} onScan={scan} onShowAll={(q) => updateFilter({ search: q })} />
-        <button type="button" onClick={() => setPanel(panel === 'cart' ? 'receipts' : 'cart')}
-          className={`flex h-11 items-center gap-2 rounded-xl px-4 text-[14px] font-semibold ${panel === 'receipts' ? 'bg-brand text-white' : 'bg-surface text-ink hover:bg-field'}`}>
-          {panel === 'receipts' ? <ShoppingCart size={18} /> : <ReceiptText size={18} />}
-          {panel === 'receipts' ? t('pos.backToCart') : t('receipts.title')}
-        </button>
+        {panel !== 'cart' && (
+          <button type="button" onClick={() => setPanel('cart')}
+            className="flex h-11 items-center gap-2 rounded-xl bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-field">
+            <ShoppingCart size={18} /> {t('pos.backToCart')}
+          </button>
+        )}
+        {([['receipts', ReceiptText, 'receipts.title'], ['finance', BarChart3, 'finance.title']] as const).map(([key, Icon, label]) => (
+          <button key={key} type="button" onClick={() => setPanel(panel === key ? 'cart' : key)}
+            className={`flex h-11 items-center gap-2 rounded-xl px-4 text-[14px] font-semibold ${panel === key ? 'bg-brand text-white' : 'bg-surface text-ink hover:bg-field'}`}>
+            <Icon size={18} /> <span className="hidden md:inline">{t(label)}</span>
+          </button>
+        ))}
         <div className="hidden items-center gap-2 rounded-xl bg-surface px-3 py-2 md:flex">
           <Monitor size={18} className="text-brand" />
           <div className="leading-tight">
             <div className="text-[14px] font-semibold">{ctx.registerName}</div>
             <div className="max-w-52 truncate text-[12px] text-ink-3">{ctx.storeName}{ctx.storeAddress ? `, ${ctx.storeAddress}` : ''}</div>
           </div>
-          <RowMenu items={menu} />
+          <RowMenu items={[{ label: t('settings.title'), icon: <Settings size={16} />, onClick: () => setSettingsOpen(true) }, ...menu]} />
         </div>
       </div>
 
@@ -153,8 +165,10 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
         <CatalogPanel filter={filter} onFilter={updateFilter} onAdd={add} />
         {panel === 'cart'
           ? <CartPanel ctx={ctx} onPay={(method) => { setPayError(null); setPay({ method }) }} />
-          : <ReceiptsPanel canReturn={ctx.canReturn} onClose={() => setPanel('cart')} onOpen={setViewing}
-              onReturn={setReturning} onPrint={(id) => void print(id)} />}
+          : panel === 'receipts'
+            ? <ReceiptsPanel canReturn={ctx.canReturn} onClose={() => setPanel('cart')} onOpen={setViewing}
+                onReturn={setReturning} onPrint={(id) => void print(id)} />
+            : <FinancePanel onClose={() => setPanel('cart')} />}
       </div>
 
       {pay && (
@@ -167,7 +181,8 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
           error={approval.error} busy={busy} onClose={() => setApproval(null)}
           onApprove={(staffUserId, pin) => void submit(approval.payments, { staffUserId, pin })} />
       )}
-      {done && <ReceiptDoneModal receipt={done} onPrint={() => printReceipt(done, t)} onClose={() => setDone(null)} />}
+      {done && <ReceiptDoneModal receipt={done} electronic={ctx.electronicReceipt} onPrint={() => printReceipt(done, t)} onClose={() => setDone(null)} />}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
       {viewing && (
         <ReceiptModal saleId={viewing} canReturn={ctx.canReturn} onClose={() => setViewing(null)}
           onReturn={() => { setReturning(viewing); setViewing(null) }} />

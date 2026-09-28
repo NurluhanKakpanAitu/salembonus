@@ -29,6 +29,7 @@ public class SaleService(
     WarehouseService warehouses,
     CashierService cashier,
     BonusLedger ledger,
+    StoreNotifier notifier,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
 {
@@ -181,8 +182,10 @@ public class SaleService(
                     balance = new StockBalance { WarehouseId = warehouse.Id, ProductId = l.ProductId };
                     inventory.AddBalance(balance);
                 }
+                var before = balance.Quantity;
                 balance.Quantity -= l.Quantity;
                 balance.UpdatedAt = now;
+                await notifier.StockChangedAsync(m.StoreId, l.Name, before, balance.Quantity, ct);
                 inventory.AddMovement(new StockMovement
                 {
                     Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = l.ProductId,
@@ -212,6 +215,8 @@ public class SaleService(
                     Comment = dr.Comment, StaffUserId = access.StaffUserId, CreatedAt = now,
                 };
                 sales.AddDebt(debt);
+                await notifier.NotifyAsync(m.StoreId, StoreNotificationType.DebtCreated, customer.FullName, debt.Amount, sale.Number,
+                    await StaffNameAsync(ct), ct);
                 access.Audit(orgId, m.StoreId, "debt.create", "debt", debt.Id, null,
                     new { SaleNumber = sale.Number, debt.Amount, DueDate = debt.DueDate.ToString("yyyy-MM-dd"), CustomerId = customer.Id });
             }
@@ -233,6 +238,9 @@ public class SaleService(
 
         return await ToReceiptAsync(sale, ct);
     }
+
+    private async Task<string?> StaffNameAsync(CancellationToken ct) =>
+        await staff.GetByIdAsync(access.StaffUserId, ct) is { } u ? $"{u.FirstName} {u.LastName}".Trim() : null;
 
     private sealed record DebtRequest(DateOnly DueDate, string? Comment);
 

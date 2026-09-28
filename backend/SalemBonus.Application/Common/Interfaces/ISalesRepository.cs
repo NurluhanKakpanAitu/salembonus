@@ -48,6 +48,24 @@ public interface ISalesRepository
     Task<Dictionary<Guid, string>> CustomerNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
     Task<Dictionary<Guid, string>> StaffNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
 
+    // Финанс (ТЗ §14): кезеңдегі сатылым, қайтару, қарыз өтеулері; staffId берілсе — тек сол кассирдікі.
+    Task<IReadOnlyList<Sale>> ListSalesInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default);
+    Task<IReadOnlyList<SaleReturn>> ListReturnsInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default);
+    Task<IReadOnlyList<DebtPayment>> ListDebtPaymentsInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default);
+
+    // Клиент карточкасы (ТЗ §5)
+    Task<(IReadOnlyList<Sale> Recent, decimal Total, int Count)> CustomerSalesAsync(Guid storeId, Guid customerId, int take, CancellationToken ct = default);
+    Task<(IReadOnlyList<SaleReturn> Recent, decimal Total, int Count)> CustomerReturnsAsync(Guid storeId, Guid customerId, int take, CancellationToken ct = default);
+    Task<Dictionary<Guid, long>> SaleNumbersAsync(IReadOnlyCollection<Guid> saleIds, CancellationToken ct = default);
+
+    // Баптаулар мен хабарламалар (ТЗ §17, §19)
+    Task<StoreCashierSettings?> GetSettingsForUpdateAsync(Guid storeId, CancellationToken ct = default);
+    void AddSettings(StoreCashierSettings settings);
+    Task<TransferRecipient?> GetRecipientForUpdateAsync(Guid storeId, Guid id, CancellationToken ct = default);
+    void AddRecipient(TransferRecipient recipient);
+    void AddNotification(StoreNotification notification);
+    Task<IReadOnlyList<StoreNotification>> ListNotificationsAsync(Guid storeId, int take, CancellationToken ct = default);
+
     Task<StoreCashierSettings?> GetSettingsAsync(Guid storeId, CancellationToken ct = default);
     Task<IReadOnlyList<TransferRecipient>> ListRecipientsAsync(Guid storeId, CancellationToken ct = default);
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Banknote, CreditCard, Landmark, Loader2, QrCode, UserRound } from 'lucide-react'
+import { Banknote, CreditCard, Landmark, Loader2, QrCode, Receipt as ReceiptIcon, ShoppingCart, Undo2, UserRound, Wallet } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
@@ -13,11 +13,12 @@ import { num, round2, tenge } from '../../lib/money'
 import { formatPhoneInput } from '../../lib/phone'
 import { useT, type TranslationKey } from '../../lib/i18n'
 
-type Tab = 'info' | 'debts'
+type Tab = 'info' | 'bonus' | 'purchases' | 'returns' | 'debts'
+const TABS: Tab[] = ['info', 'bonus', 'purchases', 'returns', 'debts']
 
 /**
- * Клиент карточкасы (ТЗ «Касса» §5). Әзірге: ақпарат және қарыздар (өтеу тарихымен). Бонус тарихы,
- * сатып алулар мен қайтарулар — Касса 3-қадамында.
+ * Клиент карточкасы (ТЗ «Касса» §5): жеке деректер, бонус тарихы, сатып алулар, қайтарулар, қарыздар
+ * және итогтар. Барлығы — осы дүкен бойынша.
  */
 export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierContext; customer: CashierCustomer; onClose: () => void }) {
   const t = useT()
@@ -28,16 +29,19 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
   const c = fresh.data
   const debts = useQuery({ queryKey: ['cashier', 'debts', customer.id], queryFn: () => cashierApi.customerDebts(customer.id) })
   const open = (debts.data ?? []).filter((d) => d.status === 'Open')
+  const cardQuery = useQuery({ queryKey: ['cashier', 'card', customer.id], queryFn: () => cashierApi.customerCard(customer.id) })
+  const card = cardQuery.data
 
   const refresh = async () => {
     await qc.invalidateQueries({ queryKey: ['cashier', 'debts', customer.id] })
+    await qc.invalidateQueries({ queryKey: ['cashier', 'card', customer.id] })
     const updated = await cashierApi.customer(customer.id)
     qc.setQueryData(['cashier', 'customer', customer.id], updated)
     cart.refreshCustomer(updated)
   }
 
   return (
-    <Modal title={t('customer.title')} onClose={onClose} width={620}>
+    <Modal title={t('customer.title')} onClose={onClose} width={680}>
       <div className="flex items-center gap-4">
         <span className="flex size-14 items-center justify-center rounded-full bg-brand-soft text-brand"><UserRound size={26} /></span>
         <div className="min-w-0 flex-1">
@@ -47,8 +51,8 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
         <span className="rounded-lg bg-amber-100 px-2.5 py-1 text-[12px] font-bold uppercase text-amber-800">{c.level}</span>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-field p-1">
-        {(['info', 'debts'] as const).map((k) => (
+      <div className="mt-4 grid grid-cols-5 gap-1 rounded-xl bg-field p-1">
+        {TABS.map((k) => (
           <button key={k} type="button" onClick={() => setTab(k)}
             className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-[14px] font-medium ${tab === k ? 'bg-brand text-white' : 'text-ink-2'}`}>
             {t(`customer.tab.${k}` as TranslationKey)}
@@ -57,12 +61,63 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
         ))}
       </div>
 
-      {tab === 'info' && (
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Stat label={t('pos.bonusBalance')} value={`${num(c.balance)} Б`} tone="success" />
-          <Stat label={t('customer.accrual')} value={`${num(c.accrualPercent)}%`} />
-          <Stat label={t('customer.debt')} value={tenge(c.debtTotal)} tone={c.debtTotal > 0 ? 'danger' : undefined} />
-          <Stat label={t('customer.level')} value={c.level} />
+      {tab !== 'debts' && !card && <div className="flex justify-center py-8 text-ink-3"><Loader2 className="animate-spin" /></div>}
+
+      {tab === 'info' && card && (
+        <div className="mt-4 flex flex-col gap-4">
+          <dl className="grid grid-cols-[150px_1fr] gap-x-3 gap-y-1.5 text-[14px]">
+            <Row k={t('pos.firstName')} v={c.fullName.split(' ')[0] || '—'} />
+            <Row k={t('pos.lastName')} v={c.fullName.split(' ').slice(1).join(' ') || '—'} />
+            <Row k={t('login.phone')} v={formatPhoneInput(c.phone)} />
+            <Row k={t('pos.birthDate')} v={c.birthDate ? dateOnly(c.birthDate) : '—'} />
+            <Row k={t('customer.region')} v={card.region ?? '—'} />
+            <Row k={t('customer.district')} v={card.district ?? '—'} />
+            <Row k={t('customer.settlement')} v={card.settlement ?? '—'} />
+            <Row k={t('customer.registered')} v={dateOnly(card.registeredAt)} />
+          </dl>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat icon={<Wallet size={16} />} label={t('pos.bonusBalance')} value={`${num(c.balance)} Б`} tone="success" />
+            <Stat icon={<ShoppingCart size={16} />} label={t('customer.purchases')} value={tenge(card.purchasesTotal)} hint={t('finance.receipts', { n: card.purchasesCount })} />
+            <Stat icon={<Undo2 size={16} />} label={t('customer.returns')} value={tenge(card.returnsTotal)} hint={t('finance.receipts', { n: card.returnsCount })} />
+            <Stat icon={<ReceiptIcon size={16} />} label={t('customer.debt')} value={tenge(c.debtTotal)} tone={c.debtTotal > 0 ? 'danger' : undefined} />
+          </div>
+          <Purchases list={card.purchases.slice(0, 5)} />
+        </div>
+      )}
+
+      {tab === 'bonus' && card && (
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label={t('pos.bonusBalance')} value={`${num(c.balance)} Б`} tone="success" />
+            <Stat label={t('customer.accrual')} value={`${num(c.accrualPercent)}%`} />
+            <Stat label={t('customer.level')} value={c.level} />
+          </div>
+          <div className="max-h-80 overflow-y-auto rounded-xl border border-line">
+            {card.bonus.length === 0 && <p className="py-6 text-center text-[14px] text-ink-3">{t('customer.noBonus')}</p>}
+            {card.bonus.map((b, i) => (
+              <div key={i} className="flex items-center justify-between border-t border-line px-3 py-2 text-[13px] first:border-0">
+                <div>
+                  <div className="font-medium">{t(`bonusTx.${b.type}` as TranslationKey)}</div>
+                  <div className="text-[12px] text-ink-3">{dateTime(b.createdAt)}{b.receiptNumber != null && ` · ${t('pos.receiptNo', { n: b.receiptNumber })}`}</div>
+                </div>
+                <b className={b.amount >= 0 ? 'text-success' : 'text-danger'}>{b.amount >= 0 ? '+' : '−'}{num(Math.abs(b.amount))} Б</b>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'purchases' && card && <div className="mt-4"><Purchases list={card.purchases} /></div>}
+
+      {tab === 'returns' && card && (
+        <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-line">
+          {card.returns.length === 0 && <p className="py-6 text-center text-[14px] text-ink-3">{t('customer.noReturns')}</p>}
+          {card.returns.map((r, i) => (
+            <div key={i} className="border-t border-line px-3 py-2 text-[13px] first:border-0">
+              <div className="flex justify-between"><span>{dateTime(r.createdAt)} · {t('pos.receiptNo', { n: r.number })}</span><b className="text-danger">− {tenge(r.amount)}</b></div>
+              <div className="text-[12px] text-ink-2">{r.items}</div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -124,13 +179,43 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
   )
 }
 
+function Row({ k, v }: { k: string; v: string }) {
+  return <><dt className="text-ink-2">{k}</dt><dd className="font-medium">{v}</dd></>
+}
+
+function Purchases({ list }: { list: import('../../lib/cashierTypes').CustomerCard['purchases'] }) {
+  const t = useT()
+  return (
+    <div className="overflow-hidden rounded-xl border border-line">
+      <table className="w-full text-[13px]">
+        <thead className="bg-field text-left text-[12px] text-ink-2">
+          <tr><th className="px-3 py-2 font-medium">{t('receipts.col.date')}</th><th className="px-2 py-2 font-medium">№</th>
+            <th className="px-2 py-2 text-right font-medium">{t('receipts.col.sum')}</th><th className="px-3 py-2 text-right font-medium">{t('customer.bonus')}</th></tr>
+        </thead>
+        <tbody>
+          {list.length === 0 && <tr><td colSpan={4} className="py-6 text-center text-ink-3">{t('receipts.empty')}</td></tr>}
+          {list.map((p) => (
+            <tr key={p.saleId} className="border-t border-line">
+              <td className="px-3 py-2 text-ink-2">{dateTime(p.createdAt)}</td>
+              <td className="px-2 py-2">{p.number}{p.status !== 'Completed' && <span className="ml-1 text-[11px] text-danger">↩</span>}</td>
+              <td className="px-2 py-2 text-right font-medium">{tenge(p.total)}</td>
+              <td className="px-3 py-2 text-right text-success">{p.bonusAccrued > 0 ? `+${num(p.bonusAccrued)} Б` : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 const overdue = (d: Debt) => d.status === 'Open' && new Date(d.dueDate) < new Date(new Date().toDateString())
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: 'success' | 'danger' }) {
+function Stat({ label, value, tone, icon, hint }: { label: string; value: string; tone?: 'success' | 'danger'; icon?: React.ReactNode; hint?: string }) {
   return (
-    <div className="rounded-xl border border-line px-4 py-3">
-      <div className="text-[12px] text-ink-2">{label}</div>
-      <div className={`text-[18px] font-bold ${tone === 'success' ? 'text-success' : tone === 'danger' ? 'text-danger' : ''}`}>{value}</div>
+    <div className="rounded-xl border border-line px-3 py-2.5">
+      <div className="flex items-center gap-1.5 text-[12px] text-ink-2">{icon}{label}</div>
+      <div className={`text-[17px] font-bold ${tone === 'success' ? 'text-success' : tone === 'danger' ? 'text-danger' : ''}`}>{value}</div>
+      {hint && <div className="text-[11px] text-ink-3">{hint}</div>}
     </div>
   )
 }

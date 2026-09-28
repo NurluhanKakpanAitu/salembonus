@@ -53,6 +53,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<DebtPayment> DebtPayments => Set<DebtPayment>();
     public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
     public DbSet<SaleReturnItem> SaleReturnItems => Set<SaleReturnItem>();
+    public DbSet<StoreNotification> StoreNotifications => Set<StoreNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

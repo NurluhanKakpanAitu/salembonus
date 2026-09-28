@@ -11,7 +11,8 @@ namespace SalemBonus.Api.Controllers.Pos;
 [ApiController]
 [Route("api/pos/v1/cashier")]
 [Authorize(Policy = StaffAuth.Policy)]
-public class CashierController(CashierService cashier, DebtService debts) : ControllerBase
+public class CashierController(CashierService cashier, DebtService debts, FinanceService finance,
+    CashierSettingsService settings, StoreNotifier notifications) : ControllerBase
 {
     private string? DeviceToken => Request.Cookies[StaffAuth.RegisterCookie];
 
@@ -36,6 +37,42 @@ public class CashierController(CashierService cashier, DebtService debts) : Cont
     [HttpGet("customers/{id:guid}")]
     public async Task<ActionResult<CashierCustomerDto>> Customer(Guid id, CancellationToken ct) =>
         Ok(await cashier.GetCustomerAsync(id, ct));
+
+    [HttpGet("customers/{id:guid}/card")]
+    public async Task<ActionResult<CustomerCardDto>> CustomerCard(Guid id, CancellationToken ct) =>
+        Ok(await cashier.GetCardAsync(id, ct));
+
+    /// <summary>Финанс (ТЗ §14): from/to — дүкеннің жергілікті күндері, әдепкіде бүгін.</summary>
+    [HttpGet("finance")]
+    public async Task<ActionResult<FinanceDto>> Finance([FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct) =>
+        Ok(await finance.GetAsync(from, to, ct));
+
+    [HttpGet("settings")]
+    public async Task<ActionResult<CashierSettingsDto>> Settings(CancellationToken ct) =>
+        Ok(await settings.GetAsync(DeviceToken, ct));
+
+    [HttpPut("settings")]
+    public async Task<ActionResult<CashierSettingsDto>> UpdateSettings([FromBody] UpdateCashierSettingsRequest request, CancellationToken ct) =>
+        Ok(await settings.UpdateAsync(request, DeviceToken, ct));
+
+    [HttpPost("settings/recipients")]
+    public async Task<ActionResult<TransferRecipientDto>> CreateRecipient([FromBody] SaveRecipientRequest request, CancellationToken ct) =>
+        Ok(await settings.SaveRecipientAsync(null, request, ct));
+
+    [HttpPut("settings/recipients/{id:guid}")]
+    public async Task<ActionResult<TransferRecipientDto>> UpdateRecipient(Guid id, [FromBody] SaveRecipientRequest request, CancellationToken ct) =>
+        Ok(await settings.SaveRecipientAsync(id, request, ct));
+
+    [HttpDelete("settings/recipients/{id:guid}")]
+    public async Task<IActionResult> RemoveRecipient(Guid id, CancellationToken ct)
+    {
+        await settings.RemoveRecipientAsync(id, ct);
+        return NoContent();
+    }
+
+    [HttpGet("notifications")]
+    public async Task<ActionResult<IReadOnlyList<StoreNotificationDto>>> Notifications(CancellationToken ct) =>
+        Ok(await notifications.ListAsync(ct));
 
     [HttpGet("customers/{id:guid}/debts")]
     public async Task<ActionResult<IReadOnlyList<DebtDto>>> CustomerDebts(Guid id, CancellationToken ct) =>

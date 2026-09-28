@@ -175,3 +175,18 @@ public class SaleReturnItemConfiguration : IEntityTypeConfiguration<SaleReturnIt
         b.Property(x => x.Amount).HasPrecision(18, 2);
     }
 }
+
+public class StoreNotificationConfiguration : IEntityTypeConfiguration<StoreNotification>
+{
+    public void Configure(EntityTypeBuilder<StoreNotification> b)
+    {
+        b.ToTable("store_notifications", Schemas.Pos);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Type).HasConversion<string>().HasMaxLength(24);
+        b.Property(x => x.Subject).HasMaxLength(200);
+        b.Property(x => x.StaffName).HasMaxLength(120);
+        b.Property(x => x.Amount).HasPrecision(18, 3);
+        b.HasIndex(x => new { x.StoreId, x.CreatedAt });
+        b.HasOne<Store>().WithMany().HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

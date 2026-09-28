@@ -15,6 +15,10 @@ export interface CashierContext {
   canApproveDiscount: boolean
   canSellWithoutStock: boolean
   canReturn: boolean
+  canViewStoreFinance: boolean
+  autoPrint: boolean
+  electronicReceipt: boolean
+  canManageSettings: boolean
   maxRedeemPercent: number
   approvers: { id: string; name: string }[]
 }
@@ -126,4 +130,76 @@ export interface Debt {
   cashierName: string
   payments: { amount: number; method: PaymentMethod | null; isReturn: boolean; transferRecipient: string | null;
     remainingAfter: number; createdAt: string; cashierName: string }[]
+}
+
+export interface FinanceMethod { method: PaymentMethod; amount: number; count: number }
+
+export interface Finance {
+  from: string
+  to: string
+  wholeStore: boolean
+  salesTotal: number
+  salesCount: number
+  methods: FinanceMethod[]
+  mixedTotal: number
+  mixedCount: number
+  discounts: number
+  discountCount: number
+  bonusRedeemed: number
+  bonusAccrued: number
+  returnsTotal: number
+  returnsCount: number
+  refundsByMethod: FinanceMethod[]
+  debtIssued: number
+  debtRepaid: number
+  debtRepaidByMethod: FinanceMethod[]
+  revenue: number
+  cashInDrawer: number
+}
+
+export interface CustomerCard {
+  customer: CashierCustomer
+  region: string | null
+  district: string | null
+  settlement: string | null
+  registeredAt: string
+  purchasesTotal: number
+  purchasesCount: number
+  returnsTotal: number
+  returnsCount: number
+  purchases: { saleId: string; number: number; createdAt: string; total: number; bonusAccrued: number; bonusRedeemed: number; status: SaleStatus }[]
+  bonus: { createdAt: string; type: string; amount: number; receiptNumber: number | null }[]
+  returns: { saleId: string; number: number; createdAt: string; amount: number; items: string }[]
+}
+
+export interface CashierSettings {
+  storeName: string
+  storeAddress: string | null
+  registerId: string
+  registerName: string
+  autoLockMinutes: number | null
+  enabledMethods: PaymentMethod[]
+  mixedEnabled: boolean
+  autoPrint: boolean
+  electronicReceipt: boolean
+  notifyOutOfStock: boolean
+  notifyLowStock: boolean
+  notifyDebt: boolean
+  notifyReturn: boolean
+  notifyCashierChange: boolean
+  lowStockThreshold: number
+  recipients: TransferRecipient[]
+  canManage: boolean
+}
+
+export type NotificationType = 'OutOfStock' | 'LowStock' | 'DebtCreated' | 'DebtRepaid' | 'SaleReturn' | 'CashierChange'
+
+export interface StoreNotification {
+  id: string
+  type: NotificationType
+  subject: string | null
+  amount: number | null
+  number: number | null
+  staffName: string | null
+  createdAt: string
 }

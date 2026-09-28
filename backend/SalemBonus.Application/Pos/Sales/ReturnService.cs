@@ -24,6 +24,7 @@ public class ReturnService(
     CashierService cashier,
     SaleService saleService,
     BonusLedger ledger,
+    StoreNotifier notifier,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
 {
@@ -150,6 +151,8 @@ public class ReturnService(
             sale.ReturnedAmount += money;
             sale.Status = fullyReturned ? SaleStatus.Returned : SaleStatus.PartiallyReturned;
             sales.AddReturn(saleReturn);
+            var staffName = (await sales.StaffNamesAsync([access.StaffUserId], ct)).GetValueOrDefault(access.StaffUserId);
+            await notifier.NotifyAsync(m.StoreId, StoreNotificationType.SaleReturn, null, money, sale.Number, staffName, ct);
 
             access.Audit(orgId, m.StoreId, "sale.return", "sale", sale.Id, null, new
             {
@@ -166,7 +169,7 @@ public class ReturnService(
 }
 
 /// <summary>Қарыздар (ТЗ «Касса» §11.6–11.12): клиенттің қарыздары және бөліп не толық өтеу.</summary>
-public class DebtService(ISalesRepository sales, CashierService cashier, CatalogAccess access, IUnitOfWork unitOfWork)
+public class DebtService(ISalesRepository sales, CashierService cashier, StoreNotifier notifier, CatalogAccess access, IUnitOfWork unitOfWork)
 {
     private AppLanguage Lang => access.Lang;
 
@@ -214,14 +217,18 @@ public class DebtService(ISalesRepository sales, CashierService cashier, Catalog
             debt.Status = DebtStatus.Paid;
             debt.ClosedAt = now;
         }
+        var names = await sales.CustomerNamesAsync([debt.CustomerId], ct);
+        var cashierName = (await sales.StaffNamesAsync([access.StaffUserId], ct)).GetValueOrDefault(access.StaffUserId);
+        await notifier.NotifyAsync(m.StoreId, StoreNotificationType.DebtRepaid, names.GetValueOrDefault(debt.CustomerId), amount,
+            debt.SaleNumber, cashierName, ct);
         access.Audit(orgId, m.StoreId, "debt.repay", "debt", debt.Id, null,
             new { debt.SaleNumber, Amount = amount, Method = method.ToString(), Remaining = debt.Remaining });
         await unitOfWork.SaveChangesAsync(ct);
 
         var fresh = await sales.GetDebtForUpdateAsync(m.StoreId, debtId, ct);
-        var names = await sales.StaffNamesAsync(
+        var staffNames = await sales.StaffNamesAsync(
             fresh!.Payments.Select(p => p.StaffUserId).Append(fresh.StaffUserId).Distinct().ToList(), ct);
-        return ToDto(fresh, names);
+        return ToDto(fresh, staffNames);
     }
 
     private static DebtDto ToDto(Debt d, IReadOnlyDictionary<Guid, string> names) => new(

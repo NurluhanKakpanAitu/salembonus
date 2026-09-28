@@ -17,7 +17,8 @@ public class RegisterService(
     ITokenService tokens,
     IAuditLog audit,
     IUnitOfWork unitOfWork,
-    ICurrentLanguage language) : IRegisterService
+    ICurrentLanguage language,
+    SalemBonus.Application.Pos.Sales.StoreNotifier notifier) : IRegisterService
 {
     private AppLanguage Lang => language.Value;
 
@@ -82,7 +83,12 @@ public class RegisterService(
         string? deviceToken, PinLoginRequest request, string? device, CancellationToken ct = default)
     {
         var register = await RequireRegisterAsync(deviceToken, forUpdate: false, ct);
-        return await auth.SignInWithPinAsync(request.StaffUserId, request.Pin, register.StoreId, register.Id, device, ct);
+        var session = await auth.SignInWithPinAsync(request.StaffUserId, request.Pin, register.StoreId, register.Id, device, ct);
+        // ТЗ «Касса» §19.5: кассир ауысуы дүкен хабарламасына түседі.
+        await notifier.NotifyAsync(register.StoreId, Domain.Pos.Sales.StoreNotificationType.CashierChange,
+            $"{session.Me.FirstName} {session.Me.LastName}".Trim(), null, null, register.Name, ct);
+        await unitOfWork.SaveChangesAsync(ct);
+        return session;
     }
 
     public async Task UnlockAsync(string? deviceToken, string? pin, CancellationToken ct = default)

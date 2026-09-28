@@ -140,5 +140,42 @@ public class StoreCashierSettings
     public bool MixedEnabled { get; set; } = true;
     public bool AutoPrint { get; set; }
     public bool ElectronicReceipt { get; set; } = true;
+
+    // Хабарламалар (ТЗ «Касса» §19): қайсысы көрсетіледі.
+    public bool NotifyOutOfStock { get; set; } = true;
+    public bool NotifyLowStock { get; set; } = true;
+    public bool NotifyDebt { get; set; } = true;
+    public bool NotifyReturn { get; set; } = true;
+    public bool NotifyCashierChange { get; set; } = true;
+    /// <summary>«Мало товара»: қалдық осыдан төмен түссе. Тауардың өз шегі кейін «Склад»-та.</summary>
+    public int LowStockThreshold { get; set; } = 3;
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public enum StoreNotificationType
+{
+    OutOfStock,
+    LowStock,
+    DebtCreated,
+    DebtRepaid,
+    SaleReturn,
+    CashierChange,
+}
+
+/// <summary>
+/// Дүкен хабарламасы (ТЗ «Касса» §19): тауар таусылды/аз қалды, қарыз, қайтару, кассир ауысуы.
+/// Мәтін сақталмайды — тек дерек; интерфейс оны қызметкердің тілінде құрастырады.
+/// </summary>
+public class StoreNotification
+{
+    public Guid Id { get; set; }
+    public Guid StoreId { get; set; }
+    public StoreNotificationType Type { get; set; }
+    /// <summary>Тауар, клиент не кассир аты.</summary>
+    public string? Subject { get; set; }
+    public decimal? Amount { get; set; }
+    public long? Number { get; set; }
+    public string? StaffName { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

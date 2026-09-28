@@ -180,7 +180,7 @@ export function PaymentModal({ ctx, total, customerName, initial, busy, error, o
         {tab === 'Debt' && (
           <div className="flex flex-col gap-3">
             {debtFields}
-            {customerName && <p className="flex items-center gap-2 rounded-xl bg-field px-3 py-2.5 text-[13px] text-ink-2"><Info size={16} /> {t('pay.debtHint')}</p>}
+            {customerName && <p className="flex items-center gap-2 rounded-xl bg-field px-3 py-2.5 text-[13px] text-ink-2"><Info size={16} /> {t('pay.debtHint')} {t('pay.debtNoBonus')}</p>}
           </div>
         )}
 

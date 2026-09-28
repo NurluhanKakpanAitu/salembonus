@@ -18,6 +18,10 @@ public record CashierContextDto(
     bool CanApproveDiscount,
     bool CanSellWithoutStock,
     bool CanReturn,
+    bool CanViewStoreFinance,
+    bool AutoPrint,
+    bool ElectronicReceipt,
+    bool CanManageSettings,
     decimal MaxRedeemPercent,
     IReadOnlyList<ApproverDto> Approvers);
 
@@ -107,3 +111,61 @@ public record DebtDto(Guid Id, Guid? SaleId, long? SaleNumber, decimal Amount, d
     string? Comment, string Status, DateTime CreatedAt, string CashierName, IReadOnlyList<DebtPaymentDto> Payments);
 
 public record RepayDebtRequest(decimal Amount, string? Method, Guid? TransferRecipientId);
+
+// ---------- Финанс (ТЗ §14) ----------
+
+public record FinanceMethodDto(string Method, decimal Amount, int Count);
+
+/// <summary>
+/// Күн (не кезең) қорытындысы. <see cref="Revenue"/> = сатылым − қайтарым. <see cref="CashInDrawer"/> —
+/// кассадағы қолма-қол: қолма-қол сатылым + қолма-қол қарыз өтеуі − қолма-қол қайтарым.
+/// </summary>
+public record FinanceDto(
+    DateOnly From, DateOnly To, bool WholeStore,
+    decimal SalesTotal, int SalesCount,
+    IReadOnlyList<FinanceMethodDto> Methods,
+    decimal MixedTotal, int MixedCount,
+    decimal Discounts, int DiscountCount,
+    int BonusRedeemed, int BonusAccrued,
+    decimal ReturnsTotal, int ReturnsCount, IReadOnlyList<FinanceMethodDto> RefundsByMethod,
+    decimal DebtIssued, decimal DebtRepaid, IReadOnlyList<FinanceMethodDto> DebtRepaidByMethod,
+    decimal Revenue, decimal CashInDrawer);
+
+// ---------- Клиент карточкасы (ТЗ §5) ----------
+
+public record CustomerPurchaseDto(Guid SaleId, long Number, DateTime CreatedAt, decimal Total, int BonusAccrued, int BonusRedeemed, string Status);
+
+public record CustomerBonusDto(DateTime CreatedAt, string Type, int Amount, long? ReceiptNumber);
+
+public record CustomerReturnDto(Guid SaleId, long Number, DateTime CreatedAt, decimal Amount, string Items);
+
+public record CustomerCardDto(
+    CashierCustomerDto Customer,
+    string? Region, string? District, string? Settlement, DateTime RegisteredAt,
+    decimal PurchasesTotal, int PurchasesCount, decimal ReturnsTotal, int ReturnsCount,
+    IReadOnlyList<CustomerPurchaseDto> Purchases,
+    IReadOnlyList<CustomerBonusDto> Bonus,
+    IReadOnlyList<CustomerReturnDto> Returns);
+
+// ---------- Баптаулар мен хабарламалар (ТЗ §17, §19) ----------
+
+public record CashierSettingsDto(
+    string StoreName, string? StoreAddress,
+    Guid RegisterId, string RegisterName, int? AutoLockMinutes,
+    IReadOnlyList<string> EnabledMethods, bool MixedEnabled,
+    bool AutoPrint, bool ElectronicReceipt,
+    bool NotifyOutOfStock, bool NotifyLowStock, bool NotifyDebt, bool NotifyReturn, bool NotifyCashierChange,
+    int LowStockThreshold,
+    IReadOnlyList<TransferRecipientDto> Recipients,
+    bool CanManage);
+
+public record UpdateCashierSettingsRequest(
+    string? RegisterName, int? AutoLockMinutes,
+    IReadOnlyList<string>? EnabledMethods, bool MixedEnabled,
+    bool AutoPrint, bool ElectronicReceipt,
+    bool NotifyOutOfStock, bool NotifyLowStock, bool NotifyDebt, bool NotifyReturn, bool NotifyCashierChange,
+    int LowStockThreshold);
+
+public record SaveRecipientRequest(string? BankName, string? Account, string? HolderName);
+
+public record StoreNotificationDto(Guid Id, string Type, string? Subject, decimal? Amount, long? Number, string? StaffName, DateTime CreatedAt);

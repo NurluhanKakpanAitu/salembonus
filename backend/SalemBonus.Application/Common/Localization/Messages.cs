@@ -483,4 +483,7 @@ public static class Messages
 
     public static string ReturnRefundMethodRequired(AppLanguage l) => Pick(l,
         "Ақшаны қалай қайтаратыныңызды таңдаңыз", "Выберите способ возврата денег");
+
+    public static string SettingsNeedPaymentMethod(AppLanguage l) => Pick(l,
+        "Кемінде бір төлем түрі қосулы болуы керек", "Должен быть включён хотя бы один способ оплаты");
 }

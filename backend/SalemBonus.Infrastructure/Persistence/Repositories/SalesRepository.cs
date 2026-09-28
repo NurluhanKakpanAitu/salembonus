@@ -191,6 +191,60 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
             .Select(u => new { u.Id, u.FirstName, u.LastName }).ToListAsync(ct))
         .ToDictionary(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
 
+    public async Task<IReadOnlyList<Sale>> ListSalesInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default) =>
+        await db.Sales.AsNoTracking().Include(s => s.Payments)
+            .Where(s => s.StoreId == storeId && s.CreatedAt >= fromUtc && s.CreatedAt < toUtc && (staffId == null || s.StaffUserId == staffId))
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<SaleReturn>> ListReturnsInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default) =>
+        await db.SaleReturns.AsNoTracking()
+            .Where(r => r.StoreId == storeId && r.CreatedAt >= fromUtc && r.CreatedAt < toUtc && (staffId == null || r.StaffUserId == staffId))
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<DebtPayment>> ListDebtPaymentsInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default) =>
+        await db.DebtPayments.AsNoTracking()
+            .Where(p => !p.IsReturn && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc && (staffId == null || p.StaffUserId == staffId)
+                        && db.Debts.Any(d => d.Id == p.DebtId && d.StoreId == storeId))
+            .ToListAsync(ct);
+
+    public async Task<(IReadOnlyList<Sale> Recent, decimal Total, int Count)> CustomerSalesAsync(Guid storeId, Guid customerId, int take, CancellationToken ct = default)
+    {
+        var q = db.Sales.AsNoTracking().Where(s => s.StoreId == storeId && s.CustomerId == customerId);
+        var total = await q.SumAsync(s => (decimal?)s.Total, ct) ?? 0;
+        var count = await q.CountAsync(ct);
+        var recent = await q.OrderByDescending(s => s.CreatedAt).Take(take).ToListAsync(ct);
+        return (recent, total, count);
+    }
+
+    public async Task<(IReadOnlyList<SaleReturn> Recent, decimal Total, int Count)> CustomerReturnsAsync(Guid storeId, Guid customerId, int take, CancellationToken ct = default)
+    {
+        var q = db.SaleReturns.AsNoTracking()
+            .Where(r => r.StoreId == storeId && db.Sales.Any(s => s.Id == r.SaleId && s.CustomerId == customerId));
+        var total = await q.SumAsync(r => (decimal?)r.Amount, ct) ?? 0;
+        var count = await q.CountAsync(ct);
+        var recent = await q.OrderByDescending(r => r.CreatedAt).Take(take).Include(r => r.Items).ToListAsync(ct);
+        return (recent, total, count);
+    }
+
+    public async Task<Dictionary<Guid, long>> SaleNumbersAsync(IReadOnlyCollection<Guid> saleIds, CancellationToken ct = default) =>
+        await db.Sales.AsNoTracking().Where(s => saleIds.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.Number, ct);
+
+    public Task<StoreCashierSettings?> GetSettingsForUpdateAsync(Guid storeId, CancellationToken ct = default) =>
+        db.CashierSettings.FirstOrDefaultAsync(s => s.StoreId == storeId, ct);
+
+    public void AddSettings(StoreCashierSettings settings) => db.CashierSettings.Add(settings);
+
+    public Task<TransferRecipient?> GetRecipientForUpdateAsync(Guid storeId, Guid id, CancellationToken ct = default) =>
+        db.TransferRecipients.FirstOrDefaultAsync(r => r.StoreId == storeId && r.Id == id, ct);
+
+    public void AddRecipient(TransferRecipient recipient) => db.TransferRecipients.Add(recipient);
+
+    public void AddNotification(StoreNotification notification) => db.StoreNotifications.Add(notification);
+
+    public async Task<IReadOnlyList<StoreNotification>> ListNotificationsAsync(Guid storeId, int take, CancellationToken ct = default) =>
+        await db.StoreNotifications.AsNoTracking().Where(n => n.StoreId == storeId)
+            .OrderByDescending(n => n.CreatedAt).Take(take).ToListAsync(ct);
+
     public Task<StoreCashierSettings?> GetSettingsAsync(Guid storeId, CancellationToken ct = default) =>
         db.CashierSettings.AsNoTracking().FirstOrDefaultAsync(s => s.StoreId == storeId, ct);
 

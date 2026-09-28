@@ -11,6 +11,7 @@ import { useLanguageStore, type Language } from '../lib/language'
 import { staffApi } from '../lib/staffApi'
 import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { NotificationsBell } from '../components/cashier/NotificationsBell'
 
 const MONTHS: Record<Language, string[]> = {
   ru: ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'],
@@ -122,6 +123,7 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
           {today}
         </div>
 
+        <NotificationsBell />
         <div ref={profileMenu.ref} className="relative">
           <button
             type="button"

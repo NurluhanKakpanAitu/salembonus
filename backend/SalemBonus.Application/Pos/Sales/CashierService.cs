@@ -23,6 +23,8 @@ public class CashierService(
     IStoreRepository stores,
     ICustomerRepository customers,
     IBonusCardRepository cards,
+    IBonusTransactionRepository bonusTransactions,
+    IKatoRepository kato,
     IRegisterService registers,
     IRegisterRepository registerRepository,
     WarehouseService warehouses,
@@ -56,6 +58,10 @@ public class CashierService(
             m.Has(StaffPermissions.DiscountApprove),
             m.Has(StaffPermissions.SalesNegativeStock),
             m.Has(StaffPermissions.SalesReturn),
+            m.Has(StaffPermissions.FinanceView),
+            settings.AutoPrint,
+            settings.ElectronicReceipt,
+            m.Has(StaffPermissions.SettingsManage),
             store.MaxRedeemPercent,
             approvers.Select(a => new ApproverDto(a.Id, a.Name)).ToList());
     }
@@ -143,6 +149,44 @@ public class CashierService(
         var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
         var customer = await customers.GetByIdAsync(id, ct) ?? throw new NotFoundException(Messages.CustomerNotFound(Lang));
         return ToDto(customer, store, await cards.GetAsync(customer.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct));
+    }
+
+    /// <summary>
+    /// Толық клиент карточкасы (ТЗ §5): жеке деректер (мекенжайы КАТО бойынша), осы дүкендегі бонус
+    /// тарихы, сатып алулар, қайтарулар және итогтар. Бөтен дүкендегі сатып алулары көрінбейді.
+    /// </summary>
+    public async Task<CustomerCardDto> GetCardAsync(Guid id, CancellationToken ct = default)
+    {
+        var (_, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
+        var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
+        var customer = await customers.GetByIdAsync(id, ct) ?? throw new NotFoundException(Messages.CustomerNotFound(Lang));
+        var card = await cards.GetAsync(customer.Id, store.Id, ct);
+        var dto = ToDto(customer, store, card, await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct));
+
+        string? region = null, district = null, settlement = null;
+        if (customer.KatoCode is { Length: > 0 } code)
+        {
+            var path = (await kato.GetPathAsync(code, ct))
+                .Select(k => Domain.Entities.KatoNames.ForDisplay(Lang == AppLanguage.Ru ? k.NameRu : k.NameKk)).ToList();
+            region = path.ElementAtOrDefault(0);
+            district = path.Count > 2 ? path[1] : null;
+            settlement = path.Count > 1 ? path[^1] : null;
+        }
+
+        var (purchases, purchasesTotal, purchasesCount) = await sales.CustomerSalesAsync(store.Id, customer.Id, 30, ct);
+        var (returns, returnsTotal, returnsCount) = await sales.CustomerReturnsAsync(store.Id, customer.Id, 30, ct);
+        var bonus = await bonusTransactions.GetByCustomerAsync(customer.Id, store.Id, 0, 50, ct);
+        var numbers = await sales.SaleNumbersAsync(
+            bonus.Where(b => b.ReceiptId != null).Select(b => b.ReceiptId!.Value).Concat(returns.Select(r => r.SaleId)).Distinct().ToList(), ct);
+
+        return new CustomerCardDto(
+            dto, region, district, settlement, customer.CreatedAt,
+            purchasesTotal, purchasesCount, returnsTotal, returnsCount,
+            purchases.Select(s => new CustomerPurchaseDto(s.Id, s.Number, s.CreatedAt, s.Total, s.BonusAccrued, s.BonusRedeemed, s.Status.ToString())).ToList(),
+            bonus.Select(b => new CustomerBonusDto(b.CreatedAt, b.Type.ToString(), b.Amount,
+                b.ReceiptId is { } r && numbers.TryGetValue(r, out var n) ? n : null)).ToList(),
+            returns.Select(r => new CustomerReturnDto(r.SaleId, numbers.GetValueOrDefault(r.SaleId), r.CreatedAt, r.Amount,
+                string.Join(", ", r.Items.Select(i => $"{i.Name} × {i.Quantity:0.###}")))).ToList());
     }
 
     /// <summary>

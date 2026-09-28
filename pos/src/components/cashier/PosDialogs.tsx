@@ -58,7 +58,12 @@ export function ApprovalModal({ ctx, percent, error, busy, onClose, onApprove }:
 }
 
 /** Сәтті сатылымнан кейін (ТЗ §20.8–20.9): чек нөмірі, қайтарым, бонус. Жабылғанда — келесі сатылым. */
-export function ReceiptDoneModal({ receipt, onClose, onPrint }: { receipt: Receipt; onClose: () => void; onPrint: () => void }) {
+export function ReceiptDoneModal({ receipt, electronic, onClose, onPrint }: {
+  receipt: Receipt
+  electronic: boolean
+  onClose: () => void
+  onPrint: () => void
+}) {
   const t = useT()
   const change = receipt.payments.find((p) => p.method === 'Cash')?.change ?? 0
   return (
@@ -89,6 +94,8 @@ export function ReceiptDoneModal({ receipt, onClose, onPrint }: { receipt: Recei
           {receipt.customer.bonusBalance != null && (
             <div className="mt-1 text-ink-2">{t('pos.newBalance')}: <b className="text-ink">{num(receipt.customer.bonusBalance)} Б</b></div>
           )}
+          {/* Электрондық чек клиенттің SalemBonus қосымшасына түседі (чек бонус операциясына байланған). */}
+          {electronic && <div className="mt-2 text-[12px] text-brand">{t('pos.eReceiptSent')}</div>}
         </div>
       )}
       {receipt.debt && (
