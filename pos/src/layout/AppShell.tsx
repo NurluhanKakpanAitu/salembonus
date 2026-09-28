@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import { useT } from '../lib/i18n'
 import { useRegister } from '../lib/register'
 import { LockScreen } from '../components/LockScreen'
@@ -55,7 +56,9 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar title={current ? t(current.label) : ''} onMenu={() => setMobileOpen(true)} />
         <main className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
-          <Outlet />
+          <Suspense fallback={<div className="flex h-full items-center justify-center text-ink-3"><Loader2 className="animate-spin" size={28} /></div>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
       {/* Бұғат беттің үстінен жабады: астындағы бет (себет т.б.) сол күйінде қалады. */}

@@ -67,6 +67,13 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
     navigate('/login', { replace: true })
   }
 
+  const switchStore = (id: string) => {
+    setActiveStore(id)
+    qc.invalidateQueries()
+    storeMenu.setOpen(false)
+    profileMenu.setOpen(false)
+  }
+
   const lockNow = () => {
     profileMenu.setOpen(false)
     setLocked(true)
@@ -99,11 +106,7 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
                 <li key={s.id}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveStore(s.id)
-                      qc.invalidateQueries()
-                      storeMenu.setOpen(false)
-                    }}
+                    onClick={() => switchStore(s.id)}
                     className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left hover:bg-field"
                   >
                     <span className="min-w-0">
@@ -147,6 +150,19 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
                 <div className="truncate text-[14px] font-semibold">{`${me?.firstName} ${me?.lastName}`}</div>
                 <div className="truncate text-[12px] text-ink-3">{me?.organizationName}</div>
               </div>
+              {/* Телефонда жоғарғы панельде дүкен таңдағышы жоқ — ол осында (ТЗ «Статистика» §3.3). */}
+              {multiStore && (
+                <div className="border-b border-line pb-1 md:hidden">
+                  <div className="px-3.5 pb-1 pt-2.5 text-[12px] font-medium text-ink-3">{t('top.store')}</div>
+                  {me?.stores.map((s) => (
+                    <button key={s.id} type="button" onClick={() => switchStore(s.id)}
+                      className="flex w-full items-center justify-between gap-2 px-3.5 py-2 text-left text-[14px] hover:bg-field">
+                      <span className="min-w-0 truncate">{s.name}</span>
+                      {s.id === store?.id && <Check size={16} className="shrink-0 text-brand" />}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="px-3.5 pb-1 pt-2.5 text-[12px] font-medium text-ink-3">{t('top.language')}</div>
               {(['ru', 'kk'] as const).map((l) => (
                 <button

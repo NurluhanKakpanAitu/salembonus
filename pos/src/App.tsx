@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppShell } from './layout/AppShell'
@@ -8,14 +8,10 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { SectionPage } from './pages/SectionPage'
 import { refreshSession, useAuth } from './lib/auth'
 import { loadRegister } from './lib/register'
-import { CashierPage } from './pages/CashierPage'
-import { ProductsPage } from './pages/products/ProductsPage'
-import { StatisticsPage } from './pages/StatisticsPage'
-import type { TranslationKey } from './lib/i18n'
-
-const HINTS: Record<string, TranslationKey> = {
-  '/statistics': 'section.statisticsHint',
-}
+// Бөлімдер бөлек жүктеледі: кассир статистика мен каталог кодын жүктемейді.
+const CashierPage = lazy(() => import('./pages/CashierPage').then((m) => ({ default: m.CashierPage })))
+const ProductsPage = lazy(() => import('./pages/products/ProductsPage').then((m) => ({ default: m.ProductsPage })))
+const StatisticsPage = lazy(() => import('./pages/StatisticsPage').then((m) => ({ default: m.StatisticsPage })))
 
 /** Кірмеген пайдаланушы кіру бетіне жіберіледі. Шешімді сервер қабылдайды (ТЗ §11.8). */
 function RequireAuth() {
@@ -58,7 +54,7 @@ export default function App() {
                 item.path === '/cashier' ? <CashierPage />
                 : item.path === '/products' ? <ProductsPage />
                 : item.path === '/statistics' ? <StatisticsPage />
-                : <SectionPage item={item} hint={HINTS[item.path]} />
+                : <SectionPage item={item} />
               }
             />
           ))}

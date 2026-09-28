@@ -207,10 +207,10 @@ const ru = {
   'stats.bonusNotMoney': 'Бонусы не входят в денежную выручку.',
   'stats.attention': 'Требует внимания',
   'stats.allGood': 'Всё в порядке',
-  'stats.attn.lowStock': '{n} товаров заканчиваются',
-  'stats.attn.outOfStock': '{n} товаров нет в наличии',
-  'stats.attn.debts': '{n} неоплаченных долгов',
-  'stats.attn.overdueDebts': '{n} просроченных долгов',
+  'stats.attn.lowStock': '{n} {n:товар заканчивается|товара заканчиваются|товаров заканчиваются}',
+  'stats.attn.outOfStock': '{n} {n:товара|товаров|товаров} нет в наличии',
+  'stats.attn.debts': '{n} {n:неоплаченный долг|неоплаченных долга|неоплаченных долгов}',
+  'stats.attn.overdueDebts': '{n} {n:просроченный долг|просроченных долга|просроченных долгов}',
   'stats.attnSum': 'Сумма: {sum}',
   'customer.tab.bonus': 'Бонусы',
   'customer.tab.purchases': 'Покупки',
@@ -235,7 +235,7 @@ const ru = {
   'finance.wholeStore': 'Весь магазин',
   'finance.ownOnly': 'Только ваши продажи',
   'finance.sales': 'Общие продажи',
-  'finance.receipts': '{n} чеков',
+  'finance.receipts': '{n} {n:чек|чека|чеков}',
   'finance.returns': 'Возвраты',
   'finance.discounts': 'Скидки',
   'finance.bonusUsed': 'Использовано бонусов',
@@ -271,7 +271,7 @@ const ru = {
   'settings.autoLock': 'Автоматическая блокировка',
   'settings.autoLockHint': 'Блокировать кассу при бездействии',
   'settings.autoLockAfter': 'Время до блокировки',
-  'settings.minutes': '{n} минут',
+  'settings.minutes': '{n} {n:минута|минуты|минут}',
   'settings.receipt': 'Чек',
   'settings.autoPrint': 'Автоматическая печать чека',
   'settings.autoPrintHint': 'Сразу после оплаты',
@@ -646,9 +646,6 @@ const ru = {
 
   'section.soon': 'Раздел в разработке',
   'section.soonHint': 'Этот раздел появится на следующих этапах.',
-  'section.statisticsHint': 'Здесь будет обзор магазина: выручка, продажи, клиенты и бонусы.',
-  'section.cashierHint': 'Здесь будет касса: каталог, корзина и оплата.',
-  'section.productsHint': 'Здесь будет каталог: товары, категории, группы, бренды.',
   'section.noAccess': 'Нет доступа к этому разделу',
 } as const
 
@@ -1299,17 +1296,27 @@ const kk: Record<TranslationKey, string> = {
 
   'section.soon': 'Бөлім әзірленуде',
   'section.soonHint': 'Бұл бөлім келесі кезеңдерде қосылады.',
-  'section.statisticsHint': 'Мұнда дүкен шолуы болады: түсім, сатылым, клиенттер және бонустар.',
-  'section.cashierHint': 'Мұнда касса болады: каталог, себет және төлем.',
-  'section.productsHint': 'Мұнда каталог болады: тауарлар, санаттар, топтар, брендтер.',
   'section.noAccess': 'Бұл бөлімге рұқсатыңыз жоқ',
 }
 
 const dictionaries: Record<Language, Record<TranslationKey, string>> = { ru, kk }
 
+const pluralRules: Partial<Record<Language, Intl.PluralRules>> = {}
+
+/** «{n:чек|чека|чеков}» → санға сай сөз формасы (one|few|many). Қазақшада форма өзгермейді — бір сөз жазылады. */
+function plural(lang: Language, n: number, forms: string[]) {
+  const rules = (pluralRules[lang] ??= new Intl.PluralRules(lang === 'kk' ? 'kk' : 'ru'))
+  const i = { one: 0, few: 1, many: 2, other: 2 }[rules.select(n) as 'one' | 'few' | 'many' | 'other'] ?? 2
+  return forms[Math.min(i, forms.length - 1)]
+}
+
 export function translate(lang: Language, key: TranslationKey, vars?: Record<string, string | number>) {
   let text = dictionaries[lang][key] ?? ru[key]
-  if (vars) for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v))
+  if (vars) {
+    text = text.replace(/\{(\w+):([^}]+)\}/g, (m, k: string, forms: string) =>
+      k in vars ? plural(lang, Number(vars[k]), forms.split('|')) : m)
+    for (const [k, v] of Object.entries(vars)) text = text.replaceAll(`{${k}}`, String(v))
+  }
   return text
 }
 

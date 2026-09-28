@@ -160,18 +160,23 @@ public class DashboardService(
 
         // ---------- Санаттар (§9), топ тауарлар (§12), өзіндік құн (§10) ----------
         var items = cur.SelectMany(s => s.Items).ToList();
-        var productIds = items.Select(i => i.ProductId).Distinct().ToList();
+        var returnItems = curReturns.SelectMany(r => r.Items).ToList();
+        var productIds = items.Select(i => i.ProductId).Concat(returnItems.Select(i => i.ProductId)).Distinct().ToList();
         var products = (await dashboard.ProductsAsync(productIds, ct)).ToDictionary(p => p.Id);
         var nodes = (await catalog.ListNodesAsync(orgId, ct)).ToDictionary(n => n.Id);
         var currentCosts = await sales.PurchasePricesAsync(m.StoreId, productIds, ct);
+        var saleItems = items.ToDictionary(i => i.Id);
 
-        // Позицияның нақты (қайтарылғаннан кейінгі) саны мен сомасы.
-        var net = items.Select(i =>
-        {
-            var kept = i.Quantity - i.ReturnedQuantity;
-            var share = i.Quantity == 0 ? 0 : kept / i.Quantity;
-            return (Item: i, Quantity: kept, Amount: Math.Round((i.LineTotal - i.Discount) * share, 2));
-        }).Where(x => x.Quantity > 0).ToList();
+        // Выручкамен бірдей модель: кезеңде сатылған жолдар минус кезеңде қайтарылған жолдар (қайтарымның
+        // нақты сомасымен). Сонда санаттар мен топ тауарлардың қосындысы выручкаға тиынына дейін тең.
+        var lines = items
+            .Select(i => new Line(i.ProductId, i.Name, i.UnitShortName, i.Quantity, i.LineTotal - i.Discount, i.UnitCost))
+            .Concat(returnItems.Select(r =>
+            {
+                var sold = saleItems.GetValueOrDefault(r.SaleItemId);
+                return new Line(r.ProductId, r.Name, sold?.UnitShortName, -r.Quantity, -r.Amount, sold?.UnitCost);
+            }))
+            .ToList();
 
         string RootName(Guid productId)
         {
@@ -179,8 +184,8 @@ public class DashboardService(
             var rootId = Guid.Parse(node.Path.Split('/')[0]);
             return nodes.TryGetValue(rootId, out var root) ? root.Name : node.Name;
         }
-        var byCategory = net.GroupBy(x => RootName(x.Item.ProductId)).Select(g => (Name: g.Key, Sum: g.Sum(x => x.Amount)))
-            .OrderByDescending(x => x.Sum).ToList();
+        var byCategory = lines.GroupBy(x => RootName(x.ProductId)).Select(g => (Name: g.Key, Sum: g.Sum(x => x.Amount)))
+            .Where(x => x.Sum > 0).OrderByDescending(x => x.Sum).ToList();
         var netTotal = byCategory.Sum(x => x.Sum);
         var categories = byCategory.Take(TopCategories).Select(x => new ShareDto(x.Name, x.Name, x.Sum, Percent(x.Sum, netTotal))).ToList();
         if (byCategory.Count > TopCategories)
@@ -189,16 +194,18 @@ public class DashboardService(
             categories.Add(new ShareDto("other", "other", rest, Percent(rest, netTotal)));
         }
 
-        var top = net.GroupBy(x => x.Item.ProductId)
-            .Select(g => new TopProductDto(g.Key, products.GetValueOrDefault(g.Key)?.Name ?? g.First().Item.Name,
-                products.GetValueOrDefault(g.Key)?.ImageUrl, g.Sum(x => x.Quantity), g.First().Item.UnitShortName, g.Sum(x => x.Amount)))
+        var top = lines.GroupBy(x => x.ProductId)
+            .Select(g => new TopProductDto(g.Key, products.GetValueOrDefault(g.Key)?.Name ?? g.First().Name,
+                products.GetValueOrDefault(g.Key)?.ImageUrl, g.Sum(x => x.Quantity), g.Select(x => x.Unit).FirstOrDefault(u => u != null), g.Sum(x => x.Amount)))
+            .Where(x => x.Quantity > 0 && x.Revenue > 0)
             .OrderByDescending(x => x.Revenue).Take(5).ToList();
 
         // Тарихи құн: сатылған сәттегі кіріс бағасы; ескі чектерде жоқ болса — ағымдағысы.
+        // Қайтарылған тауар қоймаға оралады — оның құны да шегеріледі.
         var costComplete = true;
-        var cost = net.Sum(x =>
+        var cost = lines.Sum(x =>
         {
-            var unitCost = x.Item.UnitCost ?? (currentCosts.TryGetValue(x.Item.ProductId, out var c) ? c : (decimal?)null);
+            var unitCost = x.UnitCost ?? (currentCosts.TryGetValue(x.ProductId, out var c) ? c : (decimal?)null);
             if (unitCost is null) costComplete = false;
             return (unitCost ?? 0) * x.Quantity;
         });
@@ -246,3 +253,6 @@ public class DashboardService(
 
     private static decimal Percent(decimal part, decimal total) => total == 0 ? 0 : Math.Round(part / total * 100, 1);
 }
+
+/// <summary>Сатылым не қайтарым жолы (қайтарымда сан мен сома теріс).</summary>
+internal sealed record Line(Guid ProductId, string Name, string? Unit, decimal Quantity, decimal Amount, decimal? UnitCost);

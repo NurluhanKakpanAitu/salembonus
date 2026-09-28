@@ -1,13 +1,13 @@
 import { Construction, Lock } from 'lucide-react'
 import { activeStore, useAuth } from '../lib/auth'
-import { useT, type TranslationKey } from '../lib/i18n'
+import { useT } from '../lib/i18n'
 import { canSee, type NavItem } from '../layout/nav'
 
 /**
  * Бөлімнің уақытша беті. Рұқсатты тексереді: мәзірде жасырылған бөлімге сілтеме арқылы кірсе де
  * ашылмайды (сервер бәрібір өзі тексереді).
  */
-export function SectionPage({ item, hint }: { item: NavItem; hint?: TranslationKey }) {
+export function SectionPage({ item }: { item: NavItem }) {
   const t = useT()
   const store = useAuth(activeStore)
   const allowed = canSee(item, store)
@@ -20,7 +20,7 @@ export function SectionPage({ item, hint }: { item: NavItem; hint?: TranslationK
           <Icon size={26} />
         </span>
         <h2 className="mt-4 text-[19px] font-bold">{allowed ? t('section.soon') : t('section.noAccess')}</h2>
-        {allowed && <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{t(hint ?? 'section.soonHint')}</p>}
+        {allowed && <p className="mt-2 text-[14px] leading-relaxed text-ink-2">{t('section.soonHint')}</p>}
       </div>
     </div>
   )

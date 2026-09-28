@@ -66,11 +66,12 @@ export function StatisticsPage() {
           <h2 className="text-[20px] font-bold">{greeting}</h2>
           <p className="text-[14px] text-ink-2">{t('stats.subtitle')}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-1 rounded-xl bg-surface p-1 shadow-sm">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          {/* Телефонда бес батырма бір жолға тең бөлінеді — экраннан шықпайды. */}
+          <div className="grid w-full grid-cols-5 gap-1 rounded-xl bg-surface p-1 shadow-sm sm:flex sm:w-auto">
             {(['today', 'yesterday', 'week', 'month', 'custom'] as const).map((p) => (
               <button key={p} type="button" onClick={() => setPeriod(p)}
-                className={`rounded-lg px-3.5 py-2 text-[14px] font-medium ${period === p ? 'bg-brand text-white' : 'text-ink-2 hover:text-ink'}`}>
+                className={`truncate rounded-lg px-1 py-2 text-[13px] font-medium sm:px-3.5 sm:text-[14px] ${period === p ? 'bg-brand text-white' : 'text-ink-2 hover:text-ink'}`}>
                 {t(`stats.period.${p}` as TranslationKey)}
               </button>
             ))}
@@ -106,8 +107,9 @@ export function StatisticsPage() {
             {d.kpi.map((k) => <KpiCard key={k.key} k={k} compare={compare} />)}
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[1.35fr_1fr_1fr]">
-            <Card title={t('stats.salesByTime')} hint={t(d.meta.granularity === 'hour' ? 'stats.byHour' : 'stats.byDay')}>
+          {/* ТЗ §22: desktop — 3 баған, планшет — 2, телефон — 1. */}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1.35fr_1fr_1fr]">
+            <Card className="md:col-span-2 xl:col-span-1" title={t('stats.salesByTime')} hint={t(d.meta.granularity === 'hour' ? 'stats.byHour' : 'stats.byDay')}>
               {d.chart.every((p) => p.count === 0 && p.revenue === 0)
                 ? <Empty text={t('stats.noSales')} />
                 : <SalesChart points={d.chart} revenueLabel={t('stats.revenueTg')} countLabel={t('stats.receiptsCount')}
@@ -117,13 +119,13 @@ export function StatisticsPage() {
             <CategoriesCard d={d} />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <FinancialCard d={d} />
             <CashCard d={d} />
             <TopProductsCard d={d} />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <CustomersCard d={d} compare={compare} />
             <BonusCard d={d} />
             <AttentionCard d={d} />
@@ -134,9 +136,11 @@ export function StatisticsPage() {
   )
 }
 
-function Card({ title, hint, action, children }: { title: string; hint?: string; action?: ReactNode; children: ReactNode }) {
+function Card({ title, hint, action, className = '', children }: {
+  title: string; hint?: string; action?: ReactNode; className?: string; children: ReactNode
+}) {
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl bg-surface p-4 shadow-sm">
+    <section className={`flex min-w-0 flex-col rounded-2xl bg-surface p-4 shadow-sm ${className}`}>
       <div className="mb-3 flex items-center gap-2">
         <h3 className="text-[16px] font-bold">{title}</h3>
         {hint && <span className="rounded-md bg-field px-2 py-0.5 text-[12px] text-ink-2">{hint}</span>}
@@ -256,7 +260,7 @@ function CashCard({ d }: { d: Dashboard }) {
 function TopProductsCard({ d }: { d: Dashboard }) {
   const t = useT()
   return (
-    <Card title={t('stats.topProducts')} action={<Link to="/products" className="flex items-center gap-1 text-[13px] font-medium text-brand">{t('stats.allProducts')} <ArrowRight size={14} /></Link>}>
+    <Card className="md:col-span-2 xl:col-span-1" title={t('stats.topProducts')} action={<Link to="/products" className="flex items-center gap-1 text-[13px] font-medium text-brand">{t('stats.allProducts')} <ArrowRight size={14} /></Link>}>
       {d.topProducts.length === 0 ? <Empty text={t('stats.noSales')} /> : (
         <ol className="flex flex-col gap-2">
           {d.topProducts.map((p, i) => (
@@ -346,7 +350,7 @@ function AttentionCard({ d }: { d: Dashboard }) {
     overdueDebts: { icon: HandCoins, cls: 'bg-danger-soft text-danger', to: '/cashier' },
   } as const
   return (
-    <Card title={t('stats.attention')}>
+    <Card className="md:col-span-2 xl:col-span-1" title={t('stats.attention')}>
       {d.attention.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-xl bg-success-soft px-4 py-6 text-[14px] font-medium text-success">{t('stats.allGood')}</div>
       ) : (
@@ -377,8 +381,14 @@ function Skeleton() {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">{Array.from({ length: 6 }, (_, i) => <div key={i} className={`${box} h-28`} />)}</div>
-      <div className="grid gap-4 xl:grid-cols-3">{Array.from({ length: 3 }, (_, i) => <div key={i} className={`${box} h-72`} />)}</div>
-      <div className="grid gap-4 xl:grid-cols-3">{Array.from({ length: 3 }, (_, i) => <div key={i} className={`${box} h-56`} />)}</div>
+      {/* Бағандар нақты бетпен бірдей — деректер келгенде бет «секірмейді» (§20). */}
+      {['h-72', 'h-56'].map((h, row) => (
+        <div key={h} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className={`${box} ${h} ${(row === 0 ? i === 0 : i === 2) ? 'md:col-span-2 xl:col-span-1' : ''}`} />
+          ))}
+        </div>
+      ))}
     </div>
   )
 }

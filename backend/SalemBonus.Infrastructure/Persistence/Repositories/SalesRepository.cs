@@ -202,7 +202,7 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
             .ToListAsync(ct);
 
     public async Task<IReadOnlyList<SaleReturn>> ListReturnsInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default) =>
-        await db.SaleReturns.AsNoTracking()
+        await db.SaleReturns.AsNoTracking().Include(r => r.Items)
             .Where(r => r.StoreId == storeId && r.CreatedAt >= fromUtc && r.CreatedAt < toUtc && (staffId == null || r.StaffUserId == staffId))
             .ToListAsync(ct);
 
