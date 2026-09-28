@@ -18,6 +18,10 @@ namespace SalemBonus.Infrastructure.Persistence;
 /// </code>
 /// Дүкенге ұйым байланады (жоқ болса жасалады, әдепкі өлшем бірліктерімен), иесі мен «Касса №1» қосылады. Құпиясөз кездейсоқ
 /// жасалып, экранға бір рет шығады — иесі кіргеннен кейін профильде ауыстырады.
+/// <para>
+/// WhatsApp қосылғанша қалпына келтіру үшін: <c>pos reset-password --phone ..</c> (жаңа уақытша құпиясөз,
+/// PIN мен барлық сеанс өшеді), <c>pos deactivate --phone ..</c> (қызметкер кіре алмайды).
+/// </para>
 /// </summary>
 public static class PosBootstrap
 {
@@ -31,8 +35,18 @@ public static class PosBootstrap
                 return await ListStoresAsync(db, ct);
             case "create-owner":
                 return await CreateOwnerAsync(db, Parse(args.Skip(1)), ct);
+            case "reset-password":
+                return await ResetPasswordAsync(db, Parse(args.Skip(1)), ct);
+            case "deactivate":
+                return await DeactivateAsync(db, Parse(args.Skip(1)), ct);
             default:
-                Console.Error.WriteLine("Командалар: pos stores | pos create-owner --store <id> --phone <+7...> --first-name <..> --last-name <..> [--org <..>] [--bin <..>]");
+                Console.Error.WriteLine("""
+                    Командалар:
+                      pos stores
+                      pos create-owner --store <id> --phone <+7...> --first-name <..> --last-name <..> [--org <..>] [--bin <..>]
+                      pos reset-password --phone <+7...>
+                      pos deactivate --phone <+7...>
+                    """);
                 return 2;
         }
     }
@@ -131,6 +145,60 @@ public static class PosBootstrap
             Console.Error.WriteLine(ex.Message);
             return 2;
         }
+    }
+
+    private static async Task<int> ResetPasswordAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
+    {
+        var user = await FindStaffAsync(db, o, ct);
+        if (user is null) return 2;
+
+        var password = GeneratePassword();
+        user.PasswordHash = new Pbkdf2PasswordHasher().Hash(password);
+        user.IsActive = true;
+        user.FailedLoginCount = 0;
+        user.LockedUntil = null;
+        // PIN де ескі құпиямен бірге жарамсыз болсын: иесі кіргеннен кейін жаңасын қояды.
+        user.PinHash = null;
+        user.PinFailedCount = 0;
+        user.PinLockedUntil = null;
+        await RevokeSessionsAsync(db, user.Id, ct);
+        await db.SaveChangesAsync(ct);
+
+        Console.WriteLine($"{user.FirstName} {user.LastName} ({user.Phone}): барлық сеанс жабылды, PIN өшірілді.");
+        Console.WriteLine($"Уақытша құпиясөз: {password}");
+        return 0;
+    }
+
+    private static async Task<int> DeactivateAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
+    {
+        var user = await FindStaffAsync(db, o, ct);
+        if (user is null) return 2;
+
+        user.IsActive = false;
+        await RevokeSessionsAsync(db, user.Id, ct);
+        await db.SaveChangesAsync(ct);
+        Console.WriteLine($"{user.FirstName} {user.LastName} ({user.Phone}) өшірілді, барлық сеанс жабылды.");
+        return 0;
+    }
+
+    private static async Task<StaffUser?> FindStaffAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
+    {
+        if (!o.TryGetValue("phone", out var raw) || string.IsNullOrWhiteSpace(raw))
+        {
+            Console.Error.WriteLine("--phone міндетті");
+            return null;
+        }
+        var phone = BonusRules.NormalizePhone(raw);
+        var user = await db.StaffUsers.FirstOrDefaultAsync(u => u.Phone == phone, ct);
+        if (user is null) Console.Error.WriteLine($"{phone} нөмірімен қызметкер жоқ");
+        return user;
+    }
+
+    private static async Task RevokeSessionsAsync(AppDbContext db, Guid userId, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        await db.StaffRefreshTokens.Where(t => t.StaffUserId == userId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(x => x.SetProperty(t => t.RevokedAt, now), ct);
     }
 
     private static Dictionary<string, string> Parse(IEnumerable<string> args)

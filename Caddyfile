@@ -16,7 +16,7 @@ api.salembonus.kz {
 }
 
 # SalemPos: статика + сол домендегі API (refresh және касса cookie-лері бір доменде болуы керек).
-salempos.kz {
+pos.salemtech.kz {
 	encode zstd gzip
 	header {
 		Strict-Transport-Security "max-age=31536000"
@@ -30,8 +30,4 @@ salempos.kz {
 	handle {
 		reverse_proxy pos-web:80
 	}
-}
-
-www.salempos.kz {
-	redir https://salempos.kz{uri} permanent
 }

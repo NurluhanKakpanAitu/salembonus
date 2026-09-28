@@ -3,14 +3,16 @@
 
 services:
   db:
-    image: postgres:16-alpine
+    # Neon 18-нұсқада — дамп тек сол не жаңа нұсқаға жүктеледі.
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: salembonus
       POSTGRES_USER: salembonus
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD керек}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # 18+ образы деректі /var/lib/postgresql/18/docker ішінде сақтайды — том осы жолға қосылады.
+      - pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U salembonus -d salembonus"]
       interval: 10s
@@ -55,7 +57,7 @@ services:
     expose:
       - "80"
 
-  # SalemPos: salempos.kz. API-ге сол домендегі /api арқылы жүгінеді (cookie сол үшін бір доменде).
+  # SalemPos: pos.salemtech.kz. API-ге сол домендегі /api арқылы жүгінеді (cookie сол үшін бір доменде).
   pos-web:
     build: ./pos
     restart: unless-stopped
