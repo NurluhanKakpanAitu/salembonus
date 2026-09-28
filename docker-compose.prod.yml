@@ -1,4 +1,4 @@
-# Продакшн: база + API + фронт + Caddy (HTTPS), бәрі бір серверде.
+# Продакшн: база + API + SalemBonus фронты + SalemPos + Caddy (HTTPS), бәрі бір серверде.
 # Іске қосу: docker compose -f docker-compose.prod.yml up -d --build
 
 services:
@@ -30,13 +30,20 @@ services:
       Cors__Origins__0: https://salembonus.kz
       Cors__Origins__1: https://www.salembonus.kz
       Auth__StaticOtpCode: ${STATIC_OTP_CODE:-}
+      # SalemPos суреттері (Cloudflare R2). Токен тек salem-media бакетіне шектелген болсын.
+      R2__AccountId: ${R2_ACCOUNT_ID:-}
+      R2__Bucket: ${R2_BUCKET:-}
+      R2__AccessKeyId: ${R2_ACCESS_KEY_ID:-}
+      R2__SecretAccessKey: ${R2_SECRET_ACCESS_KEY:-}
+      R2__PublicUrl: ${R2_PUBLIC_URL:-}
     expose:
       - "8080"
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      # .NET образында wget/curl жоқ — bash-тың /dev/tcp-сымен тексереміз.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q Healthy <&3"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -44,6 +51,13 @@ services:
 
   web:
     build: ./frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  # SalemPos: salempos.kz. API-ге сол домендегі /api арқылы жүгінеді (cookie сол үшін бір доменде).
+  pos-web:
+    build: ./pos
     restart: unless-stopped
     expose:
       - "80"
@@ -63,6 +77,7 @@ services:
     depends_on:
       - api
       - web
+      - pos-web
 
 volumes:
   pgdata:

@@ -23,6 +23,7 @@ pos/dist/
 .env
 .env.*
 !.env.example
+!.env.prod.example
 !.env.production
 
 # OS

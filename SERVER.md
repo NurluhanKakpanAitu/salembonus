@@ -236,6 +236,53 @@ Google-дің тегін несиесі 90 күннен кейін бітеді.
 
 ---
 
+## 14. SalemPos қосу (`salempos.kz`)
+
+SalemPos сол серверде, сол базамен жұмыс істейді: `pos-web` контейнері статиканы береді, ал
+`salempos.kz/api/...` Caddy арқылы сол `api`-ге түседі. Кіру мен касса cookie-лері бір доменде болуы
+үшін API бөлек доменге шығарылмайды.
+
+**1. Кілттерді ауыстыр (міндетті, разработкада ашылып қалғандар):**
+- Cloudflare → R2 → **Manage API tokens**: `salem-api-dev` токенін **өшір**. Жаңасын жаса:
+  Object Read & Write, тек `salem-media` бакеті. Екінші токен: тек `salem-backups` бакеті
+- Neon паролін ауыстыр (Neon қолданылып тұрса)
+
+**2. R2 бакеті:**
+- `salem-media` → **Settings** → **Custom Domains** → `cdn.salempos.kz`
+- `salem-media` → **Settings** → **CORS policy**:
+  ```json
+  [{ "AllowedOrigins": ["https://salempos.kz"], "AllowedMethods": ["PUT", "GET"],
+     "AllowedHeaders": ["content-type"], "MaxAgeSeconds": 3600 }]
+  ```
+- `salem-backups` бакеті → **Settings** → **Object lifecycle rules** → 30 күннен кейін өшіру
+
+**3. DNS** (Cloudflare → `salempos.kz`): `@` және `www` → сервер IP, **DNS only** (сұр бұлт).
+
+**4. `.env`-ке қос** (`.env.prod.example`-дағы «SalemPos» бөлімі): `R2_*` және `BACKUP_R2_*`.
+
+**5. Жаю:**
+
+```bash
+cd /opt/salembonus && ./scripts/deploy.sh
+curl -o /dev/null -w "%{http_code}\n" https://salempos.kz/
+```
+
+**6. Бірінші иесін жасау.** Тіркелу беті жоқ, демо аккаунттар продта жасалмайды:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos stores
+docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos create-owner \
+  --store ДҮКЕН_ID --phone +77001234567 --first-name Аты --last-name Тегі --org "Ұйым атауы" --bin 123456789012
+```
+
+Команда дүкенге ұйым байлайды, иесі мен «Касса №1»-ді жасайды және **уақытша құпиясөзді бір рет**
+шығарады. Оны иесіне жеке бер: кірген соң профильде құпиясөзді ауыстырып, PIN қояды. Кассаны
+құрылғыға иесі өзі тіркейді: сол құрылғыда кіріп, «Касса» бөлімінде кассаны таңдайды.
+
+**7. Бэкапты тексер:** `./scripts/backup.sh` — соңында «R2-ге жіберілді» жолы шығуы керек.
+
+---
+
 ## Пайдалы командалар
 
 ```bash
@@ -246,4 +293,5 @@ docker compose -f docker-compose.prod.yml restart api           # қайта қ�
 docker compose -f docker-compose.prod.yml down                  # тоқтату
 docker compose -f docker-compose.prod.yml exec db psql -U salembonus -d salembonus   # базаға кіру
 df -h && free -h                                                # диск пен жады
+docker compose -f docker-compose.prod.yml logs api | grep WhatsApp   # қызметкер кодтары (WhatsApp қосылғанша)
 ```

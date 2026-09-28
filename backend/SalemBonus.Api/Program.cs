@@ -99,6 +99,13 @@ var app = builder.Build();
 
 await app.Services.InitializeDatabaseAsync();
 
+// Сервердегі бір реттік әкімшілік командалар (мысалы, SalemPos-тың бірінші иесі): веб-сервер қосылмайды.
+if (args is ["pos", .. var posArgs])
+{
+    Environment.ExitCode = await SalemBonus.Infrastructure.Persistence.PosBootstrap.RunAsync(app.Services, posArgs);
+    return;
+}
+
 app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())

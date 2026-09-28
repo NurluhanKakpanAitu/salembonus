@@ -14,3 +14,24 @@ api.salembonus.kz {
 	encode zstd gzip
 	reverse_proxy api:8080
 }
+
+# SalemPos: статика + сол домендегі API (refresh және касса cookie-лері бір доменде болуы керек).
+salempos.kz {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy pos-web:80
+	}
+}
+
+www.salempos.kz {
+	redir https://salempos.kz{uri} permanent
+}
