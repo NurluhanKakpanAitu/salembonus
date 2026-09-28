@@ -87,6 +87,11 @@ public class SaleItem
     /// </summary>
     public decimal Discount { get; set; }
     public decimal ReturnedQuantity { get; set; }
+    /// <summary>
+    /// Сатылған сәттегі бір бірліктің өзіндік құны (кіріс бағасы). Кейін баға өзгерсе де, пайда осымен
+    /// есептеледі (ТЗ «Статистика» §10, §18). Кіріс бағасы белгісіз болса — null.
+    /// </summary>
+    public decimal? UnitCost { get; set; }
     public int SortOrder { get; set; }
 }
 

@@ -88,6 +88,11 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
     public async Task<IReadOnlyList<Product>> ListProductsAsync(Guid orgId, IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
         await db.Products.AsNoTracking().Where(p => p.OrganizationId == orgId && ids.Contains(p.Id)).ToListAsync(ct);
 
+    public async Task<Dictionary<Guid, decimal>> PurchasePricesAsync(Guid storeId, IReadOnlyCollection<Guid> productIds, CancellationToken ct = default) =>
+        await db.ProductPrices.AsNoTracking()
+            .Where(p => p.StoreId == storeId && productIds.Contains(p.ProductId) && p.PurchasePrice != null)
+            .ToDictionaryAsync(p => p.ProductId, p => p.PurchasePrice!.Value, ct);
+
     public async Task<Dictionary<Guid, decimal>> PricesAsync(Guid storeId, IReadOnlyCollection<Guid> productIds, CancellationToken ct = default) =>
         await db.ProductPrices.AsNoTracking().Where(p => p.StoreId == storeId && productIds.Contains(p.ProductId))
             .ToDictionaryAsync(p => p.ProductId, p => p.SalePrice, ct);

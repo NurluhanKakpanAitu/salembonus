@@ -66,6 +66,7 @@ public static class DependencyInjection
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
         services.AddScoped<ISalesRepository, SalesRepository>();
+        services.AddScoped<IDashboardRepository, DashboardRepository>();
         // Meta-ның Authentication шаблоны бекітілгенше кодтар логқа жазылады.
         services.AddSingleton<IWhatsAppSender, LogWhatsAppSender>();
         return services;

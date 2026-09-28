@@ -21,6 +21,8 @@ public interface ISalesRepository
     Task<CashierCatalogRow?> FindByBarcodeAsync(Guid orgId, Guid storeId, Guid warehouseId, string barcode, CancellationToken ct = default);
 
     Task<IReadOnlyList<Product>> ListProductsAsync(Guid orgId, IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
+    /// <summary>Дүкендегі кіріс бағалары (белгілі болғандары).</summary>
+    Task<Dictionary<Guid, decimal>> PurchasePricesAsync(Guid storeId, IReadOnlyCollection<Guid> productIds, CancellationToken ct = default);
     Task<Dictionary<Guid, decimal>> PricesAsync(Guid storeId, IReadOnlyCollection<Guid> productIds, CancellationToken ct = default);
     Task<Dictionary<Guid, StockBalance>> BalancesForUpdateAsync(Guid warehouseId, IReadOnlyCollection<Guid> productIds, CancellationToken ct = default);
 

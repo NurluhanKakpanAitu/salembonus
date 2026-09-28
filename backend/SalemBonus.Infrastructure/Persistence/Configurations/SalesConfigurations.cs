@@ -51,6 +51,7 @@ public class SaleItemConfiguration : IEntityTypeConfiguration<SaleItem>
         b.Property(x => x.LineTotal).HasPrecision(18, 2);
         b.Property(x => x.Discount).HasPrecision(18, 2);
         b.Property(x => x.ReturnedQuantity).HasPrecision(18, 3);
+        b.Property(x => x.UnitCost).HasPrecision(18, 2);
         b.HasIndex(x => x.ProductId);
         b.HasOne<Product>().WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
     }

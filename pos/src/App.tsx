@@ -10,6 +10,7 @@ import { refreshSession, useAuth } from './lib/auth'
 import { loadRegister } from './lib/register'
 import { CashierPage } from './pages/CashierPage'
 import { ProductsPage } from './pages/products/ProductsPage'
+import { StatisticsPage } from './pages/StatisticsPage'
 import type { TranslationKey } from './lib/i18n'
 
 const HINTS: Record<string, TranslationKey> = {
@@ -56,6 +57,7 @@ export default function App() {
               element={
                 item.path === '/cashier' ? <CashierPage />
                 : item.path === '/products' ? <ProductsPage />
+                : item.path === '/statistics' ? <StatisticsPage />
                 : <SectionPage item={item} hint={HINTS[item.path]} />
               }
             />

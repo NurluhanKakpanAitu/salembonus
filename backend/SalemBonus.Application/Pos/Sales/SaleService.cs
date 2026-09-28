@@ -62,6 +62,7 @@ public class SaleService(
         var ids = requested.Select(r => r.ProductId).ToList();
         var products = (await sales.ListProductsAsync(orgId, ids, ct)).ToDictionary(p => p.Id);
         var prices = await sales.PricesAsync(m.StoreId, ids, ct);
+        var costs = await sales.PurchasePricesAsync(m.StoreId, ids, ct);
         var units = (await catalog.ListUnitsAsync(orgId, ct)).ToDictionary(u => u.Id, u => u.ShortName);
 
         var lines = new List<Line>();
@@ -172,6 +173,7 @@ public class SaleService(
             {
                 Id = Guid.NewGuid(), SaleId = sale.Id, ProductId = l.ProductId, Name = l.Name, Article = l.Article,
                 UnitShortName = l.Unit, Quantity = l.Quantity, Price = l.Price, LineTotal = l.LineTotal, Discount = shares[i], SortOrder = i + 1,
+                UnitCost = costs.TryGetValue(l.ProductId, out var cost) ? cost : null,
             }).ToList();
             sale.Payments = payments.Select(p => { p.SaleId = sale.Id; return p; }).ToList();
 
