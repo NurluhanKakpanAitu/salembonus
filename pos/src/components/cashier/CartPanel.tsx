@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Banknote, CreditCard, Gift, Minus, Percent, Plus, QrCode, ShoppingCart, Trash2, UserPlus, UserRound, X } from 'lucide-react'
+import { Banknote, ChevronRight, CreditCard, Gift, Minus, Percent, Plus, QrCode, ShoppingCart, Trash2, UserPlus, UserRound, X } from 'lucide-react'
+import { CustomerCardModal } from './CustomerCard'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -99,7 +100,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
         )}
 
         <div className="flex flex-col gap-3 border-t border-line p-4">
-          <CustomerBlock />
+          <CustomerBlock ctx={ctx} />
           {state.customer && <BonusBlock sum={sum} />}
           <DiscountBlock ctx={ctx} sum={sum} />
         </div>
@@ -144,9 +145,10 @@ function Row({ label, value }: { label: string; value: string }) {
 
 // ---------------- Клиент (ТЗ §4) ----------------
 
-function CustomerBlock() {
+function CustomerBlock({ ctx }: { ctx: CashierContext }) {
   const t = useT()
   const customer = useCart((s) => s.customer)
+  const [card, setCard] = useState(false)
   const [q, setQ] = useState('')
   const [term, setTerm] = useState('')
   const [registering, setRegistering] = useState(false)
@@ -164,17 +166,23 @@ function CustomerBlock() {
 
   if (customer) {
     return (
+      <>
       <div className="flex items-center gap-3 rounded-xl bg-brand-soft/60 px-3 py-2.5">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-brand"><UserRound size={20} /></span>
         <div className="min-w-0 flex-1">
           <div className="text-[12px] text-brand">{t('pos.customer')}</div>
           <div className="truncate text-[14px] font-semibold">{customer.fullName || t('pos.noName')}</div>
           <div className="text-[12px] text-ink-2">{formatPhoneInput(customer.phone)}</div>
+          {customer.debtTotal > 0 && <div className="text-[12px] font-medium text-danger">{t('pos.customerDebt', { sum: tenge(customer.debtTotal) })}</div>}
         </div>
         <span className={`rounded-lg px-2 py-1 text-[11px] font-bold uppercase ${LEVEL_STYLE[customer.levelKey] ?? LEVEL_STYLE.New}`}>{customer.level}</span>
         <button type="button" aria-label={t('pos.removeCustomer')} onClick={() => cart.setCustomer(null)}
           className="flex size-8 items-center justify-center rounded-lg text-ink-3 hover:bg-surface hover:text-danger"><X size={16} /></button>
+        <button type="button" aria-label={t('customer.title')} onClick={() => setCard(true)}
+          className="flex size-8 items-center justify-center rounded-lg text-brand hover:bg-surface"><ChevronRight size={18} /></button>
       </div>
+      {card && <CustomerCardModal ctx={ctx} customer={customer} onClose={() => setCard(false)} />}
+      </>
     )
   }
 

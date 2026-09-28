@@ -21,7 +21,14 @@ public static class DependencyInjection
     {
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("ConnectionStrings:Default орнатылмаған (Postgres, мысалы Neon)");
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+        // Neon бос тұрса compute-ын тоқтатады, ал пулдағы ескі TCP-қосылым «тірі» болып көрінеді де,
+        // келесі сұраныс 30 с күтіп құлайды. Keepalive өлі қосылымды тез табады, ал бос қосылым пулда
+        // ұзақ жатпайды. Жергілікті Postgres-ке (VPS) де зиянсыз.
+        var csb = new Npgsql.NpgsqlConnectionStringBuilder(connectionString);
+        if (csb.KeepAlive == 0) csb.KeepAlive = 30;
+        if (csb.ConnectionIdleLifetime == 300) csb.ConnectionIdleLifetime = 60;
+        if (csb.Timeout == 15) csb.Timeout = 20;
+        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(csb.ConnectionString));
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.Section));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.Section));

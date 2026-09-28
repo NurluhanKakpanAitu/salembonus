@@ -120,14 +120,16 @@ public class SaleService(
         var total = afterDiscount - request.BonusRedeem;
 
         // ---------- Төлем (ТЗ §7–10, §21.2–21.3) ----------
-        var payments = await ValidatePaymentsAsync(request.Payments ?? [], total, m.StoreId, ct);
+        var (payments, debtRequest) = await ValidatePaymentsAsync(request.Payments ?? [], total, m, customer, ct);
 
         // Жеңілдік пен бонус жолдарға үлес бойынша бөлінеді — қайтарғанда клиент нақты төлегенін алады.
         var reduction = discount + request.BonusRedeem;
         var shares = new decimal[lines.Count];
         if (reduction > 0 && subtotal > 0)
         {
-            for (var i = 0; i < lines.Count - 1; i++) shares[i] = Math.Round(reduction * lines[i].LineTotal / subtotal, 2);
+            // Бүтін теңгемен: қайтарғанда клиентке тиынсыз сома беріледі (қалдығы соңғы жолға).
+            var digits = reduction % 1 == 0 ? 0 : 2;
+            for (var i = 0; i < lines.Count - 1; i++) shares[i] = Math.Round(reduction * lines[i].LineTotal / subtotal, digits);
             shares[^1] = reduction - shares[..^1].Sum();
         }
 
@@ -196,7 +198,22 @@ public class SaleService(
                 sale.BonusCardId = card.Id;
                 if (request.BonusRedeem > 0)
                     await ledger.RedeemAsync(card, customer, store, request.BonusRedeem, afterDiscount, $"Чек №{sale.Number}", sale.Id, now, ct);
-                sale.BonusAccrued = ledger.Accrue(card, customer, store, total, afterDiscount, $"Чек №{sale.Number}", sale.Id, now).Accrued;
+                // Бонус тек нақты төленген бөліктен: қарызға берілгені есептелмейді.
+                var paidNow = total - sale.DebtAmount;
+                sale.BonusAccrued = ledger.Accrue(card, customer, store, paidNow, afterDiscount, $"Чек №{sale.Number}", sale.Id, now).Accrued;
+            }
+
+            if (debtRequest is { } dr)
+            {
+                var debt = new Debt
+                {
+                    Id = Guid.NewGuid(), OrganizationId = orgId, StoreId = m.StoreId, CustomerId = customer!.Id,
+                    SaleId = sale.Id, SaleNumber = sale.Number, Amount = sale.DebtAmount, DueDate = dr.DueDate,
+                    Comment = dr.Comment, StaffUserId = access.StaffUserId, CreatedAt = now,
+                };
+                sales.AddDebt(debt);
+                access.Audit(orgId, m.StoreId, "debt.create", "debt", debt.Id, null,
+                    new { SaleNumber = sale.Number, debt.Amount, DueDate = debt.DueDate.ToString("yyyy-MM-dd"), CustomerId = customer.Id });
             }
 
             sales.AddSale(sale);
@@ -217,27 +234,40 @@ public class SaleService(
         return await ToReceiptAsync(sale, ct);
     }
 
-    private async Task<List<SalePayment>> ValidatePaymentsAsync(IReadOnlyList<SalePaymentRequest> input, decimal total, Guid storeId, CancellationToken ct)
+    private sealed record DebtRequest(DateOnly DueDate, string? Comment);
+
+    private async Task<(List<SalePayment> Payments, DebtRequest? Debt)> ValidatePaymentsAsync(IReadOnlyList<SalePaymentRequest> input,
+        decimal total, StoreMembership m, Customer? customer, CancellationToken ct)
     {
+        var storeId = m.StoreId;
         var settings = await sales.GetSettingsAsync(storeId, ct) ?? new StoreCashierSettings { StoreId = storeId };
-        if (total == 0 && input.Count == 0) return [];
+        if (total == 0 && input.Count == 0) return ([], null);
         if (input.Count == 0) throw new ValidationException(Messages.PaymentRequired(Lang), "payments");
         if (input.Count > 1 && !settings.MixedEnabled) throw new ValidationException(Messages.PaymentMethodDisabled(Lang), "payments");
 
         var recipients = (await sales.ListRecipientsAsync(storeId, ct)).Where(r => r.IsActive).ToDictionary(r => r.Id);
         var result = new List<SalePayment>();
+        DebtRequest? debt = null;
         foreach (var p in input)
         {
             if (!Enum.TryParse<PaymentMethod>(p.Method, ignoreCase: true, out var method) || !Enum.IsDefined(method))
                 throw new ValidationException(Messages.PaymentMethodInvalid(Lang), "payments");
-            // Қарыз — келесі кезеңде (клиент карточкасы мен өтеу бірге).
-            if (method == PaymentMethod.Debt || !settings.EnabledMethods.Contains(method))
+            if (!settings.EnabledMethods.Contains(method))
                 throw new ValidationException(Messages.PaymentMethodDisabled(Lang), "payments");
             if (result.Any(x => x.Method == method)) throw new ValidationException(Messages.PaymentMethodRepeated(Lang), "payments");
             var amount = Math.Round(p.Amount, 2);
             if (amount <= 0) throw new ValidationException(Messages.PaymentAmountInvalid(Lang), "payments");
 
             var payment = new SalePayment { Id = Guid.NewGuid(), Method = method, Amount = amount };
+            // Қарыз (ТЗ §11, §21.6): құқық, анықталған клиент және қайтару күні міндетті.
+            if (method == PaymentMethod.Debt)
+            {
+                if (!m.Has(StaffPermissions.SalesDebt)) throw new ForbiddenException(Messages.StaffPermissionDenied(Lang));
+                if (customer is null) throw new ValidationException(Messages.DebtNeedsCustomer(Lang), "payments");
+                var due = p.DueDate ?? throw new ValidationException(Messages.DebtDueDateRequired(Lang), "dueDate");
+                if (due < DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1)) throw new ValidationException(Messages.DebtDueDateInvalid(Lang), "dueDate");
+                debt = new DebtRequest(due, CatalogAccess.Optional(p.Comment, 300));
+            }
             if (method == PaymentMethod.Transfer)
             {
                 var recipient = p.TransferRecipientId is { } rid && recipients.TryGetValue(rid, out var r) ? r
@@ -261,7 +291,7 @@ public class SaleService(
             cash.Received = received;
             cash.Change = received - cash.Amount;
         }
-        return result;
+        return (result, debt);
     }
 
     public async Task<ReceiptDto> GetAsync(Guid id, CancellationToken ct = default)
@@ -288,10 +318,43 @@ public class SaleService(
             cashierUser is null ? string.Empty : $"{cashierUser.FirstName} {cashierUser.LastName}".Trim(),
             customerDto,
             sale.Items.OrderBy(i => i.SortOrder).Select(i => new ReceiptItemDto(
-                i.ProductId, i.Name, i.Article, i.UnitShortName, i.Quantity, i.Price, i.LineTotal, i.Discount, i.ReturnedQuantity)).ToList(),
+                i.Id, i.ProductId, i.Name, i.Article, i.UnitShortName, i.Quantity, i.Price, i.LineTotal, i.Discount, i.ReturnedQuantity)).ToList(),
             sale.Subtotal, sale.DiscountKind?.ToString(), sale.DiscountValue, sale.DiscountAmount,
             sale.BonusRedeemed, sale.BonusAccrued, sale.Total,
             sale.Payments.Select(p => new ReceiptPaymentDto(p.Method.ToString(), p.Amount, p.Received, p.Change, p.TransferRecipient)).ToList(),
-            sale.Status.ToString(), sale.ReturnedAmount);
+            sale.Status.ToString(), sale.ReturnedAmount,
+            await sales.GetDebtBySaleAsync(sale.Id, ct) is { } d
+                ? new ReceiptDebtDto(d.Id, d.Amount, d.Paid, d.Remaining, d.DueDate, d.Status.ToString(), d.Comment) : null,
+            await ReturnsAsync(sale.Id, ct));
     }
+
+    private async Task<IReadOnlyList<ReceiptReturnDto>> ReturnsAsync(Guid saleId, CancellationToken ct)
+    {
+        var list = await sales.ListReturnsAsync(saleId, ct);
+        if (list.Count == 0) return [];
+        var names = await sales.StaffNamesAsync(list.Select(r => r.StaffUserId).Distinct().ToList(), ct);
+        return list.Select(r => new ReceiptReturnDto(r.Id, r.CreatedAt, names.GetValueOrDefault(r.StaffUserId) ?? string.Empty,
+            r.Amount, r.Refunded, r.RefundMethod?.ToString(), r.DebtReduced, r.BonusRestored, r.BonusReversed, r.Reason,
+            r.Items.Select(i => new ReceiptReturnItemDto(i.Name, i.Quantity, i.Amount)).ToList())).ToList();
+    }
+
+    /// <summary>Чектер тарихы (ТЗ §12): күн кезеңі дүкеннің уақыт белдеуімен, соңғылары жоғарыда.</summary>
+    public async Task<SalePageDto> ListAsync(DateOnly? from, DateOnly? to, string? search, int page, int pageSize, CancellationToken ct = default)
+    {
+        var (_, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
+        var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var zone = StoreTime.Zone(store);
+        var (items, total) = await sales.SearchSalesAsync(m.StoreId,
+            from is { } f ? StoreTime.StartOfDayUtc(f, zone) : null,
+            to is { } t ? StoreTime.StartOfDayUtc(t.AddDays(1), zone) : null,
+            search, (page - 1) * pageSize, pageSize, ct);
+        var names = await sales.CustomerNamesAsync(items.Where(s => s.CustomerId != null).Select(s => s.CustomerId!.Value).Distinct().ToList(), ct);
+        return new SalePageDto(items.Select(s => new SaleListItemDto(
+            s.Id, s.Number, s.CreatedAt, s.CustomerId is { } c ? names.GetValueOrDefault(c) : null, s.Total,
+            s.Payments.Select(p => p.Method.ToString()).ToList(), s.Status.ToString())).ToList(), total, page, pageSize);
+    }
+
+    public Task<ReceiptDto> ReceiptAsync(Sale sale, CancellationToken ct) => ToReceiptAsync(sale, ct);
 }

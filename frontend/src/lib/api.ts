@@ -102,7 +102,7 @@ export interface BonusCard {
   expiringAt: string | null
 }
 
-export type TransactionType = 'Accrual' | 'Redemption' | 'Birthday' | 'Promo' | 'Expiration'
+export type TransactionType = 'Accrual' | 'Redemption' | 'Birthday' | 'Promo' | 'Expiration' | 'ReturnRestore' | 'ReturnReversal'
 
 export interface BonusTransaction {
   id: string

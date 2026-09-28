@@ -78,6 +78,10 @@ export const cart = {
   setCustomer(customer: CashierCustomer | null) {
     set({ customer, bonusOn: false, bonus: 0 })
   },
+  /** Клиенттің жаңа дерегі (баланс, қарыз): бонус таңдауы сақталады. */
+  refreshCustomer(customer: CashierCustomer) {
+    if (useCart.getState().customer?.id === customer.id) set({ customer })
+  },
   setBonus(bonusOn: boolean, bonus: number) {
     set({ bonusOn, bonus })
   },

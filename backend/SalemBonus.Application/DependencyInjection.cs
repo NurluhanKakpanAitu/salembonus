@@ -38,6 +38,8 @@ public static class DependencyInjection
         services.AddScoped<ProductExchangeService>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.CashierService>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.SaleService>();
+        services.AddScoped<SalemBonus.Application.Pos.Sales.ReturnService>();
+        services.AddScoped<SalemBonus.Application.Pos.Sales.DebtService>();
         services.AddScoped<WarehouseService>();
         services.AddScoped<MediaService>();
         return services;

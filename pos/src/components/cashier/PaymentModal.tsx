@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
-import { Banknote, Check, CheckCircle2, Copy, CreditCard, Equal, Info, Landmark, QrCode, Shuffle, Smartphone } from 'lucide-react'
+import { Banknote, Check, CheckCircle2, Copy, CreditCard, Equal, HandCoins, Info, Landmark, QrCode, Shuffle, Smartphone, UserRound } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
 import type { CashierContext, PaymentMethod, SalePaymentInput } from '../../lib/cashierTypes'
 import { round2, tenge } from '../../lib/money'
+import { addDays, isoDate } from '../../lib/dates'
 import { useT } from '../../lib/i18n'
 
-type Tab = Exclude<PaymentMethod, 'Debt'> | 'Mixed'
-const ICON: Record<Tab, typeof Banknote> = { Cash: Banknote, Card: CreditCard, Qr: QrCode, Transfer: Landmark, Mixed: Shuffle }
+type Tab = PaymentMethod | 'Mixed'
+const ICON: Record<Tab, typeof Banknote> = { Cash: Banknote, Card: CreditCard, Qr: QrCode, Transfer: Landmark, Debt: HandCoins, Mixed: Shuffle }
 
 const parse = (v: string) => {
   const n = Number(v.replace(',', '.').replace(/\s/g, ''))
@@ -19,9 +20,11 @@ const parse = (v: string) => {
  * Төлем терезесі (ТЗ «Касса» §7–10). Жылдам түрлер бүкіл соманы бір түрге береді; аралас төлемде
  * «=» қалған соманы таңдалған түрге береді. Кем не артық төлем расталмайды — сервер де тексереді.
  */
-export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConfirm }: {
+export function PaymentModal({ ctx, total, customerName, initial, busy, error, onClose, onConfirm }: {
   ctx: CashierContext
   total: number
+  /** Қарыз тек анықталған клиентке (ТЗ §11.1). */
+  customerName: string | null
   initial: Tab | null
   busy: boolean
   error: string | null
@@ -29,12 +32,15 @@ export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConf
   onConfirm: (payments: SalePaymentInput[]) => void
 }) {
   const t = useT()
-  const single = (['Cash', 'Card', 'Qr', 'Transfer'] as const).filter((m) => ctx.paymentMethods.includes(m))
+  const single = (['Cash', 'Card', 'Qr', 'Transfer', 'Debt'] as const).filter((m) => ctx.paymentMethods.includes(m))
   const tabs: Tab[] = [...single, ...(ctx.mixedEnabled && single.length > 1 ? (['Mixed'] as const) : [])]
   const [tab, setTab] = useState<Tab>(initial && tabs.includes(initial) ? initial : tabs[0])
   const [received, setReceived] = useState('')
   const [recipient, setRecipient] = useState<string | null>(ctx.transferRecipients.length === 1 ? ctx.transferRecipients[0].id : null)
   const [mixed, setMixed] = useState<Record<string, string>>({})
+  const [dueDate, setDueDate] = useState(isoDate(addDays(new Date(), 7)))
+  const [comment, setComment] = useState('')
+  const debtInfo = { dueDate, comment: comment.trim() || null }
 
   const cash = parse(received)
   const change = round2(cash - total)
@@ -55,11 +61,14 @@ export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConf
       case 'Card': return [{ method: 'Card', amount: total }]
       case 'Qr': return [{ method: 'Qr', amount: total }]
       case 'Transfer': return recipient ? [{ method: 'Transfer', amount: total, transferRecipientId: recipient }] : null
+      case 'Debt': return customerName && dueDate ? [{ method: 'Debt', amount: total, ...debtInfo }] : null
       case 'Mixed': {
         if (remaining !== 0) return null
         const list = single.map((m) => ({ method: m, amount: parse(mixed[m] ?? '') })).filter((p) => p.amount > 0)
         if (list.some((p) => p.method === 'Transfer') && !recipient) return null
-        return list.map((p) => (p.method === 'Transfer' ? { ...p, transferRecipientId: recipient } : p))
+        if (list.some((p) => p.method === 'Debt') && (!customerName || !dueDate)) return null
+        return list.map((p) => (p.method === 'Transfer' ? { ...p, transferRecipientId: recipient }
+          : p.method === 'Debt' ? { ...p, ...debtInfo } : p))
       }
     }
   }
@@ -69,6 +78,28 @@ export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConf
     void navigator.clipboard?.writeText(text)
     toast(t('pay.copied'))
   }
+
+  const debtFields = customerName ? (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-2 rounded-xl bg-field px-3 py-2.5 text-[14px]">
+        <UserRound size={17} className="text-brand" /> <span className="text-ink-2">{t('pos.customer')}:</span> <b>{customerName}</b>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+          {t('pay.dueDate')}
+          <input type="date" value={dueDate} min={isoDate(new Date())} onChange={(e) => setDueDate(e.target.value)}
+            className="h-11 rounded-xl border border-line bg-surface px-3 text-[15px] text-ink outline-none focus:border-brand" />
+        </label>
+        <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink-2">
+          {t('pay.comment')}
+          <input value={comment} maxLength={300} onChange={(e) => setComment(e.target.value)}
+            className="h-11 rounded-xl border border-line bg-surface px-3 text-[15px] text-ink outline-none focus:border-brand" />
+        </label>
+      </div>
+    </div>
+  ) : (
+    <p className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-[14px] text-amber-800"><Info size={17} /> {t('pay.debtNeedsCustomer')}</p>
+  )
 
   const recipients = (
     <div className="flex flex-col gap-2">
@@ -146,6 +177,13 @@ export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConf
           </div>
         )}
 
+        {tab === 'Debt' && (
+          <div className="flex flex-col gap-3">
+            {debtFields}
+            {customerName && <p className="flex items-center gap-2 rounded-xl bg-field px-3 py-2.5 text-[13px] text-ink-2"><Info size={16} /> {t('pay.debtHint')}</p>}
+          </div>
+        )}
+
         {tab === 'Mixed' && (
           <div className="flex flex-col gap-2">
             {single.map((m) => {
@@ -164,6 +202,7 @@ export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConf
               )
             })}
             {parse(mixed.Transfer ?? '') > 0 && <div className="mt-2">{recipients}</div>}
+            {parse(mixed.Debt ?? '') > 0 && <div className="mt-2">{debtFields}</div>}
             <div className={`mt-1 rounded-xl px-4 py-3 text-[15px] font-medium ${
               remaining === 0 ? 'bg-success-soft text-success' : remaining > 0 ? 'bg-amber-50 text-amber-700' : 'bg-danger-soft text-danger'}`}>
               {remaining === 0 ? <span className="flex items-center gap-2"><CheckCircle2 size={18} /> {t('pay.matched')}</span>
@@ -178,7 +217,7 @@ export function PaymentModal({ ctx, total, initial, busy, error, onClose, onConf
           <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>{t('common.cancel')}</Button>
           <Button type="button" className="h-12!" icon={<Check size={19} />} loading={busy} disabled={!ready}
             onClick={() => ready && onConfirm(ready)}>
-            {tab === 'Cash' ? t('pay.confirmCash') : t('pay.confirm')}
+            {tab === 'Cash' ? t('pay.confirmCash') : tab === 'Debt' ? t('pay.confirmDebt') : t('pay.confirm')}
           </Button>
         </div>
       </div>

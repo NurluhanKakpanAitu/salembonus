@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Monitor } from 'lucide-react'
+import { Loader2, Monitor, ReceiptText, ShoppingCart } from 'lucide-react'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
@@ -14,6 +14,8 @@ import { CatalogPanel, type CatalogFilter } from './CatalogPanel'
 import { PaymentModal } from './PaymentModal'
 import { ApprovalModal, ReceiptDoneModal } from './PosDialogs'
 import { SearchBox, useBarcodeScanner } from './SearchBox'
+import { ReceiptsPanel } from './ReceiptsPanel'
+import { printReceipt, ReceiptModal, ReturnModal } from './ReceiptView'
 
 const VIEW_KEY = 'salempos.pos.view'
 const readView = (): 'grid' | 'list' => {
@@ -24,7 +26,7 @@ const readView = (): 'grid' | 'list' => {
   }
 }
 
-type PayTab = Exclude<PaymentMethod, 'Debt'> | 'Mixed'
+type PayTab = PaymentMethod | 'Mixed'
 
 /**
  * Касса экраны (ТЗ «Касса» §2): сол жақта каталог, ортада тауарлар, оң жақта себет.
@@ -42,6 +44,18 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
   const [payError, setPayError] = useState<string | null>(null)
   const [approval, setApproval] = useState<{ payments: SalePaymentInput[]; error: string | null } | null>(null)
   const [done, setDone] = useState<Receipt | null>(null)
+  // Оң жақта себет не чектер тарихы (ТЗ §2.2: «Чеки» режимінде себеттің орнында тізім).
+  const [panel, setPanel] = useState<'cart' | 'receipts'>('cart')
+  const [viewing, setViewing] = useState<string | null>(null)
+  const [returning, setReturning] = useState<string | null>(null)
+
+  const print = async (id: string) => {
+    try {
+      printReceipt(await cashierApi.sale(id), t)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : String(err), 'error')
+    }
+  }
 
   const updateFilter = (patch: Partial<CatalogFilter>) => {
     if (patch.view) try { localStorage.setItem(VIEW_KEY, patch.view) } catch { /* сақталмаса — келесіде тор */ }
@@ -120,6 +134,11 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
     <div className="-m-4 flex h-[calc(100%+2rem)] flex-col gap-3 overflow-y-auto bg-bg p-3 lg:-m-6 lg:h-[calc(100%+3rem)] lg:overflow-hidden">
       <div className="flex items-center gap-3">
         <SearchBox onAdd={add} onScan={scan} onShowAll={(q) => updateFilter({ search: q })} />
+        <button type="button" onClick={() => setPanel(panel === 'cart' ? 'receipts' : 'cart')}
+          className={`flex h-11 items-center gap-2 rounded-xl px-4 text-[14px] font-semibold ${panel === 'receipts' ? 'bg-brand text-white' : 'bg-surface text-ink hover:bg-field'}`}>
+          {panel === 'receipts' ? <ShoppingCart size={18} /> : <ReceiptText size={18} />}
+          {panel === 'receipts' ? t('pos.backToCart') : t('receipts.title')}
+        </button>
         <div className="hidden items-center gap-2 rounded-xl bg-surface px-3 py-2 md:flex">
           <Monitor size={18} className="text-brand" />
           <div className="leading-tight">
@@ -132,11 +151,15 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
         <CatalogPanel filter={filter} onFilter={updateFilter} onAdd={add} />
-        <CartPanel ctx={ctx} onPay={(method) => { setPayError(null); setPay({ method: method === 'Debt' ? null : method }) }} />
+        {panel === 'cart'
+          ? <CartPanel ctx={ctx} onPay={(method) => { setPayError(null); setPay({ method }) }} />
+          : <ReceiptsPanel canReturn={ctx.canReturn} onClose={() => setPanel('cart')} onOpen={setViewing}
+              onReturn={setReturning} onPrint={(id) => void print(id)} />}
       </div>
 
       {pay && (
-        <PaymentModal ctx={ctx} total={total} initial={pay.method as PayTab | null} busy={busy} error={payError}
+        <PaymentModal ctx={ctx} total={total} customerName={cartState.customer ? cartState.customer.fullName || cartState.customer.phone : null}
+          initial={pay.method} busy={busy} error={payError}
           onClose={() => setPay(null)} onConfirm={(payments) => void submit(payments)} />
       )}
       {approval && (
@@ -144,7 +167,15 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
           error={approval.error} busy={busy} onClose={() => setApproval(null)}
           onApprove={(staffUserId, pin) => void submit(approval.payments, { staffUserId, pin })} />
       )}
-      {done && <ReceiptDoneModal receipt={done} onClose={() => setDone(null)} />}
+      {done && <ReceiptDoneModal receipt={done} onPrint={() => printReceipt(done, t)} onClose={() => setDone(null)} />}
+      {viewing && (
+        <ReceiptModal saleId={viewing} canReturn={ctx.canReturn} onClose={() => setViewing(null)}
+          onReturn={() => { setReturning(viewing); setViewing(null) }} />
+      )}
+      {returning && (
+        <ReturnModal saleId={returning} onClose={() => setReturning(null)}
+          onDone={(r) => { setReturning(null); setViewing(r.id) }} />
+      )}
     </div>
   )
 }

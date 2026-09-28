@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Printer, ShieldCheck } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { CodeInput } from '../ui/CodeInput'
 import { Field, Select } from '../ui/Field'
@@ -58,7 +58,7 @@ export function ApprovalModal({ ctx, percent, error, busy, onClose, onApprove }:
 }
 
 /** Сәтті сатылымнан кейін (ТЗ §20.8–20.9): чек нөмірі, қайтарым, бонус. Жабылғанда — келесі сатылым. */
-export function ReceiptDoneModal({ receipt, onClose }: { receipt: Receipt; onClose: () => void }) {
+export function ReceiptDoneModal({ receipt, onClose, onPrint }: { receipt: Receipt; onClose: () => void; onPrint: () => void }) {
   const t = useT()
   const change = receipt.payments.find((p) => p.method === 'Cash')?.change ?? 0
   return (
@@ -91,7 +91,15 @@ export function ReceiptDoneModal({ receipt, onClose }: { receipt: Receipt; onClo
           )}
         </div>
       )}
-      <Button className="mt-5 h-12! w-full" autoFocus onClick={onClose}>{t('pos.nextSale')}</Button>
+      {receipt.debt && (
+        <div className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-[14px] text-amber-800">
+          {t('pos.debtCreated', { sum: tenge(receipt.debt.amount) })}
+        </div>
+      )}
+      <div className="mt-5 grid grid-cols-[1fr_2fr] gap-2">
+        <Button variant="secondary" className="h-12!" icon={<Printer size={18} />} onClick={onPrint}>{t('receipts.print')}</Button>
+        <Button className="h-12!" autoFocus onClick={onClose}>{t('pos.nextSale')}</Button>
+      </div>
     </Modal>
   )
 }

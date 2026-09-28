@@ -123,6 +123,74 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
 
     public void AddSale(Sale sale) => db.Sales.Add(sale);
 
+    public async Task<(IReadOnlyList<Sale> Items, int Total)> SearchSalesAsync(Guid storeId, DateTime? fromUtc, DateTime? toUtc,
+        string? search, int skip, int take, CancellationToken ct = default)
+    {
+        var q = db.Sales.AsNoTracking().Where(s => s.StoreId == storeId);
+        if (fromUtc is { } from) q = q.Where(s => s.CreatedAt >= from);
+        if (toUtc is { } to) q = q.Where(s => s.CreatedAt < to);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            var digits = new string(term.Where(char.IsDigit).ToArray());
+            var like = $"%{term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
+            // Тек сандар — чек нөмірі не сома; телефонның бөлігі де (4+ сан).
+            var numeric = digits.Length > 0 && digits.Length == term.Replace(" ", "").Length;
+            long.TryParse(digits, out var number);
+            decimal.TryParse(digits, out var amount);
+            var byPhone = digits.Length >= 4;
+            q = q.Where(s =>
+                (numeric && (s.Number == number || s.Total == amount))
+                || db.Customers.Any(c => c.Id == s.CustomerId
+                    && (EF.Functions.ILike(c.FirstName + " " + c.LastName, like, "\\")
+                        || (byPhone && c.Phone.Contains(digits)))));
+        }
+        var total = await q.CountAsync(ct);
+        var items = await q.OrderByDescending(s => s.Number).Skip(skip).Take(take).Include(s => s.Payments).ToListAsync(ct);
+        return (items, total);
+    }
+
+    public Task<Sale?> GetSaleForUpdateAsync(Guid storeId, Guid id, CancellationToken ct = default) =>
+        db.Sales.Include(s => s.Items).Include(s => s.Payments).AsSplitQuery()
+            .FirstOrDefaultAsync(s => s.StoreId == storeId && s.Id == id, ct);
+
+    public async Task<IReadOnlyList<SaleReturn>> ListReturnsAsync(Guid saleId, CancellationToken ct = default) =>
+        await db.SaleReturns.AsNoTracking().Include(r => r.Items).Where(r => r.SaleId == saleId).OrderBy(r => r.CreatedAt).ToListAsync(ct);
+
+    public void AddReturn(SaleReturn saleReturn) => db.SaleReturns.Add(saleReturn);
+
+    public Task<Debt?> GetDebtForUpdateAsync(Guid storeId, Guid id, CancellationToken ct = default) =>
+        db.Debts.Include(d => d.Payments).FirstOrDefaultAsync(d => d.StoreId == storeId && d.Id == id, ct);
+
+    public Task<Debt?> GetDebtBySaleForUpdateAsync(Guid saleId, CancellationToken ct = default) =>
+        db.Debts.Include(d => d.Payments).FirstOrDefaultAsync(d => d.SaleId == saleId, ct);
+
+    public Task<Debt?> GetDebtBySaleAsync(Guid saleId, CancellationToken ct = default) =>
+        db.Debts.AsNoTracking().FirstOrDefaultAsync(d => d.SaleId == saleId, ct);
+
+    public async Task<IReadOnlyList<Debt>> ListCustomerDebtsAsync(Guid storeId, Guid customerId, CancellationToken ct = default) =>
+        await db.Debts.AsNoTracking().Include(d => d.Payments)
+            .Where(d => d.StoreId == storeId && d.CustomerId == customerId)
+            .OrderBy(d => d.Status).ThenByDescending(d => d.CreatedAt).ToListAsync(ct);
+
+    public async Task<decimal> OpenDebtTotalAsync(Guid storeId, Guid customerId, CancellationToken ct = default) =>
+        await db.Debts.Where(d => d.StoreId == storeId && d.CustomerId == customerId && d.Status == DebtStatus.Open)
+            .SumAsync(d => (decimal?)(d.Amount - d.Paid), ct) ?? 0;
+
+    public void AddDebt(Debt debt) => db.Debts.Add(debt);
+
+    public void AddDebtPayment(DebtPayment payment) => db.DebtPayments.Add(payment);
+
+    public async Task<Dictionary<Guid, string>> CustomerNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
+        (await db.Customers.AsNoTracking().Where(c => ids.Contains(c.Id))
+            .Select(c => new { c.Id, c.FirstName, c.LastName, c.Phone }).ToListAsync(ct))
+        .ToDictionary(c => c.Id, c => string.IsNullOrWhiteSpace(c.FirstName) ? c.Phone : $"{c.FirstName} {c.LastName}".Trim());
+
+    public async Task<Dictionary<Guid, string>> StaffNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
+        (await db.StaffUsers.AsNoTracking().Where(u => ids.Contains(u.Id))
+            .Select(u => new { u.Id, u.FirstName, u.LastName }).ToListAsync(ct))
+        .ToDictionary(u => u.Id, u => $"{u.FirstName} {u.LastName}".Trim());
+
     public Task<StoreCashierSettings?> GetSettingsAsync(Guid storeId, CancellationToken ct = default) =>
         db.CashierSettings.AsNoTracking().FirstOrDefaultAsync(s => s.StoreId == storeId, ct);
 

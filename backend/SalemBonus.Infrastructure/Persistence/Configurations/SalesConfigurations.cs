@@ -21,6 +21,7 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         b.Property(x => x.Total).HasPrecision(18, 2);
         b.Property(x => x.ReturnedAmount).HasPrecision(18, 2);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(24);
+        b.Ignore(x => x.DebtAmount);
         // ТЗ «Касса» §21.7: нөмірдің бірегейлігін база қорғайды.
         b.HasIndex(x => new { x.StoreId, x.Number }).IsUnique();
         b.HasIndex(x => new { x.StoreId, x.ClientRequestId }).IsUnique();
@@ -107,5 +108,70 @@ public class StoreCashierSettingsConfiguration : IEntityTypeConfiguration<StoreC
                 new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<PaymentMethod>>(
                     (a, c) => a!.SequenceEqual(c!), v => v.Aggregate(0, (h, m) => HashCode.Combine(h, m)), v => v.ToList()));
         b.HasOne<Store>().WithMany().HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class DebtConfiguration : IEntityTypeConfiguration<Debt>
+{
+    public void Configure(EntityTypeBuilder<Debt> b)
+    {
+        b.ToTable("debts", Schemas.Pos);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Amount).HasPrecision(18, 2);
+        b.Property(x => x.Paid).HasPrecision(18, 2);
+        b.Property(x => x.Comment).HasMaxLength(300);
+        b.Property(x => x.Status).HasConversion<string>().HasMaxLength(16);
+        b.Ignore(x => x.Remaining);
+        b.HasIndex(x => new { x.StoreId, x.Status });
+        b.HasIndex(x => x.CustomerId);
+        b.HasIndex(x => x.SaleId);
+        b.HasOne<Store>().WithMany().HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne<Sale>().WithMany().HasForeignKey(x => x.SaleId).OnDelete(DeleteBehavior.Restrict);
+        b.HasMany(x => x.Payments).WithOne().HasForeignKey(x => x.DebtId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class DebtPaymentConfiguration : IEntityTypeConfiguration<DebtPayment>
+{
+    public void Configure(EntityTypeBuilder<DebtPayment> b)
+    {
+        b.ToTable("debt_payments", Schemas.Pos);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Amount).HasPrecision(18, 2);
+        b.Property(x => x.RemainingAfter).HasPrecision(18, 2);
+        b.Property(x => x.Method).HasConversion<string>().HasMaxLength(16);
+        b.Property(x => x.TransferRecipient).HasMaxLength(200);
+        b.HasIndex(x => new { x.DebtId, x.CreatedAt });
+    }
+}
+
+public class SaleReturnConfiguration : IEntityTypeConfiguration<SaleReturn>
+{
+    public void Configure(EntityTypeBuilder<SaleReturn> b)
+    {
+        b.ToTable("sale_returns", Schemas.Pos);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Amount).HasPrecision(18, 2);
+        b.Property(x => x.Refunded).HasPrecision(18, 2);
+        b.Property(x => x.DebtReduced).HasPrecision(18, 2);
+        b.Property(x => x.RefundMethod).HasConversion<string>().HasMaxLength(16);
+        b.Property(x => x.Reason).HasMaxLength(300);
+        b.HasIndex(x => new { x.SaleId, x.ClientRequestId }).IsUnique();
+        b.HasIndex(x => new { x.StoreId, x.CreatedAt });
+        b.HasOne<Sale>().WithMany().HasForeignKey(x => x.SaleId).OnDelete(DeleteBehavior.Restrict);
+        b.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.ReturnId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class SaleReturnItemConfiguration : IEntityTypeConfiguration<SaleReturnItem>
+{
+    public void Configure(EntityTypeBuilder<SaleReturnItem> b)
+    {
+        b.ToTable("sale_return_items", Schemas.Pos);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Name).HasMaxLength(200);
+        b.Property(x => x.Quantity).HasPrecision(18, 3);
+        b.Property(x => x.Amount).HasPrecision(18, 2);
     }
 }

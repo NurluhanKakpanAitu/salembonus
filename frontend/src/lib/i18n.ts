@@ -205,6 +205,8 @@ const kk = {
   'tx.Birthday': 'Туған күн бонусы',
   'tx.Promo': 'Акция бонусы',
   'tx.Expiration': 'Бонус мерзімі өтті',
+  'tx.ReturnRestore': 'Тауар қайтарылды — бонус қайтарылды',
+  'tx.ReturnReversal': 'Тауар қайтарылды — бонус алынды',
 
   // Чек
   'receipt.button': 'ЧЕК',
@@ -449,6 +451,8 @@ const ru: Record<TranslationKey, string> = {
   'tx.Birthday': 'Бонус на день рождения',
   'tx.Promo': 'Акционный бонус',
   'tx.Expiration': 'Срок бонуса истёк',
+  'tx.ReturnRestore': 'Возврат товара — бонусы возвращены',
+  'tx.ReturnReversal': 'Возврат товара — бонусы списаны',
 
   'receipt.button': 'ЧЕК',
   'receipt.title': 'Чек',

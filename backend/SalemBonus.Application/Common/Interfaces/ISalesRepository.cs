@@ -30,6 +30,24 @@ public interface ISalesRepository
     Task<Sale?> GetSaleAsync(Guid storeId, Guid id, CancellationToken ct = default);
     void AddSale(Sale sale);
 
+    /// <summary>Чектер тарихы: кезең (UTC), іздеу — чек нөмірі, сома не клиенттің аты/телефоны.</summary>
+    Task<(IReadOnlyList<Sale> Items, int Total)> SearchSalesAsync(Guid storeId, DateTime? fromUtc, DateTime? toUtc, string? search,
+        int skip, int take, CancellationToken ct = default);
+    Task<Sale?> GetSaleForUpdateAsync(Guid storeId, Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<SaleReturn>> ListReturnsAsync(Guid saleId, CancellationToken ct = default);
+    void AddReturn(SaleReturn saleReturn);
+
+    Task<Debt?> GetDebtForUpdateAsync(Guid storeId, Guid id, CancellationToken ct = default);
+    Task<Debt?> GetDebtBySaleForUpdateAsync(Guid saleId, CancellationToken ct = default);
+    Task<Debt?> GetDebtBySaleAsync(Guid saleId, CancellationToken ct = default);
+    Task<IReadOnlyList<Debt>> ListCustomerDebtsAsync(Guid storeId, Guid customerId, CancellationToken ct = default);
+    Task<decimal> OpenDebtTotalAsync(Guid storeId, Guid customerId, CancellationToken ct = default);
+    void AddDebt(Debt debt);
+    void AddDebtPayment(DebtPayment payment);
+
+    Task<Dictionary<Guid, string>> CustomerNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
+    Task<Dictionary<Guid, string>> StaffNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
+
     Task<StoreCashierSettings?> GetSettingsAsync(Guid storeId, CancellationToken ct = default);
     Task<IReadOnlyList<TransferRecipient>> ListRecipientsAsync(Guid storeId, CancellationToken ct = default);
 

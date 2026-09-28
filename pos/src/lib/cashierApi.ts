@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { CashierCatalog, CashierContext, CashierCustomer, CashierProduct, CashierSort, Receipt, SalePaymentInput } from './cashierTypes'
+import type { CashierCatalog, CashierContext, CashierCustomer, CashierProduct, CashierSort, Debt, PaymentMethod, Receipt, SalePage, SalePaymentInput } from './cashierTypes'
 
 const base = '/pos/v1/cashier'
 const json = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) })
@@ -30,4 +30,17 @@ export const cashierApi = {
     api<CashierCustomer>(`${base}/customers`, json('POST', body)),
   createSale: (body: CreateSale) => api<Receipt>('/pos/v1/sales', json('POST', body)),
   sale: (id: string) => api<Receipt>(`/pos/v1/sales/${id}`),
+  sales: (q: { from?: string | null; to?: string | null; search?: string; page: number; pageSize: number }) => {
+    const p = new URLSearchParams({ page: String(q.page), pageSize: String(q.pageSize) })
+    if (q.from) p.set('from', q.from)
+    if (q.to) p.set('to', q.to)
+    if (q.search?.trim()) p.set('search', q.search.trim())
+    return api<SalePage>(`/pos/v1/sales?${p}`)
+  },
+  createReturn: (saleId: string, body: { clientRequestId: string; items: { saleItemId: string; quantity: number }[];
+    refundMethod: PaymentMethod | null; reason: string | null }) =>
+    api<Receipt>(`/pos/v1/sales/${saleId}/returns`, json('POST', body)),
+  customerDebts: (customerId: string) => api<Debt[]>(`${base}/customers/${customerId}/debts`),
+  repayDebt: (debtId: string, body: { amount: number; method: PaymentMethod; transferRecipientId: string | null }) =>
+    api<Debt>(`/pos/v1/debts/${debtId}/payments`, json('POST', body)),
 }

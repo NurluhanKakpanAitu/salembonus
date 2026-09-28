@@ -43,9 +43,9 @@ public class CashierService(
         var approvers = await sales.ListApproversAsync(m.StoreId, StaffPermissions.DiscountApprove, ct);
 
         // Реквизиті жоқ аударым — таңдауға болмайтын әдіс, сондықтан көрсетілмейді.
-        // Қарыз клиент карточкасы мен өтеумен бірге келесі кезеңде қосылады.
+        // Қарыз тек құқығы барға (ТЗ §11); реквизиті жоқ аударым көрсетілмейді.
         var methods = settings.EnabledMethods
-            .Where(x => x != PaymentMethod.Debt)
+            .Where(x => x != PaymentMethod.Debt || m.Has(StaffPermissions.SalesDebt))
             .Where(x => x != PaymentMethod.Transfer || recipients.Count > 0)
             .Select(x => x.ToString()).ToList();
 
@@ -55,6 +55,7 @@ public class CashierService(
             m.Has(StaffPermissions.DiscountApprove) ? 100 : m.MaxDiscountPercent,
             m.Has(StaffPermissions.DiscountApprove),
             m.Has(StaffPermissions.SalesNegativeStock),
+            m.Has(StaffPermissions.SalesReturn),
             store.MaxRedeemPercent,
             approvers.Select(a => new ApproverDto(a.Id, a.Name)).ToList());
     }
@@ -131,7 +132,8 @@ public class CashierService(
         else found = (await sales.SearchStoreCustomersAsync(m.StoreId, q, 10, ct)).ToList();
 
         var result = new List<CashierCustomerDto>();
-        foreach (var c in found) result.Add(ToDto(c, store, await cards.GetAsync(c.Id, store.Id, ct)));
+        foreach (var c in found)
+            result.Add(ToDto(c, store, await cards.GetAsync(c.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, c.Id, ct)));
         return result;
     }
 
@@ -140,7 +142,7 @@ public class CashierService(
         var (_, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
         var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
         var customer = await customers.GetByIdAsync(id, ct) ?? throw new NotFoundException(Messages.CustomerNotFound(Lang));
-        return ToDto(customer, store, await cards.GetAsync(customer.Id, store.Id, ct));
+        return ToDto(customer, store, await cards.GetAsync(customer.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct));
     }
 
     /// <summary>
@@ -180,10 +182,10 @@ public class CashierService(
         var card = await ledger.GetOrCreateCardAsync(customer, store, now, ct);
         access.Audit(orgId, m.StoreId, "customer.register", "customer", customer.Id, null, new { customer.FullName, Phone = phone });
         await unitOfWork.SaveChangesAsync(ct);
-        return ToDto(customer, store, card);
+        return ToDto(customer, store, card, 0);
     }
 
-    private CashierCustomerDto ToDto(Customer c, Store store, BonusCard? card)
+    private CashierCustomerDto ToDto(Customer c, Store store, BonusCard? card, decimal debt)
     {
         var level = card?.Level ?? CustomerLevel.New;
         return new CashierCustomerDto(
@@ -191,7 +193,8 @@ public class CashierService(
             CustomerLevels.Name(level, Lang), CustomerLevels.Key(level),
             card?.Balance ?? 0,
             BonusRules.PercentFor(level, BonusRules.LadderOf(store)),
-            card is not null);
+            card is not null,
+            debt);
     }
 
     public async Task<string?> GetRegisterNameAsync(Guid registerId, CancellationToken ct)

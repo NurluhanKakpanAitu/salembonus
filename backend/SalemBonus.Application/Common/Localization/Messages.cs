@@ -457,4 +457,30 @@ public static class Messages
         $"Жеткіліксіз {missing:0.##} ₸", $"Недостаточно {missing:0.##} ₸");
 
     public static string SaleNotFound(AppLanguage l) => Pick(l, "Чек табылмады", "Чек не найден");
+
+    // Қарыз бен қайтару (ТЗ «Касса» §11, §13)
+    public static string DebtNeedsCustomer(AppLanguage l) => Pick(l,
+        "Қарызға беру үшін клиентті таңдаңыз", "Чтобы оформить долг, выберите клиента");
+
+    public static string DebtDueDateRequired(AppLanguage l) => Pick(l, "Қайтару күнін таңдаңыз", "Укажите дату возврата долга");
+
+    public static string DebtDueDateInvalid(AppLanguage l) => Pick(l, "Қайтару күні өтіп кеткен", "Дата возврата уже прошла");
+
+    public static string DebtNotFound(AppLanguage l) => Pick(l, "Қарыз табылмады", "Долг не найден");
+
+    public static string DebtAlreadyPaid(AppLanguage l) => Pick(l, "Қарыз толық өтелген", "Долг уже погашен");
+
+    public static string DebtRepayTooMuch(AppLanguage l, decimal remaining) => Pick(l,
+        $"Қалдықтан артық: қарыздың қалғаны {remaining:0.##} ₸", $"Больше остатка долга: осталось {remaining:0.##} ₸");
+
+    public static string ReturnEmpty(AppLanguage l) => Pick(l,
+        "Қайтаратын тауарды және санын таңдаңыз", "Выберите товары и количество к возврату");
+
+    public static string ReturnTooMuch(AppLanguage l, string name, decimal available) => Pick(l,
+        $"«{name}»: қайтаруға болатыны {available:0.###}", $"«{name}»: можно вернуть не больше {available:0.###}");
+
+    public static string ReturnItemNotFound(AppLanguage l) => Pick(l, "Чекте мұндай позиция жоқ", "В чеке нет такой позиции");
+
+    public static string ReturnRefundMethodRequired(AppLanguage l) => Pick(l,
+        "Ақшаны қалай қайтаратыныңызды таңдаңыз", "Выберите способ возврата денег");
 }

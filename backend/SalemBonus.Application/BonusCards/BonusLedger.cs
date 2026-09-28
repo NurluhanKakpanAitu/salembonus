@@ -88,6 +88,34 @@ public class BonusLedger(
         return new AccrualResult(accrued, accrualId, upgraded);
     }
 
+    /// <summary>
+    /// Қайтарым: сатылымда шегерілген бонус клиентке қайтарылады (жаңа партия — мерзімі дүкен ережесімен)
+    /// және есептелген бонус алынады. Клиент есептелгенді жұмсап қойса, баланстан артық алынбайды —
+    /// теріс баланс болмайды. Мәртебе төмендемейді. Нақты алынғанын қайтарады.
+    /// </summary>
+    public async Task<(int Restored, int Reversed)> ApplyReturnAsync(BonusCard card, Store store, int restore, int reverse,
+        decimal returnedMoney, Guid receiptId, string? comment, DateTime now, CancellationToken ct)
+    {
+        if (restore > 0)
+        {
+            card.Balance += restore;
+            var tx = NewTx(card, BonusTransactionType.ReturnRestore, restore, returnedMoney, comment, now, receiptId);
+            tx.Remaining = restore;
+            tx.ExpiresAt = store.BonusLifetimeDays is { } days ? now.AddDays(days) : null;
+            transactions.Add(tx);
+        }
+
+        var take = Math.Min(reverse, Math.Max(0, card.Balance));
+        if (take > 0)
+        {
+            card.Balance -= take;
+            await ConsumeLotsAsync(card.Id, take, ct);
+            transactions.Add(NewTx(card, BonusTransactionType.ReturnReversal, -take, returnedMoney, comment, now.AddMilliseconds(1), receiptId));
+        }
+        card.TotalSpent = Math.Max(0, card.TotalSpent - returnedMoney);
+        return (restore, take);
+    }
+
     /// <summary>Есептелетін бонус (сатылымға дейін көрсету үшін, ештеңе өзгертпейді).</summary>
     public static int PreviewAccrual(BonusCard? card, Store store, decimal paid) =>
         BonusRules.CalculateAccrual(paid, BonusRules.PercentFor(card?.Level ?? CustomerLevel.New, BonusRules.LadderOf(store)));

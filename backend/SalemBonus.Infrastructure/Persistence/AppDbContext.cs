@@ -49,6 +49,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ReceiptCounter> ReceiptCounters => Set<ReceiptCounter>();
     public DbSet<TransferRecipient> TransferRecipients => Set<TransferRecipient>();
     public DbSet<StoreCashierSettings> CashierSettings => Set<StoreCashierSettings>();
+    public DbSet<Debt> Debts => Set<Debt>();
+    public DbSet<DebtPayment> DebtPayments => Set<DebtPayment>();
+    public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
+    public DbSet<SaleReturnItem> SaleReturnItems => Set<SaleReturnItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

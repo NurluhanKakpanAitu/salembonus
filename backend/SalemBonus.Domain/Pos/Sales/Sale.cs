@@ -55,11 +55,18 @@ public class Sale
     public decimal Total { get; set; }
 
     public SaleStatus Status { get; set; } = SaleStatus.Completed;
+    /// <summary>Қайтарылған ақша (барлық қайтарым бойынша).</summary>
     public decimal ReturnedAmount { get; set; }
+    /// <summary>Қайтарымда клиентке қайтарылған шегерілген бонус және алынған есептелген бонус.</summary>
+    public int BonusRestored { get; set; }
+    public int BonusReversed { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<SaleItem> Items { get; set; } = [];
     public List<SalePayment> Payments { get; set; } = [];
+
+    /// <summary>Қарызға берілген бөлігі (бонус тек төленген бөліктен есептеледі).</summary>
+    public decimal DebtAmount => Payments.Where(p => p.Method == PaymentMethod.Debt).Sum(p => p.Amount);
 }
 
 public class SaleItem
