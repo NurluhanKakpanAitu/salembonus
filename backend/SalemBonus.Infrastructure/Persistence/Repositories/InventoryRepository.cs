@@ -26,6 +26,9 @@ public class InventoryRepository(AppDbContext db) : IInventoryRepository
     public Task<ProductPrice?> GetPriceAsync(Guid productId, Guid storeId, CancellationToken ct = default) =>
         db.ProductPrices.AsNoTracking().FirstOrDefaultAsync(p => p.ProductId == productId && p.StoreId == storeId, ct);
 
+    public async Task<IReadOnlyList<ProductPrice>> ListPricesForUpdateAsync(Guid storeId, CancellationToken ct = default) =>
+        await db.ProductPrices.Where(p => p.StoreId == storeId).ToListAsync(ct);
+
     public Task<ProductPrice?> GetPriceForUpdateAsync(Guid productId, Guid storeId, CancellationToken ct = default) =>
         db.ProductPrices.FirstOrDefaultAsync(p => p.ProductId == productId && p.StoreId == storeId, ct);
 

@@ -38,6 +38,8 @@ export function useCatalogAction(key: readonly unknown[]) {
     try {
       await action()
       await qc.invalidateQueries({ queryKey: key })
+      // Санатты архивтеу/тасымалдау тауарларға да әсер етеді.
+      if (key === catalogKeys.nodes) await qc.invalidateQueries({ queryKey: catalogKeys.products })
       toast(success)
       return true
     } catch (err) {

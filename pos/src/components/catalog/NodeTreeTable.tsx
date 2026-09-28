@@ -11,7 +11,7 @@ import { catalogKeys, useCatalogAction, useCatalogNodes, useCatalogPermissions }
 import type { CatalogNode } from '../../lib/catalogTypes'
 import { CatalogIcon } from '../../lib/catalogIcons'
 import { useT } from '../../lib/i18n'
-import { MoveContentModal, NodeFormModal } from './NodeFormModal'
+import { ArchiveNodeModal, MoveContentModal, NodeFormModal } from './NodeFormModal'
 
 type Mode = 'categories' | 'groups'
 
@@ -30,6 +30,7 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [form, setForm] = useState<{ node?: CatalogNode; parentId?: string | null } | null>(null)
   const [moving, setMoving] = useState<CatalogNode | null>(null)
+  const [archiving, setArchiving] = useState<CatalogNode | null>(null)
 
   const nodes = useMemo(() => nodesQuery.data ?? [], [nodesQuery.data])
   const children = useMemo(() => {
@@ -72,7 +73,7 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
     if (perms.lifecycle && n.status === 'Active')
       items.push({
         label: t('catalog.archive'), icon: <Archive size={16} />,
-        onClick: () => window.confirm(t('catalog.archiveConfirm', { name: n.name })) && void run(() => catalogApi.archiveNode(n.id), t('catalog.archived')),
+        onClick: () => setArchiving(n),
       })
     if (perms.lifecycle && n.status === 'Archived')
       items.push({ label: t('catalog.restore'), icon: <ArchiveRestore size={16} />, onClick: () => void run(() => catalogApi.restoreNode(n.id), t('catalog.restored')) })
@@ -201,6 +202,11 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
       {form && (
         <NodeFormModal node={form.node} parentId={form.parentId} nodes={nodes} onClose={() => setForm(null)}
           onSaved={(msg) => void run(async () => undefined, msg).then(() => setForm(null))} />
+      )}
+      {archiving && (
+        <ArchiveNodeModal node={archiving} onClose={() => setArchiving(null)}
+          onMoveContent={() => { setMoving(archiving); setArchiving(null) }}
+          onArchived={(msg) => void run(async () => undefined, msg).then(() => setArchiving(null))} />
       )}
       {moving && (
         <MoveContentModal node={moving} nodes={nodes} onClose={() => setMoving(null)}

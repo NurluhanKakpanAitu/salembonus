@@ -24,6 +24,11 @@ public class Product
     public Guid? CatalogNodeId { get; set; }
     public ProductType Type { get; set; } = ProductType.Goods;
     public CatalogStatus Status { get; set; } = CatalogStatus.Active;
+    /// <summary>
+    /// Тауар санатымен бірге архивке кетсе — сол санаттың Id-і. Санат қалпына келгенде тек осылар
+    /// қайтарылады; бұрын жеке архивтелген тауар архивте қалады (ТЗ §22.7).
+    /// </summary>
+    public Guid? ArchivedByNodeId { get; set; }
     public string? Description { get; set; }
 
     // «Дополнительно» (ТЗ §6.6). Жеткізуші мен өндіруші әзірше мәтін: анықтамалықтары кейін.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { Archive, ArchiveRestore, ChevronLeft, ChevronRight, FolderTree, ImageOff, Pencil, Plus, RotateCcw } from 'lucide-react'
+import { Archive, ArchiveRestore, ChevronLeft, ChevronRight, Download, FolderTree, ImageOff, Pencil, Plus, RotateCcw, Upload } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Select } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -9,6 +9,8 @@ import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
 import { SearchInput } from '../ui/SearchInput'
 import { StatusBadge } from '../ui/StatusBadge'
 import { ClassificationPicker } from './ClassificationPicker'
+import { ImportModal } from './ImportModal'
+import { toast } from '../ui/Toast'
 import { catalogKeys, treeOrder, useBrands, useCatalogAction, useCatalogNodes, useCatalogPermissions, useUnits } from '../../lib/catalogHooks'
 import type { CatalogStatus, ProductListItem } from '../../lib/catalogTypes'
 import { productApi } from '../../lib/productApi'
@@ -43,6 +45,8 @@ export function ProductListTab() {
   const units = useUnits().data ?? []
   const run = useCatalogAction(catalogKeys.products)
   const [moving, setMoving] = useState<ProductListItem | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   const [search, setSearch] = useState(params.get('search') ?? '')
   const debounced = useDebounced(search.trim(), 300)
@@ -83,6 +87,18 @@ export function ProductListTab() {
   const nodeOptions = useMemo(() => treeOrder(nodes), [nodes])
   const open = (id: string) => navigate(`/products/${id}`, { state: { from: location.search } })
 
+  // Экспорт тізімнің ағымдағы сүзгілерімен: не көрсе, соны алады.
+  const exportList = async () => {
+    setExporting(true)
+    try {
+      await productApi.exportXlsx({ search: debounced, status, nodeId, brandId, unitId })
+    } catch (err) {
+      toast(err instanceof Error ? err.message : String(err), 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const menu = (p: ProductListItem): RowMenuItem[] => {
     const list: RowMenuItem[] = []
     if (perms.edit) list.push({ label: t('product.changeClass'), icon: <FolderTree size={16} />, onClick: () => setMoving(p) })
@@ -104,6 +120,12 @@ export function ProductListTab() {
             {t('product.add')}
           </Button>
         )}
+        {(perms.create || perms.edit) && (
+          <Button variant="secondary" icon={<Upload size={17} />} onClick={() => setImporting(true)}>{t('import.button')}</Button>
+        )}
+        <Button variant="secondary" icon={<Download size={17} />} loading={exporting} onClick={() => void exportList()}>
+          {t('export.button')}
+        </Button>
         <SearchInput className="ml-auto w-full sm:w-80" value={search} onChange={setSearch} placeholder={t('product.search')} />
       </div>
 
@@ -212,6 +234,7 @@ export function ProductListTab() {
         </div>
       )}
 
+      {importing && <ImportModal onClose={() => setImporting(false)} />}
       {moving && <ChangeClassificationModal product={moving} onClose={() => setMoving(null)}
         onSaved={() => void run(async () => undefined, t('product.classChanged')).then(() => setMoving(null))} />}
     </div>

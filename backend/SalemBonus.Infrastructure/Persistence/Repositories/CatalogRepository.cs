@@ -49,6 +49,9 @@ public class CatalogRepository(AppDbContext db) : ICatalogRepository
                 .SetProperty(p => p.CatalogNodeId, toNodeId)
                 .SetProperty(p => p.UpdatedAt, DateTime.UtcNow), ct);
 
+    public async Task<IReadOnlyList<Product>> ListProductsInNodesForUpdateAsync(IReadOnlyCollection<Guid> nodeIds, CancellationToken ct = default) =>
+        await db.Products.Where(p => p.CatalogNodeId != null && nodeIds.Contains(p.CatalogNodeId.Value)).ToListAsync(ct);
+
     public void AddNode(CatalogNode node) => db.CatalogNodes.Add(node);
 
     public void RemoveNode(CatalogNode node) => db.CatalogNodes.Remove(node);

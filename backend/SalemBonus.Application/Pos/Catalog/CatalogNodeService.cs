@@ -230,10 +230,31 @@ public class CatalogNodeService(ICatalogRepository repo, CatalogAccess access, I
 
         node.Status = status;
         node.UpdatedAt = now;
-        foreach (var d in await repo.ListDescendantsForUpdateAsync(orgId, node.Path, ct))
+        var descendants = await repo.ListDescendantsForUpdateAsync(orgId, node.Path, ct);
+        foreach (var d in descendants)
         {
             d.Status = status;
             d.UpdatedAt = now;
+        }
+
+        // Тармақтың тауарлары бірге (ТЗ §22.7): архивтегі санаттың тауары кассада көрінбеуі керек.
+        // Қалпына келтіргенде — тек осы санатпен бірге кеткендері, жеке архивтелгені архивте қалады.
+        var nodeIds = descendants.Select(d => d.Id).Append(node.Id).ToList();
+        foreach (var p in await repo.ListProductsInNodesForUpdateAsync(nodeIds, ct))
+        {
+            if (status == CatalogStatus.Archived && p.Status == CatalogStatus.Active)
+            {
+                p.Status = CatalogStatus.Archived;
+                p.ArchivedByNodeId = node.Id;
+                p.UpdatedAt = now;
+            }
+            else if (status == CatalogStatus.Active && p.Status == CatalogStatus.Archived
+                     && p.ArchivedByNodeId is { } by && nodeIds.Contains(by))
+            {
+                p.Status = CatalogStatus.Active;
+                p.ArchivedByNodeId = null;
+                p.UpdatedAt = now;
+            }
         }
     }
 

@@ -13,6 +13,8 @@ public interface IInventoryRepository
     /// <summary>Тауардың бизнестің барлық қоймасындағы қалдығы.</summary>
     Task<IReadOnlyList<StockRow>> StockByProductAsync(Guid orgId, Guid productId, CancellationToken ct = default);
     Task<ProductPrice?> GetPriceAsync(Guid productId, Guid storeId, CancellationToken ct = default);
+    /// <summary>Дүкеннің барлық бағасы, өзгерту үшін (импорт).</summary>
+    Task<IReadOnlyList<ProductPrice>> ListPricesForUpdateAsync(Guid storeId, CancellationToken ct = default);
     Task<ProductPrice?> GetPriceForUpdateAsync(Guid productId, Guid storeId, CancellationToken ct = default);
     void AddMovement(StockMovement movement);
     void AddBalance(StockBalance balance);

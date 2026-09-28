@@ -11,8 +11,30 @@ namespace SalemBonus.Api.Controllers.Pos;
 [ApiController]
 [Route("api/pos/v1/products")]
 [Authorize(Policy = StaffAuth.Policy)]
-public class ProductsController(IProductService products) : ControllerBase
+public class ProductsController(IProductService products, ProductExchangeService exchange) : ControllerBase
 {
+    private const string XlsxType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    /// <summary>Excel-ге экспорт (тізімнің сүзгілерімен). template=true — тек тақырыптар, импортқа үлгі.</summary>
+    [HttpGet("export")]
+    public async Task<IActionResult> Export(
+        [FromQuery] string? search, [FromQuery] string? status, [FromQuery] Guid? nodeId, [FromQuery] Guid? brandId,
+        [FromQuery] Guid? unitId, [FromQuery] bool template = false, CancellationToken ct = default)
+    {
+        var (content, fileName) = await exchange.ExportAsync(search, status, nodeId, brandId, unitId, template, ct);
+        return File(content, XlsxType, fileName);
+    }
+
+    /// <summary>Excel-ден импорт. dryRun=true — тек тексеру (ештеңе сақталмайды).</summary>
+    [HttpPost("import")]
+    [RequestSizeLimit(ProductExchangeService.MaxFileBytes + 64 * 1024)]
+    public async Task<ActionResult<ImportResultDto>> Import(IFormFile? file, [FromForm] bool dryRun = true,
+        [FromForm] bool createMissing = true, CancellationToken ct = default)
+    {
+        await using var stream = file?.OpenReadStream() ?? Stream.Null;
+        return Ok(await exchange.ImportAsync(stream, file?.Length ?? 0, dryRun, createMissing, ct));
+    }
+
     [HttpGet]
     public async Task<ActionResult<ProductPageDto>> List(
         [FromQuery] string? search, [FromQuery] string? status, [FromQuery] Guid? nodeId, [FromQuery] Guid? brandId,

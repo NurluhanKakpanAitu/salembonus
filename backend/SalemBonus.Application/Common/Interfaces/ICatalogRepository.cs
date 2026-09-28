@@ -18,6 +18,8 @@ public interface ICatalogRepository
     Task<int> CountProductsInNodeAsync(Guid nodeId, CancellationToken ct = default);
     /// <summary>Бір түйіннің тауарларын басқа түйінге көшіру.</summary>
     Task MoveProductsAsync(Guid fromNodeId, Guid toNodeId, CancellationToken ct = default);
+    /// <summary>Берілген түйіндерге тікелей байланған тауарлар, өзгерту үшін.</summary>
+    Task<IReadOnlyList<Product>> ListProductsInNodesForUpdateAsync(IReadOnlyCollection<Guid> nodeIds, CancellationToken ct = default);
     void AddNode(CatalogNode node);
     void RemoveNode(CatalogNode node);
 

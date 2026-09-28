@@ -200,3 +200,63 @@ export function MoveContentModal({ node, nodes, onClose, onMoved }: {
     </Modal>
   )
 }
+
+/**
+ * Түйінді архивтеу (ТЗ §22.7): ішінде не бар екенін көрсетіп, екі жол ұсынады — мазмұнды басқа
+ * жерге ауыстыру не бәрін бірге архивтеу. Тауарлар мен тарих сақталады, қалпына келтіргенде бірге қайтады.
+ */
+export function ArchiveNodeModal({ node, onClose, onArchived, onMoveContent }: {
+  node: CatalogNode
+  onClose: () => void
+  onArchived: (message: string) => void
+  onMoveContent: () => void
+}) {
+  const t = useT()
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const hasContent = node.descendantCount > 0 || node.productCount > 0
+
+  const archive = async () => {
+    setLoading(true)
+    try {
+      await catalogApi.archiveNode(node.id)
+      onArchived(t('catalog.archived'))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('login.failed'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Modal title={t('catalog.archiveTitle', { name: node.name })} onClose={onClose} width={520}>
+      <div className="flex flex-col gap-4">
+        {hasContent ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-field px-4 py-3">
+                <div className="text-[13px] text-ink-2">{t('catalog.archiveNested')}</div>
+                <div className="text-[22px] font-bold">{node.descendantCount}</div>
+              </div>
+              <div className="rounded-xl bg-field px-4 py-3">
+                <div className="text-[13px] text-ink-2">{t('catalog.col.products')}</div>
+                <div className="text-[22px] font-bold">{node.productCount}</div>
+              </div>
+            </div>
+            <p className="text-[14px] leading-relaxed text-ink-2">{t('catalog.archiveChoice')}</p>
+          </>
+        ) : (
+          <p className="text-[14px] leading-relaxed text-ink-2">{t('catalog.archiveEmpty')}</p>
+        )}
+        {error && <p className="text-[14px] text-danger">{error}</p>}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          {hasContent && <Button type="button" variant="secondary" onClick={onMoveContent}>{t('catalog.moveContent')}</Button>}
+          <Button type="button" loading={loading} onClick={() => void archive()}>
+            {hasContent ? t('catalog.archiveAll') : t('catalog.archive')}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

@@ -168,6 +168,7 @@ public partial class ProductService(
         var product = await repo.GetForUpdateAsync(orgId, id, ct) ?? throw new NotFoundException(Messages.ProductNotFound(Lang));
         if (product.Status == CatalogStatus.Archived) return;
         product.Status = CatalogStatus.Archived;
+        product.ArchivedByNodeId = null;
         product.UpdatedAt = DateTime.UtcNow;
         access.Audit(orgId, m.StoreId, "catalog.product.archive", "product", product.Id, null, new { Status = "Archived" });
         await unitOfWork.SaveChangesAsync(ct);
@@ -182,6 +183,7 @@ public partial class ProductService(
             && (await catalog.GetNodeForUpdateAsync(orgId, nodeId, ct))?.Status == CatalogStatus.Archived)
             throw new ValidationException(Messages.ProductRestoreNodeArchived(Lang), "nodeId");
         product.Status = CatalogStatus.Active;
+        product.ArchivedByNodeId = null;
         product.UpdatedAt = DateTime.UtcNow;
         access.Audit(orgId, m.StoreId, "catalog.product.restore", "product", product.Id, null, new { Status = "Active" });
         await unitOfWork.SaveChangesAsync(ct);

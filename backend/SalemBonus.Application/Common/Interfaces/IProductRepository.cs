@@ -10,6 +10,10 @@ public record BarcodeOwner(string Barcode, Guid ProductId, string ProductName);
 public interface IProductRepository
 {
     Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(Guid orgId, ProductFilter filter, CancellationToken ct = default);
+    /// <summary>Экспорт: сүзгі бойынша барлығы (Skip/Take ескерілмейді), штрихкод пен сипаттамаларымен.</summary>
+    Task<IReadOnlyList<Product>> ListForExportAsync(Guid orgId, ProductFilter filter, CancellationToken ct = default);
+    /// <summary>Импорт: бизнестің барлық тауары, өзгерту үшін (штрихкод пен сипаттамаларымен).</summary>
+    Task<IReadOnlyList<Product>> ListAllForUpdateAsync(Guid orgId, CancellationToken ct = default);
     Task<Product?> GetAsync(Guid orgId, Guid id, CancellationToken ct = default);
     Task<Product?> GetForUpdateAsync(Guid orgId, Guid id, CancellationToken ct = default);
     Task<Product?> FindByBarcodeAsync(Guid orgId, string barcode, CancellationToken ct = default);

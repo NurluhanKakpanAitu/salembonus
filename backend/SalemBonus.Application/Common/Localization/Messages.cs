@@ -349,4 +349,46 @@ public static class Messages
 
     public static string StorageNotConfigured(AppLanguage l) => Pick(l,
         "Файл қоймасы бапталмаған", "Хранилище файлов не настроено");
+
+    // Импорт / экспорт
+    public static string StatusActive(AppLanguage l) => Pick(l, "Белсенді", "Активный");
+    public static string StatusArchived(AppLanguage l) => Pick(l, "Архивте", "Архивный");
+
+    public static string ImportFileInvalid(AppLanguage l) => Pick(l,
+        "Файл оқылмады. Оны Excel-де .xlsx пішімінде сақтаңыз", "Не удалось прочитать файл. Сохраните его в Excel в формате .xlsx");
+
+    public static string ImportFileRequired(AppLanguage l) => Pick(l, "Файлды таңдаңыз", "Выберите файл");
+
+    public static string ImportMissingColumn(AppLanguage l, string column) => Pick(l,
+        $"Файлда «{column}» бағаны жоқ. Үлгіні жүктеп алыңыз", $"В файле нет колонки «{column}». Скачайте шаблон");
+
+    public static string ImportTooManyRows(AppLanguage l, int max) => Pick(l,
+        $"Бір файлда {max} жолдан артық болмауы керек", $"В одном файле не больше {max} строк");
+
+    public static string ImportIdNotFound(AppLanguage l, string id) => Pick(l,
+        $"ID «{id}» бойынша тауар табылмады", $"Товар с ID «{id}» не найден");
+
+    public static string ImportNoCreatePermission(AppLanguage l) => Pick(l,
+        "Жаңа тауар жасауға рұқсатыңыз жоқ", "Нет права создавать товары");
+
+    public static string ImportNoEditPermission(AppLanguage l) => Pick(l,
+        "Бар тауарды өзгертуге рұқсатыңыз жоқ", "Нет права изменять товары");
+
+    public static string ImportDuplicateProduct(AppLanguage l, int row) => Pick(l,
+        $"Бұл тауар {row}-жолда да бар", $"Этот товар уже есть в строке {row}");
+
+    public static string ImportUnitNotFound(AppLanguage l, string unit) => Pick(l,
+        $"«{unit}» өлшем бірлігі табылмады", $"Единица измерения «{unit}» не найдена");
+
+    public static string ImportBrandNotFound(AppLanguage l, string brand) => Pick(l,
+        $"«{brand}» бренді табылмады", $"Бренд «{brand}» не найден");
+
+    public static string ImportCategoryNotFound(AppLanguage l, string path) => Pick(l,
+        $"«{path}» санаты табылмады", $"Категория «{path}» не найдена");
+
+    public static string ImportBarcodeInRow(AppLanguage l, string code, int row) => Pick(l,
+        $"«{code}» штрихкоды {row}-жолда да бар", $"Штрихкод «{code}» уже указан в строке {row}");
+
+    public static string ImportNumberInvalid(AppLanguage l, string column) => Pick(l,
+        $"«{column}» бағанындағы мән дұрыс емес", $"Неверное значение в колонке «{column}»");
 }

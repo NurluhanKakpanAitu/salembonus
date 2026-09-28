@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.Configure<StaffAuthOptions>(configuration.GetSection(StaffAuthOptions.Section));
         services.Configure<R2Options>(configuration.GetSection(R2Options.Section));
         services.AddSingleton<IFileStorage, R2FileStorage>();
+        services.AddSingleton<ISpreadsheet, XlsxSpreadsheet>();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();

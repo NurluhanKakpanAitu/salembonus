@@ -1,8 +1,28 @@
-import { api } from './api'
+import { api, download } from './api'
 import type { Product, ProductListItem, ProductPage, ProductQuery, SaveProduct, Warehouse } from './catalogTypes'
 
 const base = '/pos/v1/products'
 const json = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) })
+
+export interface ImportResult {
+  applied: boolean
+  total: number
+  created: number
+  updated: number
+  skipped: number
+  createdCategories: number
+  createdBrands: number
+  errors: { row: number; message: string }[]
+}
+
+function filters(q: Omit<ProductQuery, 'page' | 'pageSize'>) {
+  const p = new URLSearchParams()
+  for (const key of ['search', 'status', 'nodeId', 'brandId', 'unitId'] as const) {
+    const v = q[key]?.trim()
+    if (v) p.set(key, v)
+  }
+  return p
+}
 
 function qs(q: ProductQuery) {
   const p = new URLSearchParams({ page: String(q.page), pageSize: String(q.pageSize) })
@@ -28,4 +48,13 @@ export const productApi = {
       `${base}/barcodes/check?barcode=${encodeURIComponent(code)}${excludeProductId ? `&excludeProductId=${excludeProductId}` : ''}`),
   generateBarcode: () => api<{ barcode: string }>(`${base}/barcodes/generate`, json('POST')),
   warehouses: () => api<Warehouse[]>('/pos/v1/warehouses'),
+  exportXlsx: (q: Omit<ProductQuery, 'page' | 'pageSize'>) => download(`${base}/export?${filters(q)}`, 'products.xlsx'),
+  template: () => download(`${base}/export?template=true`, 'template.xlsx'),
+  importXlsx: (file: File, dryRun: boolean, createMissing: boolean) => {
+    const form = new FormData()
+    form.set('file', file)
+    form.set('dryRun', String(dryRun))
+    form.set('createMissing', String(createMissing))
+    return api<ImportResult>(`${base}/import`, { method: 'POST', body: form })
+  },
 }

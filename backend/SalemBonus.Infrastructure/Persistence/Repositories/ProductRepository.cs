@@ -8,6 +8,30 @@ public class ProductRepository(AppDbContext db) : IProductRepository
 {
     public async Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(Guid orgId, ProductFilter f, CancellationToken ct = default)
     {
+        var q = Filtered(orgId, f);
+        var total = await q.CountAsync(ct);
+        var items = await q.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Name)
+            .Skip(f.Skip).Take(f.Take)
+            .Include(p => p.Barcodes).Include(p => p.Images)
+            .AsSplitQuery()
+            .ToListAsync(ct);
+        return (items, total);
+    }
+
+    public async Task<IReadOnlyList<Product>> ListForExportAsync(Guid orgId, ProductFilter f, CancellationToken ct = default) =>
+        await Filtered(orgId, f).OrderBy(p => p.Name)
+            .Include(p => p.Barcodes).Include(p => p.Characteristics)
+            .AsSplitQuery()
+            .ToListAsync(ct);
+
+    public async Task<IReadOnlyList<Product>> ListAllForUpdateAsync(Guid orgId, CancellationToken ct = default) =>
+        await db.Products.Where(p => p.OrganizationId == orgId)
+            .Include(p => p.Barcodes).Include(p => p.Characteristics)
+            .AsSplitQuery()
+            .ToListAsync(ct);
+
+    private IQueryable<Product> Filtered(Guid orgId, ProductFilter f)
+    {
         var q = db.Products.AsNoTracking().Where(p => p.OrganizationId == orgId);
         if (f.Status is { } status) q = q.Where(p => p.Status == status);
         if (f.BrandId is { } brandId) q = q.Where(p => p.BrandId == brandId);
@@ -24,14 +48,7 @@ public class ProductRepository(AppDbContext db) : IProductRepository
                 || (p.Article != null && EF.Functions.ILike(p.Article, like, "\\"))
                 || p.Barcodes.Any(b => b.Barcode.StartsWith(term)));
         }
-
-        var total = await q.CountAsync(ct);
-        var items = await q.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Name)
-            .Skip(f.Skip).Take(f.Take)
-            .Include(p => p.Barcodes).Include(p => p.Images)
-            .AsSplitQuery()
-            .ToListAsync(ct);
-        return (items, total);
+        return q;
     }
 
     public Task<Product?> GetAsync(Guid orgId, Guid id, CancellationToken ct = default) =>
