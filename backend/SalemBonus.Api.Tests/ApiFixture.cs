@@ -17,7 +17,7 @@ namespace SalemBonus.Api.Tests;
 /// </summary>
 public sealed class ApiFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder().WithImage("postgres:18-alpine").Build();
+    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder("postgres:18-alpine").Build();
     private WebApplicationFactory<Program> _factory = null!;
     private (string Owner, string Cashier)? _tokens;
 
@@ -27,6 +27,8 @@ public sealed class ApiFixture : IAsyncLifetime
         // Program конфигурацияны тіркеу кезінде бірден оқиды — айнымалылар хост құрылмай тұрып қойылады.
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", _db.GetConnectionString());
         Environment.SetEnvironmentVariable("Jwt__Key", "integration-tests-signing-key-0123456789-abcdefghij");
+        // Тест шығысы SQL логына толмасын: тек ескерту мен қате.
+        Environment.SetEnvironmentVariable("Logging__LogLevel__Default", "Warning");
 
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseEnvironment("Testing"));
         using var scope = _factory.Services.CreateScope(); // хост көтеріледі: миграциялар + дүкендер
