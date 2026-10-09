@@ -375,6 +375,17 @@ cd /opt/salembonus && ./scripts/deploy.sh
 
 Миграциялар API қосылғанда өзі қолданылады. Үлкен өзгерістің алдында `./scripts/backup.sh` жаса.
 
+### Автоматты деплой (GitHub Actions)
+
+`main`-ге push болғанда тесттер өтсе, `tests` workflow-ы серверге SSH арқылы кіріп `deploy.sh` іске қосады. Қолмен: GitHub → **Actions** → **tests** → **Run workflow**.
+
+Бір рет баптау:
+
+1. Серверде `deploy` болып: `cd /opt/salembonus && git pull && chmod +x scripts/*.sh && ./scripts/allow-ci-deploy.sh`
+2. GitHub → **Settings** → **Secrets and variables** → **Actions** → секреттер: `SSH_HOST` (СЕРВЕР_IP), `SSH_USER` (`deploy`), `SSH_KEY` (жеке кілт).
+
+Секреттер қойылмаса деплой қадамы өткізіледі, тесттер бұрынғыдай жұмыс істейді.
+
 ---
 
 ## Пайдалы командалар
