@@ -110,7 +110,7 @@ public class CashierService(
             p.Images.FirstOrDefault(i => i.IsPrimary)?.Url ?? p.Images.OrderBy(i => i.SortOrder).FirstOrDefault()?.Url,
             p.BrandId is { } b ? l.Brands.GetValueOrDefault(b) : null,
             l.Units.GetValueOrDefault(p.UnitId),
-            r.Price, r.Stock, p.CatalogNodeId);
+            r.Price, r.Stock, p.CatalogNodeId, p.IsRecommended, p.BonusEligible);
     }
 
     // ---------- Клиент (ТЗ §4) ----------

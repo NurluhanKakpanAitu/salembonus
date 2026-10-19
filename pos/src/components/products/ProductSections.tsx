@@ -77,8 +77,15 @@ export function StockSection({ draft, patch, errors, warehouses, product, canEdi
 }) {
   const t = useT()
   const store = useAuth(activeStore)
+  const [markup, setMarkup] = useState('')
   const o = draft.opening
   const set = (p: Partial<ProductDraft['opening']>) => patch({ opening: { ...o, ...p } })
+
+  const minStockField = (
+    <Field label={t('product.minStock')} error={errors.minStock} hint={t('product.minStockHint')}>
+      <Input inputMode="decimal" value={draft.minStock} onChange={(e) => patch({ minStock: e.target.value })} placeholder={t('product.minStockStore')} error={!!errors.minStock} />
+    </Field>
+  )
 
   // Жасалған тауарда қалдық пен кіріс бағасы тек көрсетіледі — олар «Склад» арқылы (ТЗ §6.2).
   // Сату бағасын «Склад» модулі жасалғанша осында өзгертуге болады (ағымдағы дүкен үшін).
@@ -87,6 +94,7 @@ export function StockSection({ draft, patch, errors, warehouses, product, canEdi
       <div>
         <SectionTitle title={t('product.section.stock')} hint={t('product.stockReadonly')} />
         <div className="grid gap-4 sm:grid-cols-2">
+          {minStockField}
           {canEditPrice
             ? (
               <Field label={t('product.salePrice')} error={errors.salePrice} hint={t('product.salePriceStore', { store: store?.name ?? '' })}>
@@ -120,6 +128,13 @@ export function StockSection({ draft, patch, errors, warehouses, product, canEdi
   const qty = toNumber(o.quantity)
   const cost = toNumber(o.purchasePrice)
   const sum = qty && cost && !Number.isNaN(qty) && !Number.isNaN(cost) ? qty * cost : null
+  // Автонаценка: кіріс бағасы × (1 + %) → сату бағасы; тек есептеу көмекшісі, серверге пайыз жіберілмейді.
+  const applyMarkup = (raw: string) => {
+    setMarkup(raw)
+    const pct = toNumber(raw)
+    if (cost && !Number.isNaN(cost) && pct != null && !Number.isNaN(pct))
+      set({ salePrice: String(Math.round(cost * (1 + pct / 100))) })
+  }
   return (
     <div>
       <SectionTitle title={t('product.section.stock')} hint={t('product.stockHint')} />
@@ -136,8 +151,15 @@ export function StockSection({ draft, patch, errors, warehouses, product, canEdi
           <Input inputMode="decimal" value={o.purchasePrice} onChange={(e) => set({ purchasePrice: e.target.value })} placeholder="0 ₸" error={!!errors['opening.purchasePrice']} />
         </Field>
         <Field label={t('product.salePrice')} error={errors['opening.salePrice']}>
-          <Input inputMode="decimal" value={o.salePrice} onChange={(e) => set({ salePrice: e.target.value })} placeholder="0 ₸" error={!!errors['opening.salePrice']} />
+          <div className="flex gap-2">
+            <Input inputMode="decimal" value={o.salePrice} onChange={(e) => { set({ salePrice: e.target.value }); setMarkup('') }} placeholder="0 ₸" error={!!errors['opening.salePrice']} />
+            <div className="relative w-36 shrink-0">
+              <Input inputMode="decimal" value={markup} onChange={(e) => applyMarkup(e.target.value)} placeholder={t('product.markup')} className="pr-8" title={t('product.markupHint')} />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[14px] text-ink-3">%</span>
+            </div>
+          </div>
         </Field>
+        {minStockField}
       </div>
       <div className="mt-4 flex items-center justify-between rounded-xl bg-field px-4 py-3 text-[14px]">
         <span className="text-ink-2">{t('product.stockSum')}</span>
@@ -454,6 +476,30 @@ function IconBtn({ label, onClick, disabled, children }: { label: string; onClic
 
 // ---------------- 6.6 Дополнительно ----------------
 
+const VAT_PRESETS = ['0', '12', '16']
+
+/** ҚҚС: Қазақстандағы қалыпты мөлшерлемелер тізімнен, өзгеше болса — қолмен. */
+function VatSelect({ value, onChange, error }: { value: string; onChange: (v: string) => void; error?: boolean }) {
+  const t = useT()
+  const v = value.trim()
+  const [custom, setCustom] = useState(() => v !== '' && !VAT_PRESETS.includes(v))
+  const mode = custom ? 'custom' : v === '' ? '' : v
+  return (
+    <div className="flex gap-2">
+      <Select value={mode} error={error} onChange={(e) => {
+        if (e.target.value === 'custom') { setCustom(true); onChange('') }
+        else { setCustom(false); onChange(e.target.value) }
+      }}>
+        <option value="">{t('product.vatNone')}</option>
+        {VAT_PRESETS.filter((p) => p !== '0').map((p) => <option key={p} value={p}>{p}%</option>)}
+        <option value="0">0%</option>
+        <option value="custom">{t('product.vatCustom')}</option>
+      </Select>
+      {custom && <Input inputMode="decimal" className="w-28 shrink-0" value={value} onChange={(e) => onChange(e.target.value)} placeholder="%" error={error} autoFocus />}
+    </div>
+  )
+}
+
 export function ExtraSection({ draft, patch, errors }: { draft: ProductDraft; patch: Patch; errors: Errors }) {
   const t = useT()
   return (
@@ -476,16 +522,37 @@ export function ExtraSection({ draft, patch, errors }: { draft: ProductDraft; pa
           <Input inputMode="numeric" value={draft.shelfLifeDays} onChange={(e) => patch({ shelfLifeDays: e.target.value })} error={!!errors.shelfLifeDays} />
         </Field>
         <Field label={t('product.vat')} error={errors.vatRate} hint={t('product.vatHint')}>
-          <Input inputMode="decimal" value={draft.vatRate} onChange={(e) => patch({ vatRate: e.target.value })} error={!!errors.vatRate} />
+          <VatSelect value={draft.vatRate} onChange={(vatRate) => patch({ vatRate })} error={!!errors.vatRate} />
         </Field>
         <div className="md:col-span-2">
           <Toggle checked={draft.isMarked} onChange={(isMarked) => patch({ isMarked })} label={t('product.marked')} />
         </div>
         {/* Макет «Статус и отображение»: кассадағы тізімнен жасыру. Белсенді/архив — карточканың жоғарғы жағында. */}
-        <div className="md:col-span-2 rounded-xl border border-line p-4">
+        <div className="rounded-xl border border-line p-4">
           <div className="mb-3 text-[14px] font-bold">{t('product.display')}</div>
-          <Toggle checked={draft.hideInCashier} onChange={(hideInCashier) => patch({ hideInCashier })} label={t('product.hideInCashier')} />
-          <p className="mt-1.5 pl-14 text-[13px] text-ink-3">{t('product.hideInCashierHint')}</p>
+          <div className="flex flex-col gap-3">
+            <div>
+              <Toggle checked={draft.isRecommended} onChange={(isRecommended) => patch({ isRecommended })} label={t('product.recommended')} />
+              <p className="mt-1 pl-14 text-[13px] text-ink-3">{t('product.recommendedHint')}</p>
+            </div>
+            <div>
+              <Toggle checked={draft.hideInCashier} onChange={(hideInCashier) => patch({ hideInCashier })} label={t('product.hideInCashier')} />
+              <p className="mt-1 pl-14 text-[13px] text-ink-3">{t('product.hideInCashierHint')}</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-line p-4">
+          <div className="mb-3 text-[14px] font-bold">{t('product.discountsBonus')}</div>
+          <div className="flex flex-col gap-3">
+            <Field label={t('product.maxDiscount')} error={errors.maxDiscountPercent} hint={t('product.maxDiscountHint')}>
+              <Input inputMode="decimal" value={draft.maxDiscountPercent} onChange={(e) => patch({ maxDiscountPercent: e.target.value })}
+                placeholder={t('product.maxDiscountStore')} error={!!errors.maxDiscountPercent} />
+            </Field>
+            <div>
+              <Toggle checked={draft.bonusEligible} onChange={(bonusEligible) => patch({ bonusEligible })} label={t('product.bonusEligible')} />
+              <p className="mt-1 pl-14 text-[13px] text-ink-3">{t('product.bonusEligibleHint')}</p>
+            </div>
+          </div>
         </div>
         <div className="md:col-span-2">
           <Field label={t('product.notes')} hint={t('product.notesHint')}>

@@ -40,6 +40,12 @@ public class Product
     /// <summary>ҚҚС мөлшерлемесі (%). Бос — ҚҚС-сыз.</summary>
     public decimal? VatRate { get; set; }
     public bool IsMarked { get; set; }
+    /// <summary>
+    /// Осы тауардың ең аз қалдығы: одан төмен түссе — «мало товара» хабарламасы. Бос — дүкеннің жалпы шегі
+    /// (касса баптауларындағы LowStockThreshold). Каталог атрибуты: қалдықтың өзі «Склад»-та.
+    /// </summary>
+    public decimal? MinStock { get; set; }
+    /// <summary>Кассада «Популярные» сұрыптауында алдымен шығады.</summary>
     public bool IsRecommended { get; set; }
     public bool HideInCashier { get; set; }
     /// <summary>Бонус жүйесіне қатыса ма (есептеу мен шегеру).</summary>

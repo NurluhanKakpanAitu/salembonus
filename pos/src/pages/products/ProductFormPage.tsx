@@ -29,6 +29,8 @@ const NUMERIC: { field: string; get: (d: ProductDraft) => string }[] = [
   { field: 'warrantyMonths', get: (d) => d.warrantyMonths },
   { field: 'shelfLifeDays', get: (d) => d.shelfLifeDays },
   { field: 'vatRate', get: (d) => d.vatRate },
+  { field: 'minStock', get: (d) => d.minStock },
+  { field: 'maxDiscountPercent', get: (d) => d.maxDiscountPercent },
 ]
 
 /** Сілтеме басылғанда сақталмаған өзгерісті сұрау (сол жақ мәзір, тақырып т.б.). */

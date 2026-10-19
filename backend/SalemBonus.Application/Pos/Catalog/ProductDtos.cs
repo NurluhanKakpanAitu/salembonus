@@ -54,7 +54,13 @@ public record ProductDto(
     DateTime CreatedAt,
     DateTime UpdatedAt,
     /// <summary>Кассадағы тізімде көрсетілмейді (ТЗ макеті «Статус и отображение»); сатылымда да қабылданбайды.</summary>
-    bool HideInCashier = false);
+    bool HideInCashier = false,
+    decimal? MinStock = null,
+    bool IsRecommended = false,
+    /// <summary>Бонус есептеу мен шегеруге қатысады (мысалы, темекіге бонус жоқ).</summary>
+    bool BonusEligible = true,
+    /// <summary>Осы тауарға берілетін ең үлкен жеңілдік (%); чектегі жеңілдік асса — әкімшінің растауы керек.</summary>
+    decimal? MaxDiscountPercent = null);
 
 /// <summary>Бастапқы қалдық пен баға — тек тауар жасалғанда (ТЗ §6.2). Кейінгі өзгерістер «Склад» арқылы.</summary>
 public record OpeningStockRequest(Guid? WarehouseId, decimal? Quantity, decimal? PurchasePrice, decimal? SalePrice);
@@ -88,7 +94,11 @@ public record SaveProductRequest(
     /// <summary>
     /// Бренд қолмен терілсе (BrandId жоқ): аты бойынша анықтамалықтан табылады, болмаса сол жерде жасалады.
     /// </summary>
-    string? BrandName = null);
+    string? BrandName = null,
+    decimal? MinStock = null,
+    bool IsRecommended = false,
+    bool BonusEligible = true,
+    decimal? MaxDiscountPercent = null);
 
 public record ChangeClassificationRequest(Guid? NodeId);
 

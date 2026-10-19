@@ -34,6 +34,10 @@ export interface CashierProduct {
   price: number | null
   stock: number
   nodeId: string | null
+  /** Карточкадағы «Рекомендуемый»: «Популярные» сұрыптауында алдымен, плиткада белгі. */
+  isRecommended: boolean
+  /** Бонус есептеу/шегеру тек осы тауарлардың үлесінен (сервермен бірдей есеп). */
+  bonusEligible: boolean
 }
 
 export interface CashierCatalog { items: CashierProduct[]; total: number; page: number; pageSize: number }

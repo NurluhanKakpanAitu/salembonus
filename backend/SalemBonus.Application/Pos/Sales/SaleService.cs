@@ -93,18 +93,27 @@ public class SaleService(
                 _ => throw new ValidationException(Messages.DiscountTooLarge(Lang), "discount"),
             };
 
-            // Кассир өз шегінен асырса — құқығы бар қызметкер PIN-імен растайды.
+            // Кассир өз шегінен асырса — құқығы бар қызметкер PIN-імен растайды. Тауардың өз шегі (карточкадағы
+            // «Макс. скидка») бәріне қатысты: ол да асса — растау керек.
             var percent = subtotal == 0 ? 0 : discount / subtotal * 100m;
-            if (!m.Has(StaffPermissions.DiscountApprove) && percent > m.MaxDiscountPercent)
+            var cashierCap = m.Has(StaffPermissions.DiscountApprove) ? 100m : m.MaxDiscountPercent;
+            var productCap = lines.Select(l => products[l.ProductId].MaxDiscountPercent).Where(x => x is not null).Min();
+            var cap = Math.Min(cashierCap, productCap ?? 100m);
+            if (percent > cap)
             {
                 if (request.Approval is not { } approval)
-                    throw new ValidationException(Messages.DiscountNeedsApproval(Lang, m.MaxDiscountPercent), "approval");
+                    throw new ValidationException(productCap is { } pc && pc < cashierCap
+                        ? Messages.DiscountProductLimit(Lang, lines.First(l => products[l.ProductId].MaxDiscountPercent == pc).Name, pc)
+                        : Messages.DiscountNeedsApproval(Lang, cap), "approval");
                 await staffAuth.ApproveWithPinAsync(approval.StaffUserId, approval.Pin, m.StoreId, register.Id,
                     StaffPermissions.DiscountApprove, ct);
                 approvedBy = approval.StaffUserId;
             }
         }
         var afterDiscount = subtotal - discount;
+        // Бонус тек «бонусқа қатысатын» тауарлардың үлесінен (карточкадағы «Участвует в бонусной системе»).
+        var eligibleTotal = lines.Where(l => products[l.ProductId].BonusEligible).Sum(l => l.LineTotal);
+        var eligibleShare = subtotal == 0 ? 0 : eligibleTotal / subtotal;
 
         // ---------- Клиент мен бонус (ТЗ §6.1–6.4) ----------
         Customer? customer = null;
@@ -115,7 +124,7 @@ public class SaleService(
         {
             if (customer is null) throw new ValidationException(Messages.SaleBonusNeedsCustomer(Lang), "bonus");
             var card = await cards.GetAsync(customer.Id, m.StoreId, ct);
-            var max = BonusRules.MaxRedeemable(afterDiscount, store.MaxRedeemPercent, card?.Balance ?? 0);
+            var max = BonusRules.MaxRedeemable(Math.Round(afterDiscount * eligibleShare, 2), store.MaxRedeemPercent, card?.Balance ?? 0);
             if (request.BonusRedeem > max)
                 throw new ValidationException(Messages.RedeemTooMuch(Lang, max, card?.Balance ?? 0, store.MaxRedeemPercent), "bonus");
         }
@@ -187,7 +196,7 @@ public class SaleService(
                 var before = balance.Quantity;
                 balance.Quantity -= l.Quantity;
                 balance.UpdatedAt = now;
-                await notifier.StockChangedAsync(m.StoreId, l.Name, before, balance.Quantity, ct);
+                await notifier.StockChangedAsync(m.StoreId, l.Name, before, balance.Quantity, products[l.ProductId].MinStock, ct);
                 inventory.AddMovement(new StockMovement
                 {
                     Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = l.ProductId,
@@ -205,7 +214,7 @@ public class SaleService(
                     await ledger.RedeemAsync(card, customer, store, request.BonusRedeem, afterDiscount, $"Чек №{sale.Number}", sale.Id, now, ct);
                 // Бонус тек нақты төленген бөліктен: қарызға берілгені есептелмейді.
                 var paidNow = total - sale.DebtAmount;
-                sale.BonusAccrued = ledger.Accrue(card, customer, store, paidNow, afterDiscount, $"Чек №{sale.Number}", sale.Id, now).Accrued;
+                sale.BonusAccrued = ledger.Accrue(card, customer, store, Math.Round(paidNow * eligibleShare, 2), afterDiscount, $"Чек №{sale.Number}", sale.Id, now).Accrued;
             }
 
             if (debtRequest is { } dr)

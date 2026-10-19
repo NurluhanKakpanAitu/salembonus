@@ -11,6 +11,7 @@ export interface CartLine {
   price: number
   stock: number
   quantity: number
+  bonusEligible: boolean
 }
 
 export interface Discount { kind: 'Percent' | 'Amount'; value: number }
@@ -66,7 +67,7 @@ export const cart = {
     else
       set({ lines: [...lines, {
         productId: p.id, name: p.name, article: p.article, imageUrl: p.imageUrl, unit: p.unitShortName,
-        price: p.price ?? 0, stock: p.stock, quantity,
+        price: p.price ?? 0, stock: p.stock, quantity, bonusEligible: p.bonusEligible,
       }] })
   },
   setQuantity(productId: string, quantity: number) {
@@ -101,10 +102,13 @@ export function totals(s: CartState, maxRedeemPercent: number) {
     : d.kind === 'Percent' ? Math.round((subtotal * Math.min(d.value, 100)) / 100)
     : Math.min(round2(d.value), subtotal)
   const afterDiscount = round2(subtotal - discount)
-  const maxBonus = s.customer ? Math.min(s.customer.balance, Math.floor((afterDiscount * maxRedeemPercent) / 100)) : 0
+  // Бонус тек «бонусқа қатысатын» тауарлардың үлесінен — сервердегі есеппен бірдей.
+  const eligible = s.lines.filter((l) => l.bonusEligible !== false).reduce((sum, l) => sum + round2(l.price * l.quantity), 0)
+  const eligibleShare = subtotal > 0 ? eligible / subtotal : 0
+  const maxBonus = s.customer ? Math.min(s.customer.balance, Math.floor((round2(afterDiscount * eligibleShare) * maxRedeemPercent) / 100)) : 0
   const bonus = s.customer && s.bonusOn ? Math.min(Math.max(0, Math.floor(s.bonus)), maxBonus) : 0
   const total = round2(afterDiscount - bonus)
-  const accrual = s.customer ? Math.floor((total * s.customer.accrualPercent) / 100) : 0
+  const accrual = s.customer ? Math.floor((round2(total * eligibleShare) * s.customer.accrualPercent) / 100) : 0
   const discountPercent = subtotal > 0 ? (discount / subtotal) * 100 : 0
   return { subtotal, discount, discountPercent, afterDiscount, maxBonus, bonus, total, accrual }
 }

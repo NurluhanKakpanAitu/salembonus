@@ -27,7 +27,10 @@ public record CashierContextDto(
 
 public record CashierProductDto(
     Guid Id, string Name, string? Article, string? Barcode, string? ImageUrl, string? BrandName, string? UnitShortName,
-    decimal? Price, decimal Stock, Guid? NodeId);
+    decimal? Price, decimal Stock, Guid? NodeId,
+    bool IsRecommended = false,
+    /// <summary>Себет бонусты есептегенде осы тауарлардың ғана үлесін алады (сервермен бірдей).</summary>
+    bool BonusEligible = true);
 
 public record CashierCatalogDto(IReadOnlyList<CashierProductDto> Items, int Total, int Page, int PageSize);
 

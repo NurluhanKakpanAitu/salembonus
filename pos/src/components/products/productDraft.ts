@@ -21,6 +21,11 @@ export interface ProductDraft {
   vatRate: string
   isMarked: boolean
   hideInCashier: boolean
+  /** Ең аз қалдық (каталог атрибуты, кез келген уақытта өзгереді). */
+  minStock: string
+  isRecommended: boolean
+  bonusEligible: boolean
+  maxDiscountPercent: string
   notes: string
   primaryBarcode: string
   extraBarcodes: string[]
@@ -39,18 +44,18 @@ export const SECTIONS: SectionKey[] = ['main', 'stock', 'classification', 'chara
 /** Сервер қайтарған қате өрісі қай бөлімде. */
 export function sectionOfField(field: string | null): SectionKey {
   if (!field) return 'main'
-  if (field.startsWith('opening') || field === 'salePrice') return 'stock'
+  if (field.startsWith('opening') || field === 'salePrice' || field === 'minStock') return 'stock'
   if (field === 'nodeId') return 'classification'
   if (field === 'characteristics') return 'characteristics'
   if (field === 'barcodes' || field === 'images') return 'media'
-  if (['supplier', 'manufacturer', 'country', 'warrantyMonths', 'shelfLifeDays', 'vatRate', 'notes'].includes(field)) return 'extra'
+  if (['supplier', 'manufacturer', 'country', 'warrantyMonths', 'shelfLifeDays', 'vatRate', 'notes', 'maxDiscountPercent'].includes(field)) return 'extra'
   return 'main'
 }
 
 export function emptyDraft(nodeId: string | null, unitId: string, warehouseId: string): ProductDraft {
   return {
     name: '', article: '', unitId, brandId: '', brandName: '', nodeId, description: '',
-    supplier: '', manufacturer: '', country: '', warrantyMonths: '', shelfLifeDays: '', vatRate: '', isMarked: false, hideInCashier: false, notes: '',
+    supplier: '', manufacturer: '', country: '', warrantyMonths: '', shelfLifeDays: '', vatRate: '', isMarked: false, hideInCashier: false, minStock: '', isRecommended: false, bonusEligible: true, maxDiscountPercent: '', notes: '',
     primaryBarcode: '', extraBarcodes: [], images: [], primaryImage: null, characteristics: {}, salePrice: '',
     opening: { warehouseId, quantity: '', purchasePrice: '', salePrice: '' },
   }
@@ -62,7 +67,9 @@ export function draftFromProduct(p: Product): ProductDraft {
     name: p.name, article: p.article ?? '', unitId: p.unitId, brandId: p.brandId ?? '', brandName: '', nodeId: p.nodeId,
     description: p.description ?? '', supplier: p.supplier ?? '', manufacturer: p.manufacturer ?? '', country: p.country ?? '',
     warrantyMonths: p.warrantyMonths?.toString() ?? '', shelfLifeDays: p.shelfLifeDays?.toString() ?? '',
-    vatRate: p.vatRate?.toString() ?? '', isMarked: p.isMarked, hideInCashier: p.hideInCashier, notes: p.notes ?? '',
+    vatRate: p.vatRate?.toString() ?? '', isMarked: p.isMarked, hideInCashier: p.hideInCashier,
+    minStock: p.minStock?.toString() ?? '', isRecommended: p.isRecommended, bonusEligible: p.bonusEligible,
+    maxDiscountPercent: p.maxDiscountPercent?.toString() ?? '', notes: p.notes ?? '',
     primaryBarcode: primary,
     extraBarcodes: p.barcodes.map((b) => b.barcode).filter((b) => b !== primary),
     images: p.images.map((i) => i.url),
@@ -105,6 +112,10 @@ export function toRequest(d: ProductDraft, isNew: boolean): SaveProduct {
     vatRate: toNumber(d.vatRate),
     isMarked: d.isMarked,
     hideInCashier: d.hideInCashier,
+    minStock: toNumber(d.minStock),
+    isRecommended: d.isRecommended,
+    bonusEligible: d.bonusEligible,
+    maxDiscountPercent: toNumber(d.maxDiscountPercent),
     notes: opt(d.notes),
     barcodes: barcodes.map((b, i) => ({ barcode: b, isPrimary: i === 0 && d.primaryBarcode.trim() !== '' })),
     images: d.images.map((url) => ({ url, isPrimary: url === (d.primaryImage ?? d.images[0]) })),

@@ -437,6 +437,10 @@ public static class Messages
     public static string DiscountTooLarge(AppLanguage l) => Pick(l,
         "Жеңілдік сомадан артық болмауы керек", "Скидка не может быть больше суммы чека");
 
+    public static string DiscountProductLimit(AppLanguage l, string product, decimal limit) => Pick(l,
+        $"«{product}» тауарына жеңілдік {limit:0.##}%-дан аспауы керек — әкімшінің растауы керек",
+        $"На товар «{product}» скидка не больше {limit:0.##}% — нужно подтверждение администратора");
+
     public static string DiscountNeedsApproval(AppLanguage l, decimal limit) => Pick(l,
         $"Жеңілдік сіздің шегіңізден ({limit:0.##}%) асады — әкімшінің растауы керек",
         $"Скидка превышает ваш лимит ({limit:0.##}%) — нужно подтверждение администратора");

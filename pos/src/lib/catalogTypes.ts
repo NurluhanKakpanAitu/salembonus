@@ -104,6 +104,10 @@ export interface Product {
   isMarked: boolean
   /** Кассадағы тізімде көрсетілмейді, сатылымда қабылданбайды. */
   hideInCashier: boolean
+  minStock: number | null
+  isRecommended: boolean
+  bonusEligible: boolean
+  maxDiscountPercent: number | null
   notes: string | null
   barcodes: ProductBarcode[]
   images: ProductImage[]
@@ -139,6 +143,10 @@ export interface SaveProduct {
   vatRate: number | null
   isMarked: boolean
   hideInCashier: boolean
+  minStock: number | null
+  isRecommended: boolean
+  bonusEligible: boolean
+  maxDiscountPercent: number | null
   notes: string | null
   barcodes: ProductBarcode[]
   images: ProductImage[]

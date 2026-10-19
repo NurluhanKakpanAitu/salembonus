@@ -47,7 +47,8 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
             CashierSort.PriceDesc => rows.OrderBy(r => r.Price == null).ThenByDescending(r => r.Price).ThenBy(r => r.Product.Name),
             CashierSort.Stock => rows.OrderByDescending(r => r.Stock).ThenBy(r => r.Product.Name),
             CashierSort.Name => rows.OrderBy(r => r.Product.Name),
-            _ => rows.OrderByDescending(r => r.Sold).ThenByDescending(r => r.Stock > 0).ThenBy(r => r.Product.Name),
+            // «Популярные»: алдымен ұсынылатындар (карточкадағы «Рекомендуемый»), сосын сатылымы бойынша.
+            _ => rows.OrderByDescending(r => r.Product.IsRecommended).ThenByDescending(r => r.Sold).ThenByDescending(r => r.Stock > 0).ThenBy(r => r.Product.Name),
         };
 
         var total = await products.CountAsync(ct);

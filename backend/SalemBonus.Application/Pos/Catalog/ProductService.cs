@@ -207,6 +207,14 @@ public partial class ProductService(
         p.Notes = CatalogAccess.Optional(r.Notes, 1000);
         p.IsMarked = r.IsMarked;
         p.HideInCashier = r.HideInCashier;
+        p.IsRecommended = r.IsRecommended;
+        p.BonusEligible = r.BonusEligible;
+        p.MinStock = r.MinStock is { } ms
+            ? ms >= 0 ? Math.Round(ms, 3) : throw new ValidationException(Messages.ValueNegative(Lang), "minStock")
+            : null;
+        p.MaxDiscountPercent = r.MaxDiscountPercent is { } md
+            ? md is >= 0 and <= 100 ? Math.Round(md, 2) : throw new ValidationException(Messages.ValueOutOfRange(Lang, 0, 100), "maxDiscountPercent")
+            : null;
         p.WarrantyMonths = InRange(r.WarrantyMonths, 0, 600, "warrantyMonths");
         p.ShelfLifeDays = InRange(r.ShelfLifeDays, 0, 36500, "shelfLifeDays");
         p.VatRate = r.VatRate is { } vat
@@ -511,13 +519,13 @@ public partial class ProductService(
             price?.SalePrice,
             canSeeCost ? price?.PurchasePrice : null,
             p.CreatedAt, p.UpdatedAt,
-            p.HideInCashier);
+            p.HideInCashier, p.MinStock, p.IsRecommended, p.BonusEligible, p.MaxDiscountPercent);
     }
 
     private static object Snapshot(Product p, IReadOnlyList<ProductBarcodeDto> barcodes, object? opening) => new
     {
         p.Name, p.Article, p.UnitId, p.BrandId, NodeId = p.CatalogNodeId, Status = p.Status.ToString(), p.Description,
-        p.Supplier, p.Manufacturer, p.Country, p.WarrantyMonths, p.ShelfLifeDays, p.VatRate, p.IsMarked, p.HideInCashier, p.Notes,
+        p.Supplier, p.Manufacturer, p.Country, p.WarrantyMonths, p.ShelfLifeDays, p.VatRate, p.IsMarked, p.HideInCashier, p.MinStock, p.IsRecommended, p.BonusEligible, p.MaxDiscountPercent, p.Notes,
         Barcodes = barcodes.Select(b => b.IsPrimary ? $"{b.Barcode}*" : b.Barcode).ToList(),
         Opening = opening,
     };

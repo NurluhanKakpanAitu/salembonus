@@ -38,11 +38,13 @@ public class StoreNotifier(ISalesRepository sales, CatalogAccess access)
     }
 
     /// <summary>Сатылымнан кейін: қалдық нөлге түссе — «таусылды», шекке түссе — «аз қалды».</summary>
-    public async Task StockChangedAsync(Guid storeId, string productName, decimal before, decimal after, CancellationToken ct)
+    /// <summary>Шек — тауардың өз ең аз қалдығы (карточкада), болмаса дүкеннің жалпы шегі (касса баптаулары).</summary>
+    public async Task StockChangedAsync(Guid storeId, string productName, decimal before, decimal after, decimal? minStock, CancellationToken ct)
     {
         var s = await SettingsAsync(storeId, ct);
+        var threshold = minStock ?? s.LowStockThreshold;
         if (before > 0 && after <= 0) await NotifyAsync(storeId, StoreNotificationType.OutOfStock, productName, after, ct: ct);
-        else if (before > s.LowStockThreshold && after <= s.LowStockThreshold)
+        else if (before > threshold && after <= threshold)
             await NotifyAsync(storeId, StoreNotificationType.LowStock, productName, after, ct: ct);
     }
 

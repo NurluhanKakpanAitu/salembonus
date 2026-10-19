@@ -153,8 +153,11 @@ function AddButton({ p, onAdd }: { p: CashierProduct; onAdd: (p: CashierProduct)
 function ProductCard({ p, onAdd }: { p: CashierProduct; onAdd: (p: CashierProduct) => void }) {
   const t = useT()
   return (
-    <div className="flex flex-col rounded-2xl border border-line p-3 transition-shadow hover:shadow-md">
+    <div className="relative flex flex-col rounded-2xl border border-line p-3 transition-shadow hover:shadow-md">
       <ProductImage url={p.imageUrl} className="aspect-[4/3] w-full rounded-xl" />
+      {p.isRecommended && (
+        <span className="absolute left-5 top-5 rounded-md bg-amber-400 px-1.5 py-0.5 text-[11px] font-semibold text-amber-950">{t('pos.recommended')}</span>
+      )}
       <div className="mt-2 line-clamp-2 min-h-10 text-[14px] font-semibold leading-5">{p.name}</div>
       {p.article && <div className="text-[12px] text-ink-3">{t('pos.article', { a: p.article })}</div>}
       <div className="mt-2 flex items-end justify-between gap-2">
