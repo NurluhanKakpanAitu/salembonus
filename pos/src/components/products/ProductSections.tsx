@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight, Barcode, ImagePlus, Loader2, Plus, ScanLine, Star, Trash2, Wand2, X } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea, Toggle } from '../ui/Field'
+import { BrandCombobox } from './BrandCombobox'
 import { ClassificationPicker } from './ClassificationPicker'
 import { toNumber, type ProductDraft } from './productDraft'
 import type { Brand, CatalogNode, Characteristic, Product, Unit, Warehouse } from '../../lib/catalogTypes'
@@ -9,6 +10,7 @@ import { productApi } from '../../lib/productApi'
 import { uploadImage } from '../../lib/upload'
 import { ApiError } from '../../lib/api'
 import { toast } from '../ui/Toast'
+import { useBarcodeScanner } from '../../lib/scanner'
 import { activeStore, useAuth } from '../../lib/auth'
 import { useT } from '../../lib/i18n'
 
@@ -36,7 +38,6 @@ export function MainSection({ draft, patch, errors, units, brands }: {
   const t = useT()
   // Архивтегі анықтамалық жаңа таңдауға ұсынылмайды, бірақ бұрын таңдалғаны көрінеді.
   const unitOptions = units.filter((u) => u.status === 'Active' || u.id === draft.unitId)
-  const brandOptions = brands.filter((b) => b.status === 'Active' || b.id === draft.brandId)
   return (
     <div>
       <SectionTitle title={t('product.section.main')} hint={t('product.section.mainHint')} />
@@ -55,11 +56,9 @@ export function MainSection({ draft, patch, errors, units, brands }: {
             {unitOptions.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.shortName})</option>)}
           </Select>
         </Field>
-        <Field label={t('product.brand')} error={errors.brandId}>
-          <Select value={draft.brandId} onChange={(e) => patch({ brandId: e.target.value })} error={!!errors.brandId}>
-            <option value="">{t('product.noBrand')}</option>
-            {brandOptions.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </Select>
+        <Field label={t('product.brand')} error={errors.brandId ?? errors.brandName}>
+          <BrandCombobox brands={brands} brandId={draft.brandId} brandName={draft.brandName}
+            onChange={(v) => patch(v)} error={!!(errors.brandId ?? errors.brandName)} />
         </Field>
         <div className="md:col-span-2">
           <Field label={t('product.description')}>
@@ -273,6 +272,16 @@ export function MediaSection({ draft, patch, errors, productId, canUpload }: {
 
   const primaryImage = draft.primaryImage ?? draft.images[0] ?? null
 
+  const allCodes = [draft.primaryBarcode, ...draft.extraBarcodes].map((c) => c.trim())
+  useBarcodeScanner((code) => {
+    if (allCodes.includes(code)) return toast(t('product.barcodeRepeated', { code }), 'error')
+    if (!draft.primaryBarcode.trim()) patch({ primaryBarcode: code })
+    else patch({ extraBarcodes: [...draft.extraBarcodes.filter((c) => c.trim()), code] })
+    setScanHint(false)
+    toast(t('product.scanned', { code }))
+    void check(code)
+  }, canUpload)
+
   const addFiles = async (files: FileList | null) => {
     if (!files?.length) return
     const room = MAX_IMAGES - draft.images.length
@@ -319,11 +328,13 @@ export function MediaSection({ draft, patch, errors, productId, canUpload }: {
     }
   }
 
-  const generate = async () => {
+  /** Жаңа ішкі код: негізгіге (index null) не қосымша жолға. */
+  const generate = async (index: number | null = null) => {
     setGenerating(true)
     try {
       const { barcode } = await productApi.generateBarcode()
-      patch({ primaryBarcode: barcode })
+      if (index === null) patch({ primaryBarcode: barcode })
+      else patch({ extraBarcodes: draft.extraBarcodes.map((x, j) => (j === index ? barcode : x)) })
     } catch (err) {
       toast(err instanceof ApiError ? err.message : String(err), 'error')
     } finally {
@@ -377,7 +388,7 @@ export function MediaSection({ draft, patch, errors, productId, canUpload }: {
       </div>
 
       <div>
-        <SectionTitle title={t('product.barcodes')} hint={t('product.barcodesHint')} />
+        <SectionTitle title={t('product.barcodes')} hint={`${t('product.barcodesHint')} ${t('product.scanAnywhere')}`} />
         <Field label={t('product.primaryBarcode')} error={taken[draft.primaryBarcode.trim()]}
           hint={scanHint ? t('product.scanHint') : undefined}>
           <div className="flex flex-wrap gap-2">
@@ -408,6 +419,11 @@ export function MediaSection({ draft, patch, errors, productId, canUpload }: {
                   autoFocus={i === draft.extraBarcodes.length - 1 && code === ''}
                   onChange={(e) => patch({ extraBarcodes: draft.extraBarcodes.map((x, j) => (j === i ? e.target.value : x)) })}
                   onBlur={(e) => void check(e.target.value)} />
+                {!code.trim() && (
+                  <Button type="button" variant="secondary" icon={<Wand2 size={17} />} loading={generating} onClick={() => void generate(i)}>
+                    {t('product.generate')}
+                  </Button>
+                )}
                 <button type="button" aria-label="Remove" onClick={() => patch({ extraBarcodes: draft.extraBarcodes.filter((_, j) => j !== i) })}
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl text-ink-3 hover:bg-field hover:text-danger"><X size={18} /></button>
               </div>
@@ -464,6 +480,12 @@ export function ExtraSection({ draft, patch, errors }: { draft: ProductDraft; pa
         </Field>
         <div className="md:col-span-2">
           <Toggle checked={draft.isMarked} onChange={(isMarked) => patch({ isMarked })} label={t('product.marked')} />
+        </div>
+        {/* Макет «Статус и отображение»: кассадағы тізімнен жасыру. Белсенді/архив — карточканың жоғарғы жағында. */}
+        <div className="md:col-span-2 rounded-xl border border-line p-4">
+          <div className="mb-3 text-[14px] font-bold">{t('product.display')}</div>
+          <Toggle checked={draft.hideInCashier} onChange={(hideInCashier) => patch({ hideInCashier })} label={t('product.hideInCashier')} />
+          <p className="mt-1.5 pl-14 text-[13px] text-ink-3">{t('product.hideInCashierHint')}</p>
         </div>
         <div className="md:col-span-2">
           <Field label={t('product.notes')} hint={t('product.notesHint')}>

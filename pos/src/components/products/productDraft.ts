@@ -9,6 +9,8 @@ export interface ProductDraft {
   article: string
   unitId: string
   brandId: string
+  /** Тізімнен таңдалмаған, қолмен терілген бренд атауы. */
+  brandName: string
   nodeId: string | null
   description: string
   supplier: string
@@ -18,6 +20,7 @@ export interface ProductDraft {
   shelfLifeDays: string
   vatRate: string
   isMarked: boolean
+  hideInCashier: boolean
   notes: string
   primaryBarcode: string
   extraBarcodes: string[]
@@ -46,8 +49,8 @@ export function sectionOfField(field: string | null): SectionKey {
 
 export function emptyDraft(nodeId: string | null, unitId: string, warehouseId: string): ProductDraft {
   return {
-    name: '', article: '', unitId, brandId: '', nodeId, description: '',
-    supplier: '', manufacturer: '', country: '', warrantyMonths: '', shelfLifeDays: '', vatRate: '', isMarked: false, notes: '',
+    name: '', article: '', unitId, brandId: '', brandName: '', nodeId, description: '',
+    supplier: '', manufacturer: '', country: '', warrantyMonths: '', shelfLifeDays: '', vatRate: '', isMarked: false, hideInCashier: false, notes: '',
     primaryBarcode: '', extraBarcodes: [], images: [], primaryImage: null, characteristics: {}, salePrice: '',
     opening: { warehouseId, quantity: '', purchasePrice: '', salePrice: '' },
   }
@@ -56,10 +59,10 @@ export function emptyDraft(nodeId: string | null, unitId: string, warehouseId: s
 export function draftFromProduct(p: Product): ProductDraft {
   const primary = p.barcodes.find((b) => b.isPrimary)?.barcode ?? p.barcodes[0]?.barcode ?? ''
   return {
-    name: p.name, article: p.article ?? '', unitId: p.unitId, brandId: p.brandId ?? '', nodeId: p.nodeId,
+    name: p.name, article: p.article ?? '', unitId: p.unitId, brandId: p.brandId ?? '', brandName: '', nodeId: p.nodeId,
     description: p.description ?? '', supplier: p.supplier ?? '', manufacturer: p.manufacturer ?? '', country: p.country ?? '',
     warrantyMonths: p.warrantyMonths?.toString() ?? '', shelfLifeDays: p.shelfLifeDays?.toString() ?? '',
-    vatRate: p.vatRate?.toString() ?? '', isMarked: p.isMarked, notes: p.notes ?? '',
+    vatRate: p.vatRate?.toString() ?? '', isMarked: p.isMarked, hideInCashier: p.hideInCashier, notes: p.notes ?? '',
     primaryBarcode: primary,
     extraBarcodes: p.barcodes.map((b) => b.barcode).filter((b) => b !== primary),
     images: p.images.map((i) => i.url),
@@ -91,6 +94,7 @@ export function toRequest(d: ProductDraft, isNew: boolean): SaveProduct {
     article: opt(d.article),
     unitId: d.unitId || null,
     brandId: d.brandId || null,
+    brandName: d.brandId ? null : opt(d.brandName),
     nodeId: d.nodeId,
     description: opt(d.description),
     supplier: opt(d.supplier),
@@ -100,6 +104,7 @@ export function toRequest(d: ProductDraft, isNew: boolean): SaveProduct {
     shelfLifeDays: int(d.shelfLifeDays),
     vatRate: toNumber(d.vatRate),
     isMarked: d.isMarked,
+    hideInCashier: d.hideInCashier,
     notes: opt(d.notes),
     barcodes: barcodes.map((b, i) => ({ barcode: b, isPrimary: i === 0 && d.primaryBarcode.trim() !== '' })),
     images: d.images.map((url) => ({ url, isPrimary: url === (d.primaryImage ?? d.images[0]) })),

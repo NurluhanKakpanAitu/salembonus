@@ -22,6 +22,7 @@ public class MediaService(IFileStorage storage, CatalogAccess access)
     };
 
     public static string BrandPrefix(Guid orgId) => $"org/{orgId:N}/brands/";
+    public static string CatalogPrefix(Guid orgId) => $"org/{orgId:N}/catalog/";
 
     public async Task<UploadDto> CreateUploadAsync(UploadRequest request, CancellationToken ct = default)
     {
@@ -30,6 +31,7 @@ public class MediaService(IFileStorage storage, CatalogAccess access)
         {
             "product" => ((await access.RequireAnyAsync(ct, StaffPermissions.ProductsCreate, StaffPermissions.ProductsEdit)).OrgId, (Func<Guid, string>)ProductService.ImagePrefix),
             "brand" => ((await access.RequireAsync(StaffPermissions.CatalogDictionaries, ct)).OrgId, BrandPrefix),
+            "category" => ((await access.RequireAsync(StaffPermissions.CatalogStructure, ct)).OrgId, CatalogPrefix),
             _ => throw new ValidationException(Messages.UploadKindInvalid(lang), "kind"),
         };
 

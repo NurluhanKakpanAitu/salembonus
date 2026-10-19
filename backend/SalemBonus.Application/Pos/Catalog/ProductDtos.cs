@@ -52,7 +52,9 @@ public record ProductDto(
     decimal? SalePrice,
     decimal? PurchasePrice,
     DateTime CreatedAt,
-    DateTime UpdatedAt);
+    DateTime UpdatedAt,
+    /// <summary>Кассадағы тізімде көрсетілмейді (ТЗ макеті «Статус и отображение»); сатылымда да қабылданбайды.</summary>
+    bool HideInCashier = false);
 
 /// <summary>Бастапқы қалдық пен баға — тек тауар жасалғанда (ТЗ §6.2). Кейінгі өзгерістер «Склад» арқылы.</summary>
 public record OpeningStockRequest(Guid? WarehouseId, decimal? Quantity, decimal? PurchasePrice, decimal? SalePrice);
@@ -81,7 +83,12 @@ public record SaveProductRequest(
     /// Тек өзгертуде: ағымдағы дүкеннің сату бағасы. «Склад» модулі жасалғанша баға карточкада
     /// өзгертіледі; қалдық пен кіріс бағасы — тек «Склад» арқылы. null — өзгермейді.
     /// </summary>
-    decimal? SalePrice = null);
+    decimal? SalePrice = null,
+    bool HideInCashier = false,
+    /// <summary>
+    /// Бренд қолмен терілсе (BrandId жоқ): аты бойынша анықтамалықтан табылады, болмаса сол жерде жасалады.
+    /// </summary>
+    string? BrandName = null);
 
 public record ChangeClassificationRequest(Guid? NodeId);
 

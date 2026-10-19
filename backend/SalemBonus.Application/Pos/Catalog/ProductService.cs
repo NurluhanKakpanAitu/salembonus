@@ -111,7 +111,9 @@ public partial class ProductService(
     {
         var (orgId, m) = await access.RequireAsync(StaffPermissions.ProductsCreate, ct);
         var product = new Product { Id = Guid.NewGuid(), OrganizationId = orgId };
-        await ApplyFieldsAsync(orgId, product, request, isNew: true, ct);
+        var (resolved, newBrand) = await ResolveBrandAsync(orgId, m, request, ct);
+        request = resolved;
+        await ApplyFieldsAsync(orgId, product, request, isNew: true, newBrand, ct);
         var barcodes = await ValidateBarcodesAsync(orgId, product.Id, request.Barcodes, ct);
         var images = ValidateImages(orgId, request.Images);
         var values = await ValidateCharacteristicsAsync(orgId, request.Characteristics, ct);
@@ -131,7 +133,9 @@ public partial class ProductService(
         var product = await repo.GetForUpdateAsync(orgId, id, ct) ?? throw new NotFoundException(Messages.ProductNotFound(Lang));
         var before = Snapshot(product, product.Barcodes.Select(b => new ProductBarcodeDto(b.Barcode, b.IsPrimary)).ToList(), null);
 
-        await ApplyFieldsAsync(orgId, product, request, isNew: false, ct);
+        var (resolved, newBrand) = await ResolveBrandAsync(orgId, m, request, ct);
+        request = resolved;
+        await ApplyFieldsAsync(orgId, product, request, isNew: false, newBrand, ct);
         var barcodes = await ValidateBarcodesAsync(orgId, product.Id, request.Barcodes, ct);
         var images = ValidateImages(orgId, request.Images);
         var values = await ValidateCharacteristicsAsync(orgId, request.Characteristics, ct);
@@ -191,7 +195,8 @@ public partial class ProductService(
 
     // ---------- Тексеріс ----------
 
-    private async Task ApplyFieldsAsync(Guid orgId, Product p, SaveProductRequest r, bool isNew, CancellationToken ct)
+    /// <param name="newBrand">Осы сұраныста жаңа жасалған бренд: базада әлі жоқ, сондықтан сұраныспен тексерілмейді.</param>
+    private async Task ApplyFieldsAsync(Guid orgId, Product p, SaveProductRequest r, bool isNew, Brand? newBrand, CancellationToken ct)
     {
         p.Name = access.Name(r.Name, 200);
         p.Article = CatalogAccess.Optional(r.Article, 64);
@@ -201,6 +206,7 @@ public partial class ProductService(
         p.Country = CatalogAccess.Optional(r.Country, 64);
         p.Notes = CatalogAccess.Optional(r.Notes, 1000);
         p.IsMarked = r.IsMarked;
+        p.HideInCashier = r.HideInCashier;
         p.WarrantyMonths = InRange(r.WarrantyMonths, 0, 600, "warrantyMonths");
         p.ShelfLifeDays = InRange(r.ShelfLifeDays, 0, 36500, "shelfLifeDays");
         p.VatRate = r.VatRate is { } vat
@@ -218,7 +224,7 @@ public partial class ProductService(
 
         if (r.BrandId != p.BrandId || isNew)
         {
-            if (r.BrandId is { } brandId)
+            if (r.BrandId is { } brandId && newBrand?.Id != brandId)
             {
                 var brand = await catalog.GetBrandForUpdateAsync(orgId, brandId, ct) ?? throw new ValidationException(Messages.BrandNotFound(Lang), "brandId");
                 if (brand.Status == CatalogStatus.Archived) throw new ValidationException(Messages.ProductBrandArchived(Lang), "brandId");
@@ -231,6 +237,32 @@ public partial class ProductService(
             await EnsureNodeAsync(orgId, r.NodeId, ct);
             p.CatalogNodeId = r.NodeId;
         }
+    }
+
+    /// <summary>
+    /// Қолмен терілген бренд (BrandId жоқ, BrandName бар): аты бойынша табылады (регистрге қарамай),
+    /// табылмаса — анықтамалыққа жаңа бренд жазылады. Тауар жасау/өңдеу құқығы жеткілікті: бренд —
+    /// тауардың атрибуты, оны әр тауарда бөлек бөлімнен енгізу ыңғайсыз.
+    /// </summary>
+    private async Task<(SaveProductRequest Request, Brand? Created)> ResolveBrandAsync(Guid orgId, StoreMembership m, SaveProductRequest r, CancellationToken ct)
+    {
+        if (r.BrandId is not null || CatalogAccess.Optional(r.BrandName, 100) is not { } name) return (r, null);
+        var brands = await catalog.ListBrandsForUpdateAsync(orgId, ct);
+        var brand = brands.FirstOrDefault(b => string.Equals(b.Name, name, StringComparison.OrdinalIgnoreCase));
+        var created = brand is null;
+        if (brand is null)
+        {
+            brand = new Brand
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = orgId,
+                Name = name,
+                SortOrder = brands.Count == 0 ? 1 : brands.Max(b => b.SortOrder) + 1,
+            };
+            catalog.AddBrand(brand);
+            access.Audit(orgId, m.StoreId, "catalog.brand.create", "brand", brand.Id, null, new { brand.Name, Source = "product" });
+        }
+        return (r with { BrandId = brand.Id }, created ? brand : null);
     }
 
     private async Task EnsureNodeAsync(Guid orgId, Guid? nodeId, CancellationToken ct)
@@ -478,13 +510,14 @@ public partial class ProductService(
             stock.Select(s => new ProductStockDto(s.WarehouseId, s.WarehouseName, s.StoreName, s.Quantity)).ToList(),
             price?.SalePrice,
             canSeeCost ? price?.PurchasePrice : null,
-            p.CreatedAt, p.UpdatedAt);
+            p.CreatedAt, p.UpdatedAt,
+            p.HideInCashier);
     }
 
     private static object Snapshot(Product p, IReadOnlyList<ProductBarcodeDto> barcodes, object? opening) => new
     {
         p.Name, p.Article, p.UnitId, p.BrandId, NodeId = p.CatalogNodeId, Status = p.Status.ToString(), p.Description,
-        p.Supplier, p.Manufacturer, p.Country, p.WarrantyMonths, p.ShelfLifeDays, p.VatRate, p.IsMarked, p.Notes,
+        p.Supplier, p.Manufacturer, p.Country, p.WarrantyMonths, p.ShelfLifeDays, p.VatRate, p.IsMarked, p.HideInCashier, p.Notes,
         Barcodes = barcodes.Select(b => b.IsPrimary ? $"{b.Barcode}*" : b.Barcode).ToList(),
         Opening = opening,
     };

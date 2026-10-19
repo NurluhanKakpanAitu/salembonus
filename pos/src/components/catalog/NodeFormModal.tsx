@@ -1,32 +1,38 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Clock, Folder, Layers, Package } from 'lucide-react'
+import { Clock, Folder, ImagePlus, Layers, Package, Trash2, X } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea } from '../ui/Field'
 import { ApiError } from '../../lib/api'
 import { catalogApi } from '../../lib/catalogApi'
-import { subtreeIds, treeOrder } from '../../lib/catalogHooks'
+import { subtreeIds, treeOrder, useCatalogPermissions } from '../../lib/catalogHooks'
 import type { CatalogNode, CatalogStatus } from '../../lib/catalogTypes'
 import { CATALOG_ICONS } from '../../lib/catalogIcons'
+import { uploadImage } from '../../lib/upload'
 import { useT } from '../../lib/i18n'
 
 /**
  * Санат / топ / топша формасы (ТЗ «Товар» §7.1–7.2, §8.1). Ата-ананы өзгерту — тасымалдау:
  * өзін не өз ұрпағын ата-ана етуге болмайды (тізімде олар көрсетілмейді, сервер де тексереді).
- * Белгіше тек санатқа (ата-анасы жоқ түйінге) міндетті.
+ * Белгіше тек санатқа (ата-анасы жоқ түйінге) міндетті; сурет — санатқа қалауынша (макет бойынша).
  */
-export function NodeFormModal({ node, parentId, nodes, onClose, onSaved }: {
+export function NodeFormModal({ node, parentId, nodes, onClose, onSaved, onDelete }: {
   node?: CatalogNode
   /** Жаңа түйіннің ата-анасы (қай жерден «+» басылды). */
   parentId?: string | null
   nodes: CatalogNode[]
   onClose: () => void
   onSaved: (message: string) => void
+  /** Өңдеуде: «Удалить категорию» батырмасы (ТЗ §7.3) — шешімді ата-компонент қабылдайды. */
+  onDelete?: (node: CatalogNode) => void
 }) {
   const t = useT()
+  const perms = useCatalogPermissions()
   const [name, setName] = useState(node?.name ?? '')
   const [parent, setParent] = useState<string>(node ? (node.parentId ?? '') : (parentId ?? ''))
   const [icon, setIcon] = useState<string | null>(node?.icon ?? (parentId ? null : 'package'))
+  const [imageUrl, setImageUrl] = useState<string | null>(node?.imageUrl ?? null)
+  const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<CatalogStatus>(node?.status ?? 'Active')
   const [sortOrder, setSortOrder] = useState<string>(node ? String(node.sortOrder) : '')
   const [description, setDescription] = useState(node?.description ?? '')
@@ -44,6 +50,18 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved }: {
     ? node.parentId ? t('node.editGroup') : t('node.editCategory')
     : parentId ? t('node.newGroup') : t('node.newCategory')
 
+  const upload = async (file: File | undefined) => {
+    if (!file) return
+    setUploading(true)
+    try {
+      setImageUrl(await uploadImage(file, 'category'))
+    } catch (err) {
+      setErrors((e) => ({ ...e, imageUrl: err instanceof Error ? err.message : String(err) }))
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const errs: Record<string, string> = {}
@@ -55,6 +73,7 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved }: {
       name,
       parentId: parent || null,
       icon: icon,
+      imageUrl: isRoot ? imageUrl : null,
       description: description || null,
       status,
       sortOrder: sortOrder.trim() ? Number(sortOrder) : null,
@@ -105,6 +124,26 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved }: {
               </Field>
             )}
 
+            {/* Сурет — тек санатқа, қалауынша (макет: «Изображение (необязательно)»). */}
+            {isRoot && (
+              <Field label={t('node.image')} error={errors.imageUrl}>
+                <div className="flex flex-wrap items-center gap-3">
+                  {imageUrl
+                    ? <img src={imageUrl} alt="" className="h-24 w-40 rounded-xl border border-line bg-field object-cover" />
+                    : <span className="flex h-24 w-40 items-center justify-center rounded-xl border border-dashed border-line text-ink-3"><ImagePlus size={22} /></span>}
+                  <label className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-line px-4 text-[14px] font-medium hover:bg-field ${uploading ? 'pointer-events-none opacity-60' : ''}`}>
+                    <ImagePlus size={17} /> {t('node.chooseImage')}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { void upload(e.target.files?.[0]); e.target.value = '' }} />
+                  </label>
+                  {imageUrl && (
+                    <button type="button" onClick={() => setImageUrl(null)} className="flex items-center gap-1 text-[13px] text-ink-3 hover:text-danger">
+                      <X size={14} /> {t('node.removeImage')}
+                    </button>
+                  )}
+                </div>
+              </Field>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('node.status')} error={errors.status}>
                 <Select value={status} onChange={(e) => setStatus(e.target.value as CatalogStatus)}>
@@ -137,9 +176,14 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved }: {
         </div>
 
         {errors.form && <p className="mt-4 text-[14px] text-danger">{errors.form}</p>}
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+          {node && onDelete && perms.lifecycle && (
+            <Button type="button" variant="secondary" className="mr-auto text-danger!" icon={<Trash2 size={17} />} onClick={() => onDelete(node)}>
+              {node.parentId ? t('node.deleteGroup') : t('node.deleteCategory')}
+            </Button>
+          )}
           <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" loading={loading}>{t('common.save')}</Button>
+          <Button type="submit" loading={loading || uploading}>{t('common.save')}</Button>
         </div>
       </form>
     </Modal>
@@ -152,6 +196,72 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <span className="flex items-center gap-2 text-ink-2">{icon} {label}</span>
       <span className="font-semibold text-ink">{value}</span>
     </div>
+  )
+}
+
+/**
+ * Түйінді тасымалдау (ТЗ §8.2, §15, §22.6): жаңа ата-ана таңдалады, сақтағанға дейін ескі және жаңа жол
+ * көрінеді. Ішкі топтар мен тауарлар түйінмен бірге жаңа тармаққа көшеді. Циклді сервер де тексереді.
+ */
+export function MoveNodeModal({ node, nodes, onClose, onMoved }: {
+  node: CatalogNode
+  nodes: CatalogNode[]
+  onClose: () => void
+  onMoved: (message: string) => void
+}) {
+  const t = useT()
+  const excluded = useMemo(() => subtreeIds(nodes, node.id), [nodes, node.id])
+  const options = useMemo(
+    () => treeOrder(nodes).filter((n) => !excluded.has(n.id) && n.status === 'Active' && n.id !== node.parentId),
+    [nodes, excluded, node.parentId],
+  )
+  // Түбірге тек белгішесі бар түйін шыға алады: санатқа белгіше міндетті.
+  const rootAllowed = node.parentId !== null && !!node.icon
+  const [target, setTarget] = useState<string>(options[0]?.id ?? (rootAllowed ? '' : ''))
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const targetNode = target ? nodes.find((n) => n.id === target) : undefined
+  const newPath = [...(targetNode?.pathNames ?? []), node.name]
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!target && !rootAllowed) return
+    setLoading(true)
+    setError(null)
+    try {
+      await catalogApi.updateNode(node.id, {
+        parentId: target || null, name: node.name, icon: node.icon, imageUrl: node.imageUrl,
+        description: node.description, status: node.status, sortOrder: null,
+      })
+      onMoved(t('catalog.moved'))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t('login.failed'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Modal title={t('node.moveNodeTitle', { name: node.name })} onClose={onClose} width={560}>
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        <p className="text-[14px] leading-relaxed text-ink-2">{t('node.moveNodeHint')}</p>
+        <Field label={t('node.newParent')} error={error}>
+          <Select value={target} onChange={(e) => setTarget(e.target.value)}>
+            {rootAllowed && <option value="">{t('node.root')}</option>}
+            {options.map((n) => <option key={n.id} value={n.id}>{`${'  '.repeat(n.depth)}${n.pathNames.join(' → ')}`}</option>)}
+          </Select>
+        </Field>
+        <div className="grid gap-2 rounded-xl bg-field px-4 py-3 text-[14px]">
+          <div><span className="text-ink-2">{t('node.currentPath')}: </span><span className="font-semibold">{node.pathNames.join(' → ')}</span></div>
+          <div><span className="text-ink-2">{t('node.newPath')}: </span><span className="font-semibold text-brand">{newPath.join(' → ')}</span></div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button type="submit" loading={loading} disabled={!target && !rootAllowed}>{t('catalog.move')}</Button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
@@ -202,11 +312,13 @@ export function MoveContentModal({ node, nodes, onClose, onMoved }: {
 }
 
 /**
- * Түйінді архивтеу (ТЗ §22.7): ішінде не бар екенін көрсетіп, екі жол ұсынады — мазмұнды басқа
- * жерге ауыстыру не бәрін бірге архивтеу. Тауарлар мен тарих сақталады, қалпына келтіргенде бірге қайтады.
+ * Түйінді архивтеу (ТЗ §22.7) немесе өшіру әрекеті (ТЗ §7.3, §16): ішінде не бар екенін көрсетіп, екі жол
+ * ұсынады — мазмұнды басқа жерге ауыстыру не бәрін бірге архивтеу. Ішінде топ не тауар болса, физикалық
+ * өшіру жоқ: тарих сақталуы керек. Тауарлар архивтен санатпен бірге қайтады.
  */
-export function ArchiveNodeModal({ node, onClose, onArchived, onMoveContent }: {
+export function ArchiveNodeModal({ node, mode = 'archive', onClose, onArchived, onMoveContent }: {
   node: CatalogNode
+  mode?: 'archive' | 'delete'
   onClose: () => void
   onArchived: (message: string) => void
   onMoveContent: () => void
@@ -229,7 +341,7 @@ export function ArchiveNodeModal({ node, onClose, onArchived, onMoveContent }: {
   }
 
   return (
-    <Modal title={t('catalog.archiveTitle', { name: node.name })} onClose={onClose} width={520}>
+    <Modal title={mode === 'delete' ? t('catalog.deleteTitle', { name: node.name }) : t('catalog.archiveTitle', { name: node.name })} onClose={onClose} width={520}>
       <div className="flex flex-col gap-4">
         {hasContent ? (
           <>
@@ -243,7 +355,7 @@ export function ArchiveNodeModal({ node, onClose, onArchived, onMoveContent }: {
                 <div className="text-[22px] font-bold">{node.productCount}</div>
               </div>
             </div>
-            <p className="text-[14px] leading-relaxed text-ink-2">{t('catalog.archiveChoice')}</p>
+            <p className="text-[14px] leading-relaxed text-ink-2">{mode === 'delete' ? t('catalog.deleteBlocked') : t('catalog.archiveChoice')}</p>
           </>
         ) : (
           <p className="text-[14px] leading-relaxed text-ink-2">{t('catalog.archiveEmpty')}</p>

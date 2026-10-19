@@ -8,6 +8,7 @@ import { Modal } from '../ui/Modal'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
 import { SearchInput } from '../ui/SearchInput'
 import { StatusBadge } from '../ui/StatusBadge'
+import { CategoriesPanel } from './CategoriesPanel'
 import { ClassificationPicker } from './ClassificationPicker'
 import { ImportModal } from './ImportModal'
 import { toast } from '../ui/Toast'
@@ -47,6 +48,8 @@ export function ProductListTab() {
   const [moving, setMoving] = useState<ProductListItem | null>(null)
   const [importing, setImporting] = useState(false)
   const [exporting, setExporting] = useState(false)
+  // Макет: оң жақтағы «Категории товаров» панелі — ағаш, санақ, басқанда сүзгі.
+  const [panelOpen, setPanelOpen] = useState(false)
 
   const [search, setSearch] = useState(params.get('search') ?? '')
   const debounced = useDebounced(search.trim(), 300)
@@ -126,7 +129,11 @@ export function ProductListTab() {
         <Button variant="secondary" icon={<Download size={17} />} loading={exporting} onClick={() => void exportList()}>
           {t('export.button')}
         </Button>
-        <SearchInput className="ml-auto w-full sm:w-80" value={search} onChange={setSearch} placeholder={t('product.search')} />
+        <Button variant="secondary" className={`ml-auto ${panelOpen || nodeId ? 'border-brand! text-brand!' : ''}`} icon={<FolderTree size={17} />}
+          onClick={() => setPanelOpen((o) => !o)}>
+          {t('product.categoriesPanel')}
+        </Button>
+        <SearchInput className="w-full sm:w-80" value={search} onChange={setSearch} placeholder={t('product.search')} />
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:flex xl:items-center">
@@ -234,6 +241,7 @@ export function ProductListTab() {
         </div>
       )}
 
+      {panelOpen && <CategoriesPanel nodes={nodes} value={nodeId} onSelect={(id) => update({ nodeId: id })} onClose={() => setPanelOpen(false)} />}
       {importing && <ImportModal onClose={() => setImporting(false)} />}
       {moving && <ChangeClassificationModal product={moving} onClose={() => setMoving(null)}
         onSaved={() => void run(async () => undefined, t('product.classChanged')).then(() => setMoving(null))} />}

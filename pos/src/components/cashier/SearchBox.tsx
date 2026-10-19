@@ -127,28 +127,4 @@ export function SearchBox({ onAdd, onShowAll, onScan }: {
   )
 }
 
-/**
- * USB-сканер пернетақта сияқты кодты тез теріп, Enter басады. Фокус өрісте болмаса да
- * (мысалы, кассир себетпен жұмыс істеп тұрса) кодты ұстап алып, тауарды қосамыз.
- */
-export function useBarcodeScanner(onScan: (code: string) => void) {
-  const handler = useRef(onScan)
-  handler.current = onScan
-  useEffect(() => {
-    let buffer = ''
-    let last = 0
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement
-      if (target.closest('input, textarea, select, [contenteditable=true]')) return
-      const now = Date.now()
-      if (now - last > 60) buffer = ''
-      last = now
-      if (e.key === 'Enter') {
-        if (buffer.length >= 4) handler.current(buffer)
-        buffer = ''
-      } else if (e.key.length === 1) buffer += e.key
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-}
+export { useBarcodeScanner } from '../../lib/scanner'

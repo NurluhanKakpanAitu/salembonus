@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Archive, ArchiveRestore, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FolderInput, PackagePlus, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, FolderInput, FolderOutput, PackagePlus, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { OrderControl } from '../ui/OrderControl'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
@@ -11,7 +11,7 @@ import { catalogKeys, useCatalogAction, useCatalogNodes, useCatalogPermissions }
 import type { CatalogNode } from '../../lib/catalogTypes'
 import { CatalogIcon } from '../../lib/catalogIcons'
 import { useT } from '../../lib/i18n'
-import { ArchiveNodeModal, MoveContentModal, NodeFormModal } from './NodeFormModal'
+import { ArchiveNodeModal, MoveContentModal, MoveNodeModal, NodeFormModal } from './NodeFormModal'
 
 type Mode = 'categories' | 'groups'
 
@@ -30,7 +30,16 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [form, setForm] = useState<{ node?: CatalogNode; parentId?: string | null } | null>(null)
   const [moving, setMoving] = useState<CatalogNode | null>(null)
-  const [archiving, setArchiving] = useState<CatalogNode | null>(null)
+  const [movingNode, setMovingNode] = useState<CatalogNode | null>(null)
+  const [archiving, setArchiving] = useState<{ node: CatalogNode; mode: 'archive' | 'delete' } | null>(null)
+
+  // ТЗ §7.3, §16: бос түйін — растап өшіру; ішінде бірдеңе болса — физикалық өшіру жоқ, таңдау: ауыстыру не архив.
+  const requestDelete = (n: CatalogNode) => {
+    setForm(null)
+    if (n.descendantCount > 0 || n.productCount > 0) setArchiving({ node: n, mode: 'delete' })
+    else if (window.confirm(t('catalog.deleteConfirm', { name: n.name })))
+      void run(() => catalogApi.deleteNode(n.id), t('catalog.deleted'))
+  }
 
   const nodes = useMemo(() => nodesQuery.data ?? [], [nodesQuery.data])
   const children = useMemo(() => {
@@ -68,20 +77,20 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
       items.push({ label: t('catalog.addProduct'), icon: <PackagePlus size={16} />, onClick: () => navigate(`/products/new?nodeId=${n.id}`) })
     if (perms.structure && n.status === 'Active')
       items.push({ label: n.depth === 0 ? t('catalog.addGroup') : t('catalog.addSubgroup'), icon: <Plus size={16} />, onClick: () => setForm({ parentId: n.id }) })
+    // ТЗ §17: «Переместить» — түйіннің өзі басқа ата-анаға (ішкі топтар мен тауарлар бірге көшеді).
+    if (perms.structure)
+      items.push({ label: t('catalog.move'), icon: <FolderOutput size={16} />, onClick: () => setMovingNode(n) })
     if (perms.structure && (n.childCount > 0 || n.productCount > 0))
       items.push({ label: t('catalog.moveContent'), icon: <FolderInput size={16} />, onClick: () => setMoving(n) })
     if (perms.lifecycle && n.status === 'Active')
       items.push({
         label: t('catalog.archive'), icon: <Archive size={16} />,
-        onClick: () => setArchiving(n),
+        onClick: () => setArchiving({ node: n, mode: 'archive' }),
       })
     if (perms.lifecycle && n.status === 'Archived')
       items.push({ label: t('catalog.restore'), icon: <ArchiveRestore size={16} />, onClick: () => void run(() => catalogApi.restoreNode(n.id), t('catalog.restored')) })
     if (perms.lifecycle)
-      items.push({
-        label: t('catalog.delete'), icon: <Trash2 size={16} />, danger: true,
-        onClick: () => window.confirm(t('catalog.deleteConfirm', { name: n.name })) && void run(() => catalogApi.deleteNode(n.id), t('catalog.deleted')),
-      })
+      items.push({ label: t('catalog.delete'), icon: <Trash2 size={16} />, danger: true, onClick: () => requestDelete(n) })
     return items
   }
 
@@ -179,6 +188,12 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
                   </td>
                   <td className={`${td} whitespace-nowrap text-right`}>
                     <div className="inline-flex items-center gap-1.5">
+                      {/* Макет: «+ Товар» әр жолда — карточка осы жолмен ашылады (ТЗ §22.4). */}
+                      {perms.create && !archived && (
+                        <Button variant="secondary" className="h-9! px-3! text-[13px]!" icon={<Plus size={15} />} onClick={() => navigate(`/products/new?nodeId=${n.id}`)}>
+                          {t('catalog.product')}
+                        </Button>
+                      )}
                       {perms.structure && mode === 'groups' && !archived && (
                         <Button variant="secondary" className="h-9! px-3! text-[13px]!" icon={<Plus size={15} />} onClick={() => setForm({ parentId: n.id })}>
                           {t('catalog.addSubgroup')}
@@ -201,12 +216,16 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
 
       {form && (
         <NodeFormModal node={form.node} parentId={form.parentId} nodes={nodes} onClose={() => setForm(null)}
-          onSaved={(msg) => void run(async () => undefined, msg).then(() => setForm(null))} />
+          onSaved={(msg) => void run(async () => undefined, msg).then(() => setForm(null))} onDelete={requestDelete} />
       )}
       {archiving && (
-        <ArchiveNodeModal node={archiving} onClose={() => setArchiving(null)}
-          onMoveContent={() => { setMoving(archiving); setArchiving(null) }}
+        <ArchiveNodeModal node={archiving.node} mode={archiving.mode} onClose={() => setArchiving(null)}
+          onMoveContent={() => { setMoving(archiving.node); setArchiving(null) }}
           onArchived={(msg) => void run(async () => undefined, msg).then(() => setArchiving(null))} />
+      )}
+      {movingNode && (
+        <MoveNodeModal node={movingNode} nodes={nodes} onClose={() => setMovingNode(null)}
+          onMoved={(msg) => void run(async () => undefined, msg).then(() => setMovingNode(null))} />
       )}
       {moving && (
         <MoveContentModal node={moving} nodes={nodes} onClose={() => setMoving(null)}

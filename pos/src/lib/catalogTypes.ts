@@ -21,6 +21,7 @@ export interface SaveNode {
   parentId: string | null
   name: string
   icon: string | null
+  imageUrl: string | null
   description: string | null
   status: CatalogStatus
   sortOrder?: number | null
@@ -101,6 +102,8 @@ export interface Product {
   shelfLifeDays: number | null
   vatRate: number | null
   isMarked: boolean
+  /** Кассадағы тізімде көрсетілмейді, сатылымда қабылданбайды. */
+  hideInCashier: boolean
   notes: string | null
   barcodes: ProductBarcode[]
   images: ProductImage[]
@@ -124,6 +127,8 @@ export interface SaveProduct {
   article: string | null
   unitId: string | null
   brandId: string | null
+  /** Қолмен терілген бренд: brandId жоқ болса, сервер аты бойынша табады не жасайды. */
+  brandName: string | null
   nodeId: string | null
   description: string | null
   supplier: string | null
@@ -133,6 +138,7 @@ export interface SaveProduct {
   shelfLifeDays: number | null
   vatRate: number | null
   isMarked: boolean
+  hideInCashier: boolean
   notes: string | null
   barcodes: ProductBarcode[]
   images: ProductImage[]

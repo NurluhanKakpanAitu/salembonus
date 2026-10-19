@@ -24,7 +24,7 @@ async function compress(file: File): Promise<Blob> {
  * Файлды R2-ге тікелей жүктейді: сервер тек қолтаңбалы сілтеме береді (түрі мен көлемі бекітілген).
  * Қайтарады — жария сілтеме, оны тауарға не брендке сақтаймыз.
  */
-export async function uploadImage(file: File, kind: 'product' | 'brand'): Promise<string> {
+export async function uploadImage(file: File, kind: 'product' | 'brand' | 'category'): Promise<string> {
   const blob = await compress(file)
   const { uploadUrl, publicUrl } = await api<{ uploadUrl: string; publicUrl: string }>('/pos/v1/uploads', {
     method: 'POST',
