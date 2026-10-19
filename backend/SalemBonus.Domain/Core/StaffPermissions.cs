@@ -47,7 +47,9 @@ public static class StaffPermissions
             StatisticsView, ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle,
             CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove,
         ],
-        StaffRole.Cashier => [ProductsView, SalesCreate],
+        // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,
+        // «Товар» бөлімі мен оның API-і кассирге ашылмайды. Иесі қажет болса жеке кеңейтеді.
+        StaffRole.Cashier => [SalesCreate],
         _ => [],
     };
 }

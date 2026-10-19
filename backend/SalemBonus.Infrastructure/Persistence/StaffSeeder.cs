@@ -19,8 +19,8 @@ public static class StaffSeeder
 
     public const string OwnerPhone = "+77000000001";
     public const string OwnerPassword = "Demo-Owner-2026";
+    /// <summary>Кассирде құпиясөз жоқ: тек тіркелген кассада PIN-мен кіреді.</summary>
     public const string CashierPhone = "+77000000002";
-    public const string CashierPassword = "Demo-Kassir-2026";
     /// <summary>Тіркелген кассада PIN-мен кіру мен бұғатты ашу үшін.</summary>
     public const string OwnerPin = "3691";
     public const string CashierPin = "2580";
@@ -39,7 +39,7 @@ public static class StaffSeeder
 
         var owner = Staff(org.Id, store.Id, OwnerPhone, "Максатбек", "Абдужаббаров", hasher.Hash(OwnerPassword), StaffRole.Owner, 100);
         owner.PinHash = hasher.Hash(OwnerPin);
-        var cashier = Staff(org.Id, store.Id, CashierPhone, "Алишер", "Кассир", hasher.Hash(CashierPassword), StaffRole.Cashier, 5);
+        var cashier = Staff(org.Id, store.Id, CashierPhone, "Алишер", "Кассир", null, StaffRole.Cashier, 5);
         cashier.PinHash = hasher.Hash(CashierPin);
         db.StaffUsers.AddRange(owner, cashier);
 
@@ -49,7 +49,7 @@ public static class StaffSeeder
     }
 
     private static StaffUser Staff(
-        Guid orgId, Guid storeId, string phone, string firstName, string lastName, string passwordHash,
+        Guid orgId, Guid storeId, string phone, string firstName, string lastName, string? passwordHash,
         StaffRole role, decimal maxDiscount)
     {
         var id = Guid.NewGuid();

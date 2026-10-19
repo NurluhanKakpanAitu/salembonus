@@ -52,6 +52,12 @@ public class StaffAuthService(
             await FailAsync(user, phone, "disabled", ct);
             throw new ValidationException(Messages.StaffDisabled(Lang), "phone");
         }
+        // Кассирде құпиясөз жоқ — ол тек тіркелген кассада PIN-мен кіреді (SignInWithPinAsync).
+        if (user.PasswordHash is null)
+        {
+            await FailAsync(user, phone, "pin_only", ct);
+            throw new ValidationException(Messages.StaffPinOnly(Lang), "password");
+        }
         if (!hasher.Verify(request.Password, user.PasswordHash))
         {
             user.FailedLoginCount++;
@@ -283,7 +289,7 @@ public class StaffAuthService(
 
         return new StaffMeDto(
             user.Id, user.Phone, user.FirstName, user.LastName, user.Language,
-            user.OrganizationId, user.Organization?.Name ?? string.Empty, stores, user.HasPin, startPage);
+            user.OrganizationId, user.Organization?.Name ?? string.Empty, stores, user.HasPin, user.HasPassword, startPage);
     }
 
     private string ParsePhone(string raw)

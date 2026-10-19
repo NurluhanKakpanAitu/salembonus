@@ -6,8 +6,11 @@ using SalemBonus.Application.Core.Staff.Dtos;
 
 namespace SalemBonus.Api.Controllers.Staff;
 
-/// <summary>Кіру жауабы: refresh токені мұнда жоқ, ол httpOnly cookie-де.</summary>
-public record StaffSessionResponse(string AccessToken, DateTime AccessTokenExpiresAt, StaffMeDto Me);
+/// <summary>
+/// Кіру жауабы. Кабинет сеансында refresh токені мұнда жоқ — ол httpOnly cookie-де. Касса терминалының
+/// сеансында (PIN-мен кіру, X-Refresh-Token арқылы жаңарту) ол осында беріледі, cookie қойылмайды.
+/// </summary>
+public record StaffSessionResponse(string AccessToken, DateTime AccessTokenExpiresAt, StaffMeDto Me, string? RefreshToken = null);
 
 /// <summary>
 /// Қызметкердің кіруі (ТЗ «Авторизация»). Барлық өнімге ортақ: SalemPos, кейін SalemZapis.
@@ -27,30 +30,44 @@ public class StaffAuthController(
     public async Task<ActionResult<StaffSessionResponse>> Login([FromBody] StaffLoginRequest request, CancellationToken ct) =>
         Ok(Respond(await auth.LoginAsync(request, ct)));
 
-    /// <summary>Cookie-дегі refresh токенмен жаңа access токен. Ескі refresh жабылады.</summary>
+    /// <summary>
+    /// Жаңа access токен. Refresh токені — X-Refresh-Token тақырыбында (касса терминалы) немесе cookie-де (кабинет).
+    /// Ескі refresh жабылады, жаңасы сол жолмен қайтады.
+    /// </summary>
     [HttpPost("refresh")]
     [AllowAnonymous]
     public async Task<ActionResult<StaffSessionResponse>> Refresh(CancellationToken ct)
     {
+        var terminal = TerminalRefreshToken is not null;
         try
         {
-            return Ok(Respond(await auth.RefreshAsync(Request.Cookies[StaffAuth.RefreshCookie], ct)));
+            var session = await auth.RefreshAsync(TerminalRefreshToken ?? Request.Cookies[StaffAuth.RefreshCookie], ct);
+            return Ok(IssueSession(Response, env, session, terminal));
         }
         catch
         {
-            ClearCookie();
+            if (!terminal) ClearCookie();
             throw;
         }
     }
 
+    /// <summary>Шығу: терминал сеансы (тақырып) не кабинет сеансы (cookie) — біреуі ғана жабылады.</summary>
     [HttpPost("logout")]
     [AllowAnonymous]
     public async Task<IActionResult> Logout(CancellationToken ct)
     {
+        if (TerminalRefreshToken is { } terminal)
+        {
+            await auth.LogoutAsync(terminal, ct);
+            return NoContent();
+        }
         await auth.LogoutAsync(Request.Cookies[StaffAuth.RefreshCookie], ct);
         ClearCookie();
         return NoContent();
     }
+
+    private string? TerminalRefreshToken =>
+        Request.Headers[StaffAuth.RefreshHeader].ToString() is { Length: > 0 } token ? token : null;
 
     [HttpGet("me")]
     [Authorize(Policy = StaffAuth.Policy)]
@@ -112,9 +129,14 @@ public class StaffAuthController(
     private void ClearCookie() =>
         Response.Cookies.Delete(StaffAuth.RefreshCookie, CookieOptions(env, null));
 
-    /// <summary>Сеансты жауапқа жазу: refresh — httpOnly cookie-ге, қалғаны — JSON-ға.</summary>
-    internal static StaffSessionResponse IssueSession(HttpResponse response, IWebHostEnvironment env, StaffSession session)
+    /// <summary>
+    /// Сеансты жауапқа жазу. Кабинет: refresh — httpOnly cookie-ге, қалғаны — JSON-ға. Терминал (касса):
+    /// бәрі JSON-ға, cookie қозғалмайды — сол браузердегі кабинет сеансы сақталады.
+    /// </summary>
+    internal static StaffSessionResponse IssueSession(HttpResponse response, IWebHostEnvironment env, StaffSession session, bool terminal = false)
     {
+        if (terminal)
+            return new StaffSessionResponse(session.AccessToken, session.AccessTokenExpiresAt, session.Me, session.RefreshToken);
         response.Cookies.Append(StaffAuth.RefreshCookie, session.RefreshToken, CookieOptions(env, session.RefreshTokenExpiresAt));
         return new StaffSessionResponse(session.AccessToken, session.AccessTokenExpiresAt, session.Me);
     }

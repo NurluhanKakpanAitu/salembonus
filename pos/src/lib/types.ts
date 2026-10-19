@@ -19,6 +19,8 @@ export interface StaffMe {
   stores: StaffStore[]
   /** PIN қойылған ба — кассада PIN-мен кіру мен бұғатты ашу үшін. */
   hasPin: boolean
+  /** Құпиясөз бар ма. Кассирде жоқ: «сменить пароль» көрсетілмейді, PIN қазіргі PIN-мен ауысады. */
+  hasPassword: boolean
   /** Кіргеннен кейінгі бет: иесі — статистика, кассир — касса. */
   startPage: 'statistics' | 'cashier'
 }
@@ -27,6 +29,8 @@ export interface StaffSession {
   accessToken: string
   accessTokenExpiresAt: string
   me: StaffMe
+  /** Тек терминал сеансында (PIN-мен кіру): refresh токені cookie-де емес, вкладканың sessionStorage-ында. */
+  refreshToken?: string | null
 }
 
 /** Сервердің рұқсат кілттері (backend: StaffPermissions). */

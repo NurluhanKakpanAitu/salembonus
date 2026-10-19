@@ -37,7 +37,7 @@ public class StaffUserConfiguration : IEntityTypeConfiguration<StaffUser>
         b.HasIndex(x => x.Phone).IsUnique();
         b.Property(x => x.FirstName).HasMaxLength(100).IsRequired();
         b.Property(x => x.LastName).HasMaxLength(100).IsRequired();
-        b.Property(x => x.PasswordHash).HasMaxLength(200).IsRequired();
+        b.Property(x => x.PasswordHash).HasMaxLength(200);
         b.Property(x => x.PinHash).HasMaxLength(200);
         b.Property(x => x.Language).HasMaxLength(5).IsRequired();
         b.Ignore(x => x.FullName);

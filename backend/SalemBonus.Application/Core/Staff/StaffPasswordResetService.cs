@@ -35,6 +35,9 @@ public class StaffPasswordResetService(
     public async Task<PasswordResetRequested> RequestAsync(PasswordResetRequest request, CancellationToken ct = default)
     {
         var user = await FindUserAsync(request.Phone, ct);
+        // Кассирде құпиясөз жоқ, қалпына келтіретін де ештеңе жоқ: PIN-ді иесі өзгертеді.
+        if (user.PasswordHash is null)
+            throw new ValidationException(Messages.StaffPinOnly(Lang), "phone");
         var now = DateTime.UtcNow;
 
         var latest = await otps.GetLatestAsync(user.Id, StaffOtpCode.PasswordReset, ct);

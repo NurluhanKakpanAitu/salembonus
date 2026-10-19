@@ -139,6 +139,16 @@ public static class Messages
     public static string StaffWrongPassword(AppLanguage l) => Pick(l,
         "Құпиясөз қате", "Неверный пароль");
 
+    public static string StaffPinOnly(AppLanguage l) => Pick(l,
+        "Бұл қызметкер құпиясөзсіз: кассада PIN-кодпен кіреді",
+        "У этого сотрудника нет пароля: вход только по PIN-коду на кассе");
+
+    public static string StaffCurrentPinRequired(AppLanguage l) => Pick(l,
+        "Қазіргі PIN-кодты енгізіңіз", "Введите текущий PIN-код");
+
+    public static string StaffCurrentPinWrong(AppLanguage l) => Pick(l,
+        "Қазіргі PIN-код қате", "Неверный текущий PIN-код");
+
     public static string StaffLockedOut(AppLanguage l, int minutes) => Pick(l,
         $"Тым көп сәтсіз әрекет. {minutes} минуттан кейін қайталаңыз",
         $"Слишком много неудачных попыток. Повторите через {minutes} мин.");

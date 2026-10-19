@@ -51,8 +51,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-full">
-      {/* Касса экранына орын керек (каталог + себет): мәзір тек белгішелер түрінде. */}
-      <Sidebar collapsed={collapsed || location.pathname.startsWith('/cashier')} onToggle={toggle} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <Sidebar collapsed={collapsed} onToggle={toggle} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar title={current ? t(current.label) : ''} onMenu={() => setMobileOpen(true)} />
         <main className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">

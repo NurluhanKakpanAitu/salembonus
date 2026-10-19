@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { clearSignedOut, enterKiosk, isKiosk, isSignedOut, setTerminalToken, terminalToken } from './kiosk'
 import { getLanguage, useLanguageStore } from './language'
 import type { StaffMe, StaffSession, StaffStore } from './types'
 
@@ -38,8 +39,16 @@ function saveStoreId(id: string | null) {
   }
 }
 
-/** Сеансты қабылдау: токен, профиль, белсенді дүкен және қызметкердің тілі. */
+/**
+ * Сеансты қабылдау: токен, профиль, белсенді дүкен және қызметкердің тілі.
+ * Терминал сеансы (refreshToken жауапта) — PIN-мен кіру: бұл вкладка касса режиміне көшеді.
+ */
 export function applySession(session: StaffSession) {
+  if (session.refreshToken) {
+    setTerminalToken(session.refreshToken)
+    clearSignedOut()
+    enterKiosk()
+  }
   applyMe(session.me)
   useAuth.setState({ status: 'authed', accessToken: session.accessToken })
 }
@@ -63,15 +72,25 @@ export function clearSession() {
 
 let refreshing: Promise<boolean> | null = null
 
-/** Cookie-дегі refresh токенмен жаңа access токен. Бір уақытта бір ғана сұраныс жүреді. */
+/**
+ * Жаңа access токен. Терминал сеансында — вкладкадағы refresh токенмен (X-Refresh-Token), әйтпесе
+ * cookie-дегімен. Кассадан шыққан вкладка кабинеттің cookie-сеансына оралмайды: тек PIN.
+ * Бір уақытта бір ғана сұраныс жүреді.
+ */
 export function refreshSession(): Promise<boolean> {
   refreshing ??= (async () => {
+    const terminal = terminalToken()
+    if (!terminal && isKiosk() && isSignedOut()) {
+      clearSession()
+      return false
+    }
     try {
       const res = await fetch('/api/staff/v1/auth/refresh', {
         method: 'POST',
-        headers: { 'Accept-Language': getLanguage() },
+        headers: { 'Accept-Language': getLanguage(), ...(terminal ? { 'X-Refresh-Token': terminal } : {}) },
       })
       if (!res.ok) {
+        if (terminal) setTerminalToken(null)
         clearSession()
         return false
       }

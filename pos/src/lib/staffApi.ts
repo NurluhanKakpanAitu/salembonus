@@ -9,7 +9,9 @@ export const staffApi = {
       method: 'POST',
       body: JSON.stringify({ phone, password, device: navigator.userAgent }),
     }),
-  logout: () => api<void>(`${base}/logout`, { method: 'POST' }),
+  /** Терминал сеансы — токен тақырыпта (тек сол сеанс жабылады), кабинет — cookie. */
+  logout: (terminalToken?: string | null) =>
+    api<void>(`${base}/logout`, { method: 'POST', headers: terminalToken ? { 'X-Refresh-Token': terminalToken } : {} }),
   passwordPolicy: () => api<PasswordPolicy>(`${base}/password-policy`),
   requestReset: (phone: string) =>
     api<ResetRequested>(`${base}/password-reset/request`, { method: 'POST', body: JSON.stringify({ phone }) }),
@@ -20,8 +22,9 @@ export const staffApi = {
       method: 'POST',
       body: JSON.stringify({ resetToken, newPassword, confirmPassword }),
     }),
-  setPin: (currentPassword: string, pin: string, confirmPin: string) =>
-    api<StaffMe>(`${base}/me/pin`, { method: 'PUT', body: JSON.stringify({ currentPassword, pin, confirmPin }) }),
+  /** Растау: құпиясөзі барлар — currentPassword, кассир — currentPin. */
+  setPin: (verify: { currentPassword?: string; currentPin?: string }, pin: string, confirmPin: string) =>
+    api<StaffMe>(`${base}/me/pin`, { method: 'PUT', body: JSON.stringify({ ...verify, pin, confirmPin }) }),
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) =>
     api<void>(`${base}/me/password`, {
       method: 'PUT',

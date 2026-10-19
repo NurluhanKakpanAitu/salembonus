@@ -22,8 +22,11 @@ function useFormErrors() {
 
 const digitsOnly = (v: string) => v.replace(/\D/g, '').slice(0, 4)
 
-/** PIN қою не ауыстыру — ағымдағы құпиясөзбен расталады (ТЗ «Касса» §17.8). */
-export function PinModal({ hasPin, onClose }: { hasPin: boolean; onClose: () => void }) {
+/**
+ * PIN қою не ауыстыру (ТЗ «Касса» §17.8). Құпиясөзі бар қызметкер ағымдағы құпиясөзбен растайды,
+ * кассир (құпиясөзсіз) — ағымдағы PIN-мен.
+ */
+export function PinModal({ hasPin, hasPassword, onClose }: { hasPin: boolean; hasPassword: boolean; onClose: () => void }) {
   const t = useT()
   const { errors, setErrors, fail } = useFormErrors()
   const [password, setPassword] = useState('')
@@ -35,7 +38,8 @@ export function PinModal({ hasPin, onClose }: { hasPin: boolean; onClose: () => 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const next: Errors = {}
-    if (!password) next.currentPassword = t('common.required')
+    if (hasPassword && !password) next.currentPassword = t('common.required')
+    if (!hasPassword && password.length !== 4) next.currentPin = t('pin.format')
     if (pin.length !== 4) next.pin = t('pin.format')
     else if (pin !== confirm) next.confirmPin = t('pin.mismatch')
     setErrors(next)
@@ -43,7 +47,7 @@ export function PinModal({ hasPin, onClose }: { hasPin: boolean; onClose: () => 
 
     setLoading(true)
     try {
-      applyMe(await staffApi.setPin(password, pin, confirm))
+      applyMe(await staffApi.setPin(hasPassword ? { currentPassword: password } : { currentPin: password }, pin, confirm))
       setDone(true)
     } catch (err) {
       fail(err)
@@ -60,14 +64,15 @@ export function PinModal({ hasPin, onClose }: { hasPin: boolean; onClose: () => 
         <form onSubmit={submit} noValidate className="flex flex-col gap-4">
           <p className="text-[14px] leading-relaxed text-ink-2">{t('pin.hint')}</p>
           <TextField
-            label={t('pin.currentPassword')}
-            icon={<Lock size={18} />}
+            label={hasPassword ? t('pin.currentPassword') : t('pin.currentPin')}
+            icon={hasPassword ? <Lock size={18} /> : <KeyRound size={18} />}
             secret
-            autoComplete="current-password"
+            inputMode={hasPassword ? undefined : 'numeric'}
+            autoComplete={hasPassword ? 'current-password' : 'off'}
             autoFocus
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={errors.currentPassword}
+            onChange={(e) => setPassword(hasPassword ? e.target.value : digitsOnly(e.target.value))}
+            error={hasPassword ? errors.currentPassword : errors.currentPin}
           />
           <div className="grid grid-cols-2 gap-3">
             <TextField

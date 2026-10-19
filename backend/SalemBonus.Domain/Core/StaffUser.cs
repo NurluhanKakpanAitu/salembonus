@@ -2,7 +2,8 @@ namespace SalemBonus.Domain.Core;
 
 /// <summary>
 /// Бизнестің қызметкері: иесі, әкімші немесе кассир. Клиенттен (<see cref="Entities.Customer"/>) бөлек:
-/// кіру паролмен, өзін-өзі тіркей алмайды — оны иесі қосады.
+/// өзін-өзі тіркей алмайды — оны иесі қосады. Иесі мен әкімші құпиясөзбен (кез келген құрылғыдан) кіреді,
+/// кассирде құпиясөз жоқ — тек тіркелген кассадағы PIN. Сондықтан кассир кассадан басқа жерден кіре алмайды.
 /// </summary>
 public class StaffUser
 {
@@ -18,7 +19,8 @@ public class StaffUser
     public string Phone { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
+    /// <summary>Бос — құпиясөзбен кіру жоқ (кассир): тек PIN.</summary>
+    public string? PasswordHash { get; set; }
     /// <summary>Кассаны ашатын 4 таңбалы PIN-нің хеші. Бос болса — PIN әлі қойылмаған.</summary>
     public string? PinHash { get; set; }
     /// <summary>Интерфейс тілі: "ru" немесе "kk". ТЗ бойынша әдепкісі орысша.</summary>
@@ -41,4 +43,6 @@ public class StaffUser
     public bool IsPinLockedOut(DateTime now) => PinLockedUntil is { } until && until > now;
 
     public bool HasPin => PinHash is not null;
+
+    public bool HasPassword => PasswordHash is not null;
 }

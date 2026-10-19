@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CalendarDays, Check, ChevronDown, KeyRound, Lock, LockKeyhole, LogOut, Menu, Store, UsersRound } from 'lucide-react'
+import { CalendarDays, Check, ChevronDown, KeyRound, Lock, LockKeyhole, LogOut, Menu, Store, UsersRound, X } from 'lucide-react'
 import { activeStore, applyMe, setActiveStore, useAuth } from '../lib/auth'
+import { leaveKiosk, terminalToken } from '../lib/kiosk'
 import { setLocked, useRegister } from '../lib/register'
+import { canSee, NAV } from './nav'
 import { registerApi } from '../lib/registerApi'
 import { endSession } from '../lib/session'
 import { PasswordModal, PinModal } from '../components/CredentialModals'
@@ -12,6 +14,7 @@ import { staffApi } from '../lib/staffApi'
 import type { ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { NotificationsBell } from '../components/cashier/NotificationsBell'
+import { Logo } from '../components/Logo'
 
 const MONTHS: Record<Language, string[]> = {
   ru: ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'],
@@ -31,7 +34,11 @@ function usePopover() {
   return { open, setOpen, ref }
 }
 
-export function Topbar({ title, onMenu }: { title: string; onMenu: () => void }) {
+/**
+ * Жоғарғы панель. kiosk — касса вкладкасы: мәзір батырмасы жоқ (мәзір де жоқ), дүкен ауыстырылмайды
+ * (касса бір дүкенге тіркелген), қалғаны — кассир, хабарламалар, бұғаттау, ауысу, шығу — сол күйінде.
+ */
+export function Topbar({ title, onMenu, kiosk = false }: { title: string; onMenu?: () => void; kiosk?: boolean }) {
   const t = useT()
   const navigate = useNavigate()
   const qc = useQueryClient()
@@ -60,6 +67,21 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
     }
   }
 
+  /**
+   * «Закрыть кассу»: кабинеттен кірген иесі/әкімші кассаны жауып, кабинетке қайтады. Тек cookie-сеансында
+   * (терминал токені жоқ) және кабинетте көретін бөлімі болса — PIN-мен кірген кассирге көрінбейді.
+   * Касса кабинеттен жаңа вкладкада ашылған болса, вкладка жабылады (кабинет вкладкасы қалады);
+   * жабылмаса (бет тікелей ашылған) — сол вкладкада кабинетке өтеді.
+   */
+  const canCloseRegister = kiosk && !terminalToken() && NAV.some((item) => item.path !== '/cashier' && canSee(item, store))
+  const closeRegister = () => {
+    leaveKiosk()
+    window.close()
+    window.setTimeout(() => {
+      if (!window.closed) navigate(`/${me?.startPage ?? 'statistics'}`, { replace: true })
+    }, 150)
+  }
+
   const logout = async () => {
     profileMenu.setOpen(false)
     await endSession()
@@ -82,9 +104,13 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
 
   return (
     <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-line bg-surface px-4 lg:px-6">
-      <button type="button" onClick={onMenu} className="text-ink-2 lg:hidden" aria-label="Menu">
-        <Menu size={24} />
-      </button>
+      {kiosk ? (
+        <span className="hidden lg:block"><Logo size={26} tone="dark" /></span>
+      ) : (
+        <button type="button" onClick={onMenu} className="text-ink-2 lg:hidden" aria-label="Menu">
+          <Menu size={24} />
+        </button>
+      )}
       <h1 className="min-w-0 truncate text-[22px] font-extrabold tracking-tight lg:text-[26px]">{title}</h1>
 
       <div className="ml-auto flex items-center gap-2 lg:gap-3">
@@ -92,15 +118,15 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
         <div ref={storeMenu.ref} className="relative hidden md:block">
           <button
             type="button"
-            disabled={!multiStore}
+            disabled={!multiStore || kiosk}
             onClick={() => storeMenu.setOpen((o) => !o)}
             className="flex h-11 items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 text-left disabled:cursor-default"
           >
             <Store size={19} className="text-ink-2" />
             <span className="max-w-[180px] truncate text-[14px] font-semibold">{store?.name}</span>
-            {multiStore && <ChevronDown size={16} className="text-ink-3" />}
+            {multiStore && !kiosk && <ChevronDown size={16} className="text-ink-3" />}
           </button>
-          {storeMenu.open && (
+          {storeMenu.open && !kiosk && (
             <ul className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-lg">
               {me?.stores.map((s) => (
                 <li key={s.id}>
@@ -126,6 +152,12 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
           {today}
         </div>
 
+        {canCloseRegister && (
+          <button type="button" onClick={closeRegister}
+            className="flex h-11 items-center gap-2 rounded-xl border border-line px-3.5 text-[14px] font-semibold text-ink hover:bg-field">
+            <X size={18} className="text-ink-2" /> <span className="hidden sm:inline">{t('top.closeRegister')}</span>
+          </button>
+        )}
         <NotificationsBell />
         <div ref={profileMenu.ref} className="relative">
           <button
@@ -151,7 +183,7 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
                 <div className="truncate text-[12px] text-ink-3">{me?.organizationName}</div>
               </div>
               {/* Телефонда жоғарғы панельде дүкен таңдағышы жоқ — ол осында (ТЗ «Статистика» §3.3). */}
-              {multiStore && (
+              {multiStore && !kiosk && (
                 <div className="border-b border-line pb-1 md:hidden">
                   <div className="px-3.5 pb-1 pt-2.5 text-[12px] font-medium text-ink-3">{t('top.store')}</div>
                   {me?.stores.map((s) => (
@@ -179,9 +211,11 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
                 <MenuItem icon={<KeyRound size={16} />} onClick={() => { profileMenu.setOpen(false); setModal('pin') }}>
                   {me?.hasPin ? t('top.changePin') : t('top.setPin')}
                 </MenuItem>
-                <MenuItem icon={<LockKeyhole size={16} />} onClick={() => { profileMenu.setOpen(false); setModal('password') }}>
-                  {t('top.changePassword')}
-                </MenuItem>
+                {me?.hasPassword && (
+                  <MenuItem icon={<LockKeyhole size={16} />} onClick={() => { profileMenu.setOpen(false); setModal('password') }}>
+                    {t('top.changePassword')}
+                  </MenuItem>
+                )}
                 {register && (
                   <>
                     <MenuItem icon={<Lock size={16} />} onClick={lockNow}>{t('top.lock')}</MenuItem>
@@ -200,7 +234,7 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
           )}
         </div>
       </div>
-      {modal === 'pin' && <PinModal hasPin={!!me?.hasPin} onClose={() => setModal(null)} />}
+      {modal === 'pin' && <PinModal hasPin={!!me?.hasPin} hasPassword={!!me?.hasPassword} onClose={() => setModal(null)} />}
       {modal === 'password' && <PasswordModal onClose={() => setModal(null)} />}
     </header>
   )

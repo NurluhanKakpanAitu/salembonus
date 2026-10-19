@@ -301,6 +301,14 @@ docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos
 Қызметкер құпиясөзін ұмытса (WhatsApp коды қосылғанша): `pos reset-password --phone ...`.
 Қызметкер кетсе: `pos deactivate --phone ...`.
 
+Кассирлер («Сотрудники» бөлімі шыққанша) — құпиясөзсіз, тек тіркелген кассада PIN-мен кіреді:
+
+```bash
+docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos add-cashier   --store <дүкен id> --phone +77001234567 --first-name Алишер --last-name Кассир --pin 2580 [--max-discount 5]
+# PIN ұмытылса не бұғатталса: жаңа PIN, барлық сеанс жабылады
+docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos reset-pin --phone +77001234567 --pin 7391
+```
+
 ---
 
 ## 11. Бэкап

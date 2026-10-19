@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowRight, CheckCircle2, Lock, Phone } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Lock, Monitor, Phone } from 'lucide-react'
 import { AuthLayout } from '../components/AuthLayout'
 import { CashierPicker } from '../components/CashierPicker'
+import { isKiosk } from '../lib/kiosk'
 import { useRegister } from '../lib/register'
 import type { StaffSession } from '../lib/types'
 import { Button } from '../components/ui/Button'
@@ -28,7 +29,6 @@ export function LoginPage() {
   const passwordChanged = (useLocation().state as { passwordChanged?: boolean } | null)?.passwordChanged
 
   const register = useRegister((s) => s.register)
-  const [mode, setMode] = useState<'pin' | 'password'>('pin')
   const [phone, setPhone] = useState('+7 ')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<Errors>({})
@@ -125,26 +125,31 @@ export function LoginPage() {
     </form>
   )
 
+  // PIN-мен кіру — терминал сеансы: рөліне қарамай кассаға (иесі де PIN-мен кірсе, касса ашылады).
   const signedIn = (session: StaffSession) => {
     applySession(session)
-    navigate(`/${session.me.startPage}`, { replace: true })
+    navigate(session.refreshToken ? '/cashier' : `/${session.me.startPage}`, { replace: true })
   }
 
-  // Тіркелген кассада әдепкі бойынша қызметкерлер тізімі мен PIN (ТЗ «Касса» §15).
+  // Тіркелген кассада кіру тек PIN-мен (ТЗ «Касса» §15): құпиясөз формасы жоқ. Құпиясөзбен кіру —
+  // касса емес құрылғыда (ноутбук, телефон); кассаны ажыратса, бұл жерде де форма қайта шығады.
+  // Касса вкладкасында құпиясөз формасы ешқашан шықпайды: касса қосылмаса — түсініктеме.
+  if (!register && isKiosk())
+    return (
+      <AuthLayout>
+        <div className="flex w-full max-w-[410px] flex-col items-center text-center">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-brand-soft text-brand"><Monitor size={26} /></span>
+          <h1 className="mt-4 text-[22px] font-extrabold tracking-tight text-ink">{t('login.kioskNoRegister')}</h1>
+          <p className="mt-2 text-[15px] leading-relaxed text-ink-2">{t('login.kioskNoRegisterHint')}</p>
+        </div>
+      </AuthLayout>
+    )
   if (!register) return <AuthLayout>{form}</AuthLayout>
 
   return (
     <AuthLayout>
       <div className="w-full max-w-[410px]">
-        <div role="tablist" className="mb-8 grid grid-cols-2 rounded-xl bg-field p-1">
-          {(['pin', 'password'] as const).map((m) => (
-            <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}
-              className={`h-10 rounded-lg text-[14px] font-semibold transition-colors ${mode === m ? 'bg-surface text-ink shadow-sm' : 'text-ink-2'}`}>
-              {m === 'pin' ? t('login.byPin') : t('login.byPassword')}
-            </button>
-          ))}
-        </div>
-        {mode === 'pin' ? <CashierPicker register={register} onSignedIn={signedIn} /> : form}
+        <CashierPicker register={register} onSignedIn={signedIn} />
       </div>
     </AuthLayout>
   )

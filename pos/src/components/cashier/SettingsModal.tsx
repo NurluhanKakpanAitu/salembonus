@@ -113,7 +113,9 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
         <Section icon={<UserRound size={20} />} title={t('settings.cashier')}>
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" icon={<KeyRound size={17} />} onClick={() => setModal('password')}>{t('settings.changePassword')}</Button>
+            {me?.hasPassword && (
+              <Button variant="secondary" icon={<KeyRound size={17} />} onClick={() => setModal('password')}>{t('settings.changePassword')}</Button>
+            )}
             <Button variant="secondary" icon={<LockKeyhole size={17} />} onClick={() => setModal('pin')}>{t('settings.changePin')}</Button>
           </div>
         </Section>
@@ -188,7 +190,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         {can && <Button loading={saving} onClick={() => void save()}>{t('settings.save')}</Button>}
       </div>
 
-      {modal === 'pin' && <PinModal hasPin={me?.hasPin ?? false} onClose={() => setModal(null)} />}
+      {modal === 'pin' && <PinModal hasPin={me?.hasPin ?? false} hasPassword={me?.hasPassword ?? false} onClose={() => setModal(null)} />}
       {modal === 'password' && <PasswordModal onClose={() => setModal(null)} />}
       {recipient && (
         <RecipientModal recipient={recipient === 'new' ? null : recipient} onClose={() => setRecipient(null)}

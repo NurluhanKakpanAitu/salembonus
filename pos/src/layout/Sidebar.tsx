@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { ChevronsLeft, ChevronsRight, X } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight, ExternalLink, X } from 'lucide-react'
 import { Logo } from '../components/Logo'
 import { activeStore, useAuth } from '../lib/auth'
 import { useT } from '../lib/i18n'
@@ -40,23 +40,40 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
 
         <nav className="flex-1 overflow-y-auto px-3 py-2">
           <ul className="flex flex-col gap-1">
-            {items.map((item) => (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  onClick={onClose}
-                  title={collapsed ? t(item.label) : undefined}
-                  className={({ isActive }) =>
-                    `flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors ${
-                      collapsed ? 'lg:justify-center lg:px-0' : ''
-                    } ${isActive ? 'bg-brand text-white' : 'hover:bg-nav-2 hover:text-white'}`
-                  }
-                >
+            {items.map((item) => {
+              const base = `flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors ${
+                collapsed ? 'lg:justify-center lg:px-0' : ''
+              }`
+              const content = (
+                <>
                   <item.icon size={20} className="shrink-0" />
                   <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{t(item.label)}</span>
-                </NavLink>
-              </li>
-            ))}
+                </>
+              )
+              return (
+                <li key={item.path}>
+                  {item.path === '/cashier' ? (
+                    // Касса жаңа вкладкада ашылады (ТЗ «Касса»: кассирге басқа бөлімдер көрінбейді).
+                    // noopener: касса вкладкасы кабинет вкладкасына қол жеткізбейді, тарихы бос — «артқа» жоқ.
+                    <a href={item.path} target="_blank" rel="noopener" onClick={onClose}
+                      title={collapsed ? `${t(item.label)} · ${t('nav.cashierNewTab')}` : t('nav.cashierNewTab')}
+                      className={`${base} hover:bg-nav-2 hover:text-white`}>
+                      {content}
+                      <ExternalLink size={15} className={`ml-auto shrink-0 opacity-60 ${collapsed ? 'lg:hidden' : ''}`} />
+                    </a>
+                  ) : (
+                    <NavLink
+                      to={item.path}
+                      onClick={onClose}
+                      title={collapsed ? t(item.label) : undefined}
+                      className={({ isActive }) => `${base} ${isActive ? 'bg-brand text-white' : 'hover:bg-nav-2 hover:text-white'}`}
+                    >
+                      {content}
+                    </NavLink>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </nav>
 

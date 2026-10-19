@@ -1,14 +1,19 @@
-import { useEffect, useState } from 'react'
-import { ArrowLeft, KeyRound, Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, ChevronRight, KeyRound, Loader2 } from 'lucide-react'
 import { CodeInput } from './ui/CodeInput'
+import { SearchInput } from './ui/SearchInput'
 import { ApiError } from '../lib/api'
 import { useT, type TranslationKey } from '../lib/i18n'
 import { registerApi } from '../lib/registerApi'
 import type { Register, RegisterCashier, StaffSession } from '../lib/types'
 
+/** Осыдан көп қызметкер болса — тізімнің үстінде іздеу шығады. */
+const SEARCH_FROM = 6
+
 /**
  * Тіркелген кассада кіру (ТЗ «Касса» §15): қызметкерлер тізімі → PIN. PIN 4 цифр толған бойда
- * жіберіледі. PIN-і жоқ қызметкер таңдалмайды — ол құпиясөзбен кіріп, PIN қоюы керек.
+ * жіберіледі. PIN-і жоқ қызметкер таңдалмайды — PIN-ді иесі қояды.
+ * Тізім — айналдырылатын жолдар: 2 кассирге де, 30-ға да жарайды; көп болса аты бойынша іздеу.
  */
 export function CashierPicker({ register, onSignedIn }: {
   register: Register
@@ -17,6 +22,7 @@ export function CashierPicker({ register, onSignedIn }: {
   const t = useT()
   const [cashiers, setCashiers] = useState<RegisterCashier[] | null>(null)
   const [selected, setSelected] = useState<RegisterCashier | null>(null)
+  const [query, setQuery] = useState('')
   const [pin, setPin] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -24,6 +30,12 @@ export function CashierPicker({ register, onSignedIn }: {
   useEffect(() => {
     registerApi.cashiers().then(setCashiers).catch(() => setCashiers([]))
   }, [])
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = (cashiers ?? []).filter((c) => !q || `${c.firstName} ${c.lastName}`.toLowerCase().includes(q))
+    return list.sort((a, b) => a.firstName.localeCompare(b.firstName) || a.lastName.localeCompare(b.lastName))
+  }, [cashiers, query])
 
   const submit = async (value: string) => {
     if (!selected || value.length !== 4) return
@@ -71,22 +83,33 @@ export function CashierPicker({ register, onSignedIn }: {
       ) : cashiers.length === 0 ? (
         <p className="mt-8 text-center text-[14px] text-ink-3">{t('login.noCashiers')}</p>
       ) : (
-        <ul className="mt-5 grid grid-cols-2 gap-3">
-          {cashiers.map((c) => (
-            <li key={c.id}>
-              <button type="button" disabled={!c.hasPin} onClick={() => setSelected(c)}
-                className="flex w-full flex-col items-center gap-2 rounded-2xl border border-line bg-surface px-3 py-4 text-center transition-colors hover:border-brand hover:bg-brand-soft/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-line disabled:hover:bg-surface">
-                <Avatar c={c} size={48} />
-                <span className="w-full truncate text-[15px] font-semibold">{c.firstName}</span>
-                <span className="text-[12px] text-ink-3">
-                  {c.hasPin ? t(`role.${c.role}` as TranslationKey) : (
-                    <span className="inline-flex items-center gap-1"><KeyRound size={12} /> {t('login.noPin')}</span>
-                  )}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          {cashiers.length >= SEARCH_FROM && (
+            <SearchInput value={query} onChange={setQuery} placeholder={t('login.searchCashier')} className="mt-5" />
+          )}
+          {/* Биіктігі шектеулі: ~6 жол көрінеді, қалғаны айналдырумен — экран ұзармайды. */}
+          <ul className={`${cashiers.length >= SEARCH_FROM ? 'mt-3' : 'mt-5'} max-h-[min(58vh,408px)] overflow-y-auto rounded-2xl border border-line bg-surface`}>
+            {visible.length === 0 ? (
+              <li className="px-4 py-6 text-center text-[14px] text-ink-3">{t('login.noMatch')}</li>
+            ) : visible.map((c) => (
+              <li key={c.id} className="border-b border-line last:border-b-0">
+                <button type="button" disabled={!c.hasPin} onClick={() => setSelected(c)}
+                  className="flex h-[68px] w-full items-center gap-3 px-4 text-left transition-colors hover:bg-brand-soft/40 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
+                  <Avatar c={c} size={44} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-semibold">{`${c.firstName} ${c.lastName}`}</span>
+                    <span className="block truncate text-[12px] text-ink-3">
+                      {c.hasPin ? t(`role.${c.role}` as TranslationKey) : (
+                        <span className="inline-flex items-center gap-1"><KeyRound size={12} /> {t('login.noPin')}</span>
+                      )}
+                    </span>
+                  </span>
+                  <ChevronRight size={18} className="shrink-0 text-ink-3" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   )

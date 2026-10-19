@@ -2,6 +2,7 @@ import { lazy, useEffect } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppShell } from './layout/AppShell'
+import { CashierShell, KioskGuard } from './layout/CashierShell'
 import { NAV } from './layout/nav'
 import { LoginPage } from './pages/LoginPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
@@ -44,21 +45,26 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route element={<RequireAuth />}>
-        <Route element={<AppShell />}>
-          <Route index element={<StartPage />} />
-          {NAV.map((item) => (
-            <Route
-              key={item.path}
-              path={item.path === '/products' ? '/products/*' : item.path}
-              element={
-                item.path === '/cashier' ? <CashierPage />
-                : item.path === '/products' ? <ProductsPage />
-                : item.path === '/statistics' ? <StatisticsPage />
-                : <SectionPage item={item} />
-              }
-            />
-          ))}
-          <Route path="*" element={<StartPage />} />
+        <Route element={<KioskGuard />}>
+          {/* Касса — кабинеттен тыс, өз вкладкасында: мәзір де, басқа бөлімге жол да жоқ. */}
+          <Route path="/cashier" element={<CashierShell />}>
+            <Route index element={<CashierPage />} />
+          </Route>
+          <Route element={<AppShell />}>
+            <Route index element={<StartPage />} />
+            {NAV.filter((item) => item.path !== '/cashier').map((item) => (
+              <Route
+                key={item.path}
+                path={item.path === '/products' ? '/products/*' : item.path}
+                element={
+                  item.path === '/products' ? <ProductsPage />
+                  : item.path === '/statistics' ? <StatisticsPage />
+                  : <SectionPage item={item} />
+                }
+              />
+            ))}
+            <Route path="*" element={<StartPage />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

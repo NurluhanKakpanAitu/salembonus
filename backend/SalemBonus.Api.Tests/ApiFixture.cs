@@ -4,7 +4,9 @@ using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using SalemBonus.Infrastructure.Identity;
 using SalemBonus.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
 
@@ -36,7 +38,14 @@ public sealed class ApiFixture : IAsyncLifetime
         await StaffSeeder.SeedAsync(db);
         await CatalogDemoSeeder.SeedAsync(db);
         await CashierDemoSeeder.SeedAsync(db);
+        // Нақты өмірде кассирде құпиясөз жоқ (тек PIN). Тесттерде кассирдің токенін құпиясөзбен алу оңай:
+        // PIN-мен кіру үшін әр «құрылғыда» кассаны алдын ала қосу керек болар еді.
+        var cashier = await db.StaffUsers.SingleAsync(u => u.Phone == StaffSeeder.CashierPhone);
+        cashier.PasswordHash = new Pbkdf2PasswordHasher().Hash(CashierPassword);
+        await db.SaveChangesAsync();
     }
+
+    private const string CashierPassword = "Test-Kassir-2026";
 
     /// <summary>
     /// Жаңа «құрылғы»: өз cookie-лері бар клиент. Касса cookie-і Secure (Development емес), сондықтан https.
@@ -50,7 +59,7 @@ public sealed class ApiFixture : IAsyncLifetime
         });
         // Кіруге IP бойынша минутына 10 рет шек бар — токендер бір рет алынып, барлық «құрылғыда» қолданылады.
         _tokens ??= (await LoginAsync(http, StaffSeeder.OwnerPhone, StaffSeeder.OwnerPassword),
-                     await LoginAsync(http, StaffSeeder.CashierPhone, StaffSeeder.CashierPassword));
+                     await LoginAsync(http, StaffSeeder.CashierPhone, CashierPassword));
         var pos = new Pos(http) { Owner = _tokens.Value.Owner, Cashier = _tokens.Value.Cashier };
         if (activateRegister)
         {

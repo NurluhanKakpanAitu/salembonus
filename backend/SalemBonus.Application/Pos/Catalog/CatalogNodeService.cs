@@ -12,7 +12,8 @@ public class CatalogNodeService(ICatalogRepository repo, CatalogAccess access, I
 
     public async Task<IReadOnlyList<CatalogNodeDto>> ListAsync(CancellationToken ct = default)
     {
-        var (orgId, _) = await access.RequireAsync(StaffPermissions.ProductsView, ct);
+        // Тізім кассаға да керек (сол жақтағы санаттар, ТЗ «Касса» §2.6): кассирде «Товар» бөлімі жоқ, бірақ сату құқығы бар.
+        var (orgId, _) = await access.RequireAnyAsync(ct, StaffPermissions.ProductsView, StaffPermissions.SalesCreate);
         return await BuildAsync(orgId, ct);
     }
 

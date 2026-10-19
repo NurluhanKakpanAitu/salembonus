@@ -19,4 +19,9 @@ public static class StaffAuth
     /// <summary>Refresh токені тек осы cookie-де: JavaScript оны оқи алмайды.</summary>
     public const string RefreshCookie = "salem_staff_rt";
     public const string RefreshCookiePath = "/api/staff/v1/auth";
+    /// <summary>
+    /// Касса терминалының сеансы: refresh токені cookie-де емес, осы тақырыпта жүреді (фронт оны вкладканың
+    /// sessionStorage-ында ұстайды). Сонда кассир PIN-мен кірсе, сол браузердегі иесінің кабинет сеансы бұзылмайды.
+    /// </summary>
+    public const string RefreshHeader = "X-Refresh-Token";
 }

@@ -2,6 +2,9 @@ using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SalemBonus.Application.BonusCards;
+using SalemBonus.Application.Common.Exceptions;
+using SalemBonus.Application.Common.Interfaces;
+using SalemBonus.Application.Core.Staff;
 using SalemBonus.Domain.Core;
 using SalemBonus.Domain.Pos;
 using SalemBonus.Infrastructure.Identity;
@@ -22,6 +25,10 @@ namespace SalemBonus.Infrastructure.Persistence;
 /// WhatsApp қосылғанша қалпына келтіру үшін: <c>pos reset-password --phone ..</c> (жаңа уақытша құпиясөз,
 /// PIN мен барлық сеанс өшеді), <c>pos deactivate --phone ..</c> (қызметкер кіре алмайды).
 /// </para>
+/// <para>
+/// Кассирлер («Сотрудники» бөлімі шыққанша): <c>pos add-cashier --store .. --phone .. --first-name .. --last-name .. --pin 2580</c>
+/// — құпиясөзсіз, тек тіркелген кассада PIN-мен кіреді; <c>pos reset-pin --phone .. --pin ..</c> — жаңа PIN.
+/// </para>
 /// </summary>
 public static class PosBootstrap
 {
@@ -37,6 +44,10 @@ public static class PosBootstrap
                 return await CreateOwnerAsync(db, Parse(args.Skip(1)), ct);
             case "reset-password":
                 return await ResetPasswordAsync(db, Parse(args.Skip(1)), ct);
+            case "add-cashier":
+                return await AddCashierAsync(db, Parse(args.Skip(1)), ct);
+            case "reset-pin":
+                return await ResetPinAsync(db, Parse(args.Skip(1)), ct);
             case "deactivate":
                 return await DeactivateAsync(db, Parse(args.Skip(1)), ct);
             default:
@@ -45,6 +56,8 @@ public static class PosBootstrap
                       pos stores
                       pos create-owner --store <id> --phone <+7...> --first-name <..> --last-name <..> [--org <..>] [--bin <..>]
                       pos reset-password --phone <+7...>
+                      pos add-cashier --store <id> --phone <+7...> --first-name <..> --last-name <..> --pin <4 цифр> [--max-discount <%>]
+                      pos reset-pin --phone <+7...> --pin <4 цифр>
                       pos deactivate --phone <+7...>
                     """);
                 return 2;
@@ -151,6 +164,11 @@ public static class PosBootstrap
     {
         var user = await FindStaffAsync(db, o, ct);
         if (user is null) return 2;
+        if (!user.HasPassword)
+        {
+            Console.Error.WriteLine($"{user.FirstName} {user.LastName} — кассир, құпиясөзі жоқ. PIN-ді ауыстыру: pos reset-pin --phone {user.Phone} --pin <4 цифр>");
+            return 2;
+        }
 
         var password = GeneratePassword();
         user.PasswordHash = new Pbkdf2PasswordHasher().Hash(password);
@@ -168,6 +186,86 @@ public static class PosBootstrap
         Console.WriteLine($"Уақытша құпиясөз: {password}");
         return 0;
     }
+
+    /// <summary>Кассир: құпиясөзсіз, тек PIN. Дүкенде сату құқығымен (әдепкі кассир рұқсаттары).</summary>
+    private static async Task<int> AddCashierAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
+    {
+        try
+        {
+            var store = await db.Stores.FirstOrDefaultAsync(s => s.Id == Guid.Parse(Required(o, "store")), ct)
+                ?? throw new ArgumentException("Мұндай дүкен жоқ: pos stores арқылы тізімді қараңыз");
+            if (store.OrganizationId is not { } orgId)
+                throw new ArgumentException("Дүкенде ұйым жоқ — алдымен pos create-owner");
+            var phone = BonusRules.NormalizePhone(Required(o, "phone"));
+            if (phone.Length != 12) throw new ArgumentException("--phone: +7XXXXXXXXXX пішімінде болсын");
+            if (await db.StaffUsers.AnyAsync(u => u.Phone == phone, ct))
+                throw new ArgumentException($"{phone} нөмірімен қызметкер бар");
+            var firstName = Required(o, "first-name");
+            var lastName = Required(o, "last-name");
+            var pin = Required(o, "pin");
+            CredentialRules.ValidatePin(pin, AppLanguage.Ru);
+            var maxDiscount = o.TryGetValue("max-discount", out var md) ? decimal.Parse(md) : 5;
+
+            var userId = Guid.NewGuid();
+            db.StaffUsers.Add(new StaffUser
+            {
+                Id = userId,
+                OrganizationId = orgId,
+                Phone = phone,
+                FirstName = firstName,
+                LastName = lastName,
+                PasswordHash = null,
+                PinHash = new Pbkdf2PasswordHasher().Hash(pin),
+                Memberships =
+                [
+                    new StoreMembership
+                    {
+                        Id = Guid.NewGuid(),
+                        StaffUserId = userId,
+                        StoreId = store.Id,
+                        Role = StaffRole.Cashier,
+                        Permissions = [.. StaffPermissions.DefaultsFor(StaffRole.Cashier)],
+                        MaxDiscountPercent = maxDiscount,
+                    },
+                ],
+            });
+            await db.SaveChangesAsync(ct);
+            Console.WriteLine($"Дайын: {firstName} {lastName} ({phone}) — «{store.Name}» дүкенінің кассирі. Кіру: кассадағы кассирлер тізімі → PIN.");
+            return 0;
+        }
+        catch (Exception ex) when (ex is ArgumentException or FormatException or ValidationException)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return 2;
+        }
+    }
+
+    private static async Task<int> ResetPinAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
+    {
+        var user = await FindStaffAsync(db, o, ct);
+        if (user is null) return 2;
+        try
+        {
+            var pin = Required(o, "pin");
+            CredentialRules.ValidatePin(pin, AppLanguage.Ru);
+            user.PinHash = new Pbkdf2PasswordHasher().Hash(pin);
+            user.PinFailedCount = 0;
+            user.PinLockedUntil = null;
+            user.IsActive = true;
+            await RevokeSessionsAsync(db, user.Id, ct);
+            await db.SaveChangesAsync(ct);
+            Console.WriteLine($"{user.FirstName} {user.LastName} ({user.Phone}): жаңа PIN қойылды, барлық сеанс жабылды.");
+            return 0;
+        }
+        catch (Exception ex) when (ex is ArgumentException or ValidationException)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return 2;
+        }
+    }
+
+    private static string Required(Dictionary<string, string> o, string key) =>
+        o.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v) ? v.Trim() : throw new ArgumentException($"--{key} міндетті");
 
     private static async Task<int> DeactivateAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
     {

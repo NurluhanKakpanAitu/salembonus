@@ -61,14 +61,17 @@ public class RegistersController(IRegisterService registers, IWebHostEnvironment
     public async Task<ActionResult<IReadOnlyList<RegisterCashierDto>>> Cashiers(CancellationToken ct) =>
         Ok(await registers.GetCashiersAsync(DeviceToken, ct));
 
-    /// <summary>Кассир ауысуы: тізімнен таңдап, PIN-мен кіру.</summary>
+    /// <summary>
+    /// Кассир ауысуы: тізімнен таңдап, PIN-мен кіру. Бұл — терминал сеансы: refresh токені жауаптың
+    /// ішінде, cookie қойылмайды (иесінің кабинет сеансы басқа вкладкада сақталады).
+    /// </summary>
     [HttpPost("current/pin-login")]
     [AllowAnonymous]
     [EnableRateLimiting(StaffAuth.PinRateLimit)]
     public async Task<ActionResult<StaffSessionResponse>> PinLogin([FromBody] PinLoginRequest request, CancellationToken ct)
     {
         var session = await registers.PinLoginAsync(DeviceToken, request, Request.Headers.UserAgent.ToString(), ct);
-        return Ok(StaffAuthController.IssueSession(Response, env, session));
+        return Ok(StaffAuthController.IssueSession(Response, env, session, terminal: true));
     }
 
     /// <summary>Бұғатталған кассаны қазіргі кассирдің PIN-імен ашу. Сеанс сақталады.</summary>
