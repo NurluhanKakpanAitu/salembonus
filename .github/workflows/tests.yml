@@ -51,6 +51,8 @@ jobs:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           SSH_KEY: ${{ secrets.SSH_KEY }}
+          # Сервердің ашық кілті (Settings → Variables): әр деплойда бірінші келген кілтке сенбеу үшін
+          SSH_HOST_KEY: ${{ vars.SSH_HOST_KEY }}
         run: |
           if [ -z "$SSH_HOST" ] || [ -z "$SSH_KEY" ]; then
             echo "::warning::SSH_HOST / SSH_KEY секреттері қойылмаған, деплой өткізілді"
@@ -59,5 +61,14 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh "${SSH_USER:-deploy}@$SSH_HOST" 'cd /opt/salembonus && ./scripts/deploy.sh'
+          if [ -n "$SSH_HOST_KEY" ]; then
+            printf '%s %s\n' "$SSH_HOST" "$SSH_HOST_KEY" >> ~/.ssh/known_hosts
+          elif ! ssh-keyscan -T 15 -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "::error::Сервер SSH арқылы қолжетімсіз (22-порт). Провайдер желісін тексеріңіз."
+            exit 1
+          fi
+          ssh -o ConnectTimeout=20 -o ServerAliveInterval=30 -o StrictHostKeyChecking=yes "${SSH_USER:-deploy}@$SSH_HOST" 'cd /opt/salembonus && ./scripts/deploy.sh' || {
+            code=$?
+            [ "$code" = 255 ] && echo "::error::Серверге SSH қосылмады (код 255): желі немесе кілт мәселесі."
+            exit "$code"
+          }
