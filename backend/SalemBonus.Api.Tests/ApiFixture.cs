@@ -88,6 +88,14 @@ public sealed class ApiFixture : IAsyncLifetime
         return (await res.Content.ReadFromJsonAsync<JsonObject>())!["accessToken"]!.GetValue<string>();
     }
 
+    /// <summary>Тестке дерек дайындау: мысалы, сатылымды «өткен айға» жылжыту (API бұған жол бермейді — дұрыс та).</summary>
+    public async Task SqlAsync(string sql)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.ExecuteSqlRawAsync(sql);
+    }
+
     public async Task DisposeAsync()
     {
         await _factory.DisposeAsync();

@@ -575,4 +575,14 @@ public static class Messages
 
     public static string SalesExportTooLarge(AppLanguage l, int max) => Pick(l,
         $"Экспортқа {max} жолдан артық болмауы керек — кезеңді тарылтыңыз", $"В экспорт помещается не больше {max} строк — сузьте период или фильтры");
+
+    // «Статистика» (ТЗ «Статистика» v1.1)
+    public static string AnalyticsStoreForbidden(AppLanguage l) => Pick(l,
+        "Таңдалған дүкендердің статистикасына рұқсат жоқ", "Нет доступа к статистике выбранных магазинов");
+
+    public static string AnalyticsRangeTooLong(AppLanguage l, int days) => Pick(l,
+        $"Кезең {days} күннен аспауы керек", $"Период не может быть длиннее {days} дней");
+
+    public static string AnalyticsTabUnknown(AppLanguage l) => Pick(l,
+        "Мұндай есеп жоқ", "Такого отчёта нет");
 }

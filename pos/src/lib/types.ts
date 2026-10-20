@@ -42,6 +42,8 @@ export const Permission = {
   SalesReturn: 'sales.return',
   SalesView: 'sales.view',
   SalesExport: 'sales.export',
+  StatisticsExport: 'statistics.export',
+  CustomersContacts: 'customers.contacts',
   StaffManage: 'staff.manage',
   SettingsManage: 'settings.manage',
   ProductsEdit: 'products.edit',

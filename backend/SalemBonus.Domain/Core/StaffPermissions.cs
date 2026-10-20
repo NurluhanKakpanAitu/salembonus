@@ -7,6 +7,10 @@ namespace SalemBonus.Domain.Core;
 public static class StaffPermissions
 {
     public const string StatisticsView = "statistics.view";
+    /// <summary>«Статистика» экспорты (Excel, CSV, PDF).</summary>
+    public const string StatisticsExport = "statistics.export";
+    /// <summary>Клиенттің телефоны мен жеке деректері (статистикада, экспортта).</summary>
+    public const string CustomersContacts = "customers.contacts";
     public const string FinanceView = "finance.view";
 
     public const string ProductsView = "products.view";
@@ -48,7 +52,7 @@ public static class StaffPermissions
 
     public static readonly IReadOnlyList<string> All =
     [
-        StatisticsView, FinanceView,
+        StatisticsView, FinanceView, StatisticsExport, CustomersContacts,
         ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle, CatalogDictionaries,
         SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove, SalesView, SalesExport,
         StaffManage, SettingsManage,
@@ -64,6 +68,7 @@ public static class StaffPermissions
             StatisticsView, ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle,
             CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove, SalesView, SalesExport,
             InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
+            StatisticsExport, CustomersContacts,
         ],
         // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,
         // «Товар» бөлімі мен оның API-і кассирге ашылмайды. Иесі қажет болса жеке кеңейтеді.
