@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { MoreVertical } from 'lucide-react'
 
 export interface RowMenuItem {
@@ -8,28 +9,64 @@ export interface RowMenuItem {
   onClick: () => void
 }
 
-/** Жолдағы «⋮» мәзірі (ТЗ «Товар» §17 контекстік мәзір). */
+const MENU_WIDTH = 224
+const GAP = 4
+const MARGIN = 8
+
+/**
+ * Жолдағы «⋮» мәзірі (ТЗ «Товар» §17 контекстік мәзір).
+ * Мәзір body-ге (portal) fixed күйде шығады: кестенің overflow-ы оны кеспейді. Астында орын жетпесе —
+ * жоғары ашылады; айналдыру не терезе өзгерсе — жабылады.
+ */
 export function RowMenu({ items }: { items: RowMenuItem[] }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLUListElement>(null)
+
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current || !menuRef.current) return
+    const b = buttonRef.current.getBoundingClientRect()
+    const h = menuRef.current.offsetHeight
+    const below = window.innerHeight - b.bottom - GAP - MARGIN
+    const top = below >= h || b.top - GAP - MARGIN < h ? b.bottom + GAP : b.top - GAP - h
+    const left = Math.min(Math.max(MARGIN, b.right - MENU_WIDTH), window.innerWidth - MENU_WIDTH - MARGIN)
+    setPos({ top: Math.max(MARGIN, top), left })
+  }, [open])
 
   useEffect(() => {
     if (!open) return
-    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
+    const outside = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (!menuRef.current?.contains(target) && !buttonRef.current?.contains(target)) setOpen(false)
+    }
+    const close = () => setOpen(false)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    document.addEventListener('mousedown', outside)
+    document.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', outside)
+      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
   }, [open])
 
   if (items.length === 0) return <span className="inline-block w-8" />
 
   return (
-    <div ref={ref} className="relative inline-block">
-      <button type="button" aria-label="Menu" aria-haspopup="menu" onClick={() => setOpen((o) => !o)}
-        className="flex size-8 items-center justify-center rounded-lg text-ink-2 hover:bg-field">
+    <>
+      <button ref={buttonRef} type="button" aria-label="Menu" aria-haspopup="menu" aria-expanded={open}
+        onClick={() => { setPos(null); setOpen((o) => !o) }}
+        className={`flex size-8 items-center justify-center rounded-lg text-ink-2 hover:bg-field ${open ? 'bg-field' : ''}`}>
         <MoreVertical size={18} />
       </button>
-      {open && (
-        <ul role="menu" className="absolute right-0 z-30 mt-1 w-56 overflow-hidden rounded-xl border border-line bg-surface py-1 text-left shadow-lg">
+      {open && createPortal(
+        <ul ref={menuRef} role="menu" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}
+          style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, width: MENU_WIDTH, visibility: pos ? 'visible' : 'hidden' }}
+          className="fixed z-[60] overflow-hidden rounded-xl border border-line bg-surface py-1 text-left shadow-lg">
           {items.map((item) => (
             <li key={item.label}>
               <button type="button" role="menuitem"
@@ -40,8 +77,9 @@ export function RowMenu({ items }: { items: RowMenuItem[] }) {
               </button>
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body,
       )}
-    </div>
+    </>
   )
 }
