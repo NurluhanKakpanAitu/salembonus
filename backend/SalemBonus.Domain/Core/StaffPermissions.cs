@@ -56,6 +56,15 @@ public static class StaffPermissions
     public const string InventoryWarehouses = "inventory.warehouses";
     public const string InventorySuppliers = "inventory.suppliers";
 
+    // «Бонусы» (ТЗ «Бонусы» §12): шолу/статистика/журнал; мәртебелер мен ережелер; таратулар; қолмен есептеу; қолмен шегеру; сторно; бағдарлама ережелерінің мәтіні.
+    public const string BonusView = "bonus.view";
+    public const string BonusManage = "bonus.manage";
+    public const string BonusCampaigns = "bonus.campaigns";
+    public const string BonusAccrue = "bonus.accrue";
+    public const string BonusWriteOff = "bonus.writeoff";
+    public const string BonusReverse = "bonus.reverse";
+    public const string BonusTerms = "bonus.terms";
+
     public static readonly IReadOnlyList<string> All =
     [
         StatisticsView, FinanceView, StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
@@ -63,6 +72,7 @@ public static class StaffPermissions
         SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove, SalesView, SalesExport,
         StaffManage, SettingsManage,
         InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
+        BonusView, BonusManage, BonusCampaigns, BonusAccrue, BonusWriteOff, BonusReverse, BonusTerms,
     ];
 
     /// <summary>Рөлдің әдепкі рұқсаттары.</summary>
@@ -75,6 +85,7 @@ public static class StaffPermissions
             CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove, SalesView, SalesExport,
             InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
             StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
+            BonusView, BonusManage, BonusCampaigns, BonusAccrue, BonusWriteOff, BonusReverse, BonusTerms,
         ],
         // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,
         // «Товар» бөлімі мен оның API-і кассирге ашылмайды. Иесі қажет болса жеке кеңейтеді.

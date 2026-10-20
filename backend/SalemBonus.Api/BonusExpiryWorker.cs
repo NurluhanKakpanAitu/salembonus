@@ -8,7 +8,7 @@ namespace SalemBonus.Api;
 /// </summary>
 public class BonusExpiryWorker(IServiceProvider services, ILogger<BonusExpiryWorker> logger) : BackgroundService
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(15);
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
@@ -26,6 +26,12 @@ public class BonusExpiryWorker(IServiceProvider services, ILogger<BonusExpiryWor
                     burned = await expiry.BurnExpiredAsync(ct);
                     if (burned > 0) logger.LogInformation("Мерзімі өткен {Count} бонус партиясы өшірілді", burned);
                 } while (burned > 0 && !ct.IsCancellationRequested);
+
+                // «Бонусы»: туған күн сыйлықтары, жану ескертулері, жоспарланған таратулар, мәртебе мерзімдері (бәрі қайталауға қауіпсіз).
+                var jobs = scope.ServiceProvider.GetRequiredService<SalemBonus.Application.Pos.Bonus.BonusJobs>();
+                var r = await jobs.RunAsync(ct);
+                if (r.Birthdays + r.Warnings + r.Campaigns > 0)
+                    logger.LogInformation("Бонус тапсырмалары: туған күн {B}, ескерту {W}, тарату {C}", r.Birthdays, r.Warnings, r.Campaigns);
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {

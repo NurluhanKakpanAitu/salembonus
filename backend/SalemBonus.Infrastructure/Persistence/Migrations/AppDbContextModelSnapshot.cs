@@ -332,6 +332,25 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("NotificationsOptOut")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("StatusAssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("StatusExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("StatusManual")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("StatusReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<Guid>("StoreId")
                         .HasColumnType("uuid");
 
@@ -341,10 +360,10 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StoreId");
-
                     b.HasIndex("CustomerId", "StoreId")
                         .IsUnique();
+
+                    b.HasIndex("StoreId", "StatusId");
 
                     b.ToTable("BonusCards");
                 });
@@ -356,6 +375,9 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BalanceAfter")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("BonusCardId")
@@ -371,6 +393,13 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("IdempotencyKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Percent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
                     b.Property<decimal?>("PurchaseAmount")
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)");
@@ -381,16 +410,42 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<int>("Remaining")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("ReversedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Source")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("StaffUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
                     b.HasIndex("ReceiptId");
+
+                    b.HasIndex("SourceTransactionId");
 
                     b.HasIndex("BonusCardId", "CreatedAt");
 
                     b.HasIndex("ExpiresAt", "Remaining");
+
+                    b.HasIndex(new[] { "SourceTransactionId" }, "IX_BonusTransactions_ExpiredLot")
+                        .IsUnique()
+                        .HasFilter("\"Type\" = 4 AND \"SourceTransactionId\" IS NOT NULL");
 
                     b.ToTable("BonusTransactions");
                 });
@@ -740,6 +795,455 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("StoreLevels");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.BirthdayGrant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("BirthdayDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Manual")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("StaffUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "CustomerId", "Year")
+                        .IsUnique();
+
+                    b.ToTable("bonus_birthday_grants", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.BonusCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AudienceMode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<int?>("BonusAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BonusValidityDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CancelledBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<Guid>>("CustomerIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<int>("ExcludedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FailedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Filter")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("RecipientsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ScheduledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "ScheduledAt");
+
+                    b.HasIndex("StoreId", "CreatedAt");
+
+                    b.ToTable("bonus_campaigns", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.BonusSettings", b =>
+                {
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("BirthdayAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("BirthdayEnabled")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<Guid>>("BirthdayExcludedCustomerIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<string>("BirthdayMessage")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal?>("BirthdayMinPurchaseAmount")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)");
+
+                    b.Property<int?>("BirthdayMinPurchaseCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BirthdayPurchasePeriodDays")
+                        .HasColumnType("integer");
+
+                    b.PrimitiveCollection<List<Guid>>("BirthdayStatusIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<TimeOnly>("BirthdayTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("BirthdayTiming")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int>("BirthdayTimingDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BirthdayValidity")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateOnly?>("BirthdayValidityDate")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("BirthdayValidityDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("ExpiryEnabled")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<string>>("ExpiryExcludedTypes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.PrimitiveCollection<List<Guid>>("ExpiryStatusIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<string>("ExpiryUnit")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<int>("ExpiryValue")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("WarnChannel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.PrimitiveCollection<List<int>>("WarnDays")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<bool>("WarnEnabled")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("StoreId");
+
+                    b.ToTable("bonus_settings", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.BonusTerms", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("BasedOnVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PublishedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "Status")
+                        .IsUnique()
+                        .HasFilter("\"Status\" IN ('Draft', 'Published')");
+
+                    b.HasIndex("StoreId", "Version");
+
+                    b.ToTable("bonus_terms", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.CampaignRecipient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BonusCardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BonusTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Contact")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId", "CustomerId")
+                        .IsUnique();
+
+                    b.ToTable("bonus_campaign_recipients", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.ExpiryWarning", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DaysBefore")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("LotId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LotId", "DaysBefore")
+                        .IsUnique();
+
+                    b.ToTable("bonus_expiry_warnings", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.LoyaltyStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AccrualPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<bool>("AutoDowngrade")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<bool>("CountReturns")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<string>("Period")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Rule")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ThresholdAmount")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)");
+
+                    b.Property<int?>("ThresholdCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ValidityDays")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId", "SortOrder");
+
+                    b.ToTable("loyalty_statuses", "pos");
                 });
 
             modelBuilder.Entity("SalemBonus.Domain.Pos.Catalog.Brand", b =>
@@ -1141,7 +1645,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SalemBonus.Domain.Pos.Finance.FinanceAccount", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Balance")
@@ -1209,7 +1712,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SalemBonus.Domain.Pos.Finance.FinanceCategory", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1253,7 +1755,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SalemBonus.Domain.Pos.Finance.FinanceEntry", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("AccountId")
@@ -1288,7 +1789,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SalemBonus.Domain.Pos.Finance.FinanceOperation", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("Amount")

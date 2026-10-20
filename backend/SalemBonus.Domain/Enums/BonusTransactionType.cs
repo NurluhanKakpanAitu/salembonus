@@ -11,4 +11,8 @@ public enum BonusTransactionType
     ReturnRestore = 5,
     /// <summary>Тауар қайтарылды — сатылымда есептелген бонус алынды (−).</summary>
     ReturnReversal = 6,
+    /// <summary>Қолмен түзету (ТЗ «Бонусы» §8.3): оң — қолмен есептеу (партия), теріс — қолмен шегеру.</summary>
+    Adjustment = 7,
+    /// <summary>Сторно: түпнұсқаға кері операция, түпнұсқа журналда қалады.</summary>
+    Reversal = 8,
 }

@@ -3,7 +3,7 @@ import { ChevronsLeft, ChevronsRight, ExternalLink, X } from 'lucide-react'
 import { Logo } from '../components/Logo'
 import { activeStore, useAuth } from '../lib/auth'
 import { useT } from '../lib/i18n'
-import { canSee, FINANCE_SECTIONS, NAV } from './nav'
+import { canSee, NAV, SUB_SECTIONS } from './nav'
 
 /** Қара сол жақ мәзір. Тек рұқсат етілген бөлімдер көрінеді; мобильдіде шығып тұратын панель. */
 export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
@@ -16,8 +16,8 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
   const store = useAuth(activeStore)
   const items = NAV.filter((i) => canSee(i, store))
   const location = useLocation()
-  const financeOpen = location.pathname.startsWith('/finance')
-  const financeSection = FINANCE_SECTIONS.find((s) => s.path !== '' && location.pathname.startsWith(`/finance/${s.path}`))?.path ?? ''
+  const openRoot = Object.keys(SUB_SECTIONS).find((root) => location.pathname.startsWith(root)) ?? null
+  const openSection = openRoot ? SUB_SECTIONS[openRoot].find((s) => s.path !== '' && location.pathname.startsWith(`${openRoot}/${s.path}`))?.path ?? '' : ''
 
   return (
     <>
@@ -74,13 +74,13 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
                       {content}
                     </NavLink>
                   )}
-                  {item.path === '/finance' && financeOpen && !collapsed && (
-                    // «Финансы» подразделдері (ТЗ «Финансы» §2): бөлім ашық тұрғанда мәзір ішінде, белсендісі бөлектеледі.
+                  {SUB_SECTIONS[item.path] && openRoot === item.path && !collapsed && (
+                    // Ішкі бөлімдер («Финансы», «Бонусы»): бөлім ашық тұрғанда мәзір ішінде, белсендісі бөлектеледі.
                     <ul className="mt-1 flex flex-col gap-0.5 pl-4">
-                      {FINANCE_SECTIONS.map((s) => (
+                      {SUB_SECTIONS[item.path].map((s) => (
                         <li key={s.path}>
-                          <NavLink to={`/finance/${s.path}${location.search}`} end={s.path === ''} onClick={onClose}
-                            className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] ${financeSection === s.path ? 'bg-nav-2 font-semibold text-white' : 'text-nav-ink/80 hover:bg-nav-2 hover:text-white'}`}>
+                          <NavLink to={`${item.path}/${s.path}${location.search}`} end={s.path === ''} onClick={onClose}
+                            className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] ${openSection === s.path ? 'bg-nav-2 font-semibold text-white' : 'text-nav-ink/80 hover:bg-nav-2 hover:text-white'}`}>
                             <s.icon size={15} className="shrink-0" /><span className="truncate">{t(s.label)}</span>
                           </NavLink>
                         </li>

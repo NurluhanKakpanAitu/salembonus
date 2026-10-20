@@ -16,6 +16,7 @@ const StatisticsPage = lazy(() => import('./pages/statistics/StatisticsPage').th
 const InventoryPage = lazy(() => import('./pages/inventory/InventoryPage').then((m) => ({ default: m.InventoryPage })))
 const SalesPage = lazy(() => import('./pages/sales/SalesPage').then((m) => ({ default: m.SalesPage })))
 const FinancePage = lazy(() => import('./pages/finance/FinancePage').then((m) => ({ default: m.FinancePage })))
+const BonusPage = lazy(() => import('./pages/bonus/BonusPage').then((m) => ({ default: m.BonusPage })))
 
 /** Кірмеген пайдаланушы кіру бетіне жіберіледі. Шешімді сервер қабылдайды (ТЗ §11.8). */
 function RequireAuth() {
@@ -58,13 +59,14 @@ export default function App() {
             {NAV.filter((item) => item.path !== '/cashier').map((item) => (
               <Route
                 key={item.path}
-                path={item.path === '/products' ? '/products/*' : item.path === '/warehouse' ? '/warehouse/*' : item.path === '/statistics' ? '/statistics/*' : item.path === '/finance' ? '/finance/*' : item.path}
+                path={['/products', '/warehouse', '/statistics', '/finance', '/bonus'].includes(item.path) ? `${item.path}/*` : item.path}
                 element={
                   item.path === '/products' ? <ProductsPage />
                   : item.path === '/warehouse' ? <InventoryPage />
                   : item.path === '/sales' ? <SalesPage />
                   : item.path === '/statistics' ? <StatisticsPage />
                   : item.path === '/finance' ? <FinancePage />
+                  : item.path === '/bonus' ? <BonusPage />
                   : <SectionPage item={item} />
                 }
               />

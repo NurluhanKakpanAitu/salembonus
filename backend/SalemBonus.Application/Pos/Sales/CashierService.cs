@@ -29,6 +29,7 @@ public class CashierService(
     IRegisterRepository registerRepository,
     WarehouseService warehouses,
     BonusLedger ledger,
+    SalemBonus.Application.Pos.Bonus.BonusProgram program,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
 {
@@ -139,7 +140,7 @@ public class CashierService(
 
         var result = new List<CashierCustomerDto>();
         foreach (var c in found)
-            result.Add(ToDto(c, store, await cards.GetAsync(c.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, c.Id, ct)));
+            result.Add(await ToDtoAsync(c, store, await cards.GetAsync(c.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, c.Id, ct), ct));
         return result;
     }
 
@@ -148,7 +149,7 @@ public class CashierService(
         var (_, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
         var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
         var customer = await customers.GetByIdAsync(id, ct) ?? throw new NotFoundException(Messages.CustomerNotFound(Lang));
-        return ToDto(customer, store, await cards.GetAsync(customer.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct));
+        return await ToDtoAsync(customer, store, await cards.GetAsync(customer.Id, store.Id, ct), await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct), ct);
     }
 
     /// <summary>
@@ -161,7 +162,7 @@ public class CashierService(
         var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));
         var customer = await customers.GetByIdAsync(id, ct) ?? throw new NotFoundException(Messages.CustomerNotFound(Lang));
         var card = await cards.GetAsync(customer.Id, store.Id, ct);
-        var dto = ToDto(customer, store, card, await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct));
+        var dto = await ToDtoAsync(customer, store, card, await sales.OpenDebtTotalAsync(store.Id, customer.Id, ct), ct);
 
         string? region = null, district = null, settlement = null;
         if (customer.KatoCode is { Length: > 0 } code)
@@ -226,17 +227,18 @@ public class CashierService(
         var card = await ledger.GetOrCreateCardAsync(customer, store, now, ct);
         access.Audit(orgId, m.StoreId, "customer.register", "customer", customer.Id, null, new { customer.FullName, Phone = phone });
         await unitOfWork.SaveChangesAsync(ct);
-        return ToDto(customer, store, card, 0);
+        return await ToDtoAsync(customer, store, card, 0, ct);
     }
 
-    private CashierCustomerDto ToDto(Customer c, Store store, BonusCard? card, decimal debt)
+    /// <summary>Мәртебе атауы мен пайызы — «Бонусы» бағдарламасынан (бар болса), әйтпесе ескі баспалдақтан.</summary>
+    private async Task<CashierCustomerDto> ToDtoAsync(Customer c, Store store, BonusCard? card, decimal debt, CancellationToken ct)
     {
         var level = card?.Level ?? CustomerLevel.New;
         return new CashierCustomerDto(
             c.Id, c.FullName, c.Phone, c.BirthDate,
-            CustomerLevels.Name(level, Lang), CustomerLevels.Key(level),
+            await program.StatusNameAsync(card, store, ct), CustomerLevels.Key(level),
             card?.Balance ?? 0,
-            BonusRules.PercentFor(level, BonusRules.LadderOf(store)),
+            await program.PercentForAsync(card, store, ct),
             card is not null,
             debt);
     }

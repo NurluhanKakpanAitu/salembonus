@@ -20,15 +20,22 @@ public class BonusCardRepository(AppDbContext db) : IBonusCardRepository
             .Include(c => c.Store).ThenInclude(s => s!.Levels)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
 
-    public Task<BonusCard?> GetForUpdateAsync(Guid customerId, Guid storeId, CancellationToken ct = default) =>
-        db.BonusCards
+    /// <summary>Карта жолы бұғатталады (транзакция ішінде): екі касса бір балансты екі рет жұмсай алмайды (ТЗ «Бонусы» §11.2).</summary>
+    public async Task<BonusCard?> GetForUpdateAsync(Guid customerId, Guid storeId, CancellationToken ct = default)
+    {
+        await db.Database.ExecuteSqlAsync($"""SELECT 1 FROM "BonusCards" WHERE "CustomerId" = {customerId} AND "StoreId" = {storeId} FOR UPDATE""", ct);
+        return await db.BonusCards
             .Include(c => c.Store).ThenInclude(s => s!.Levels)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId && c.StoreId == storeId, ct);
+    }
 
-    public Task<BonusCard?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default) =>
-        db.BonusCards
+    public async Task<BonusCard?> GetByIdForUpdateAsync(Guid id, CancellationToken ct = default)
+    {
+        await db.Database.ExecuteSqlAsync($"""SELECT 1 FROM "BonusCards" WHERE "Id" = {id} FOR UPDATE""", ct);
+        return await db.BonusCards
             .Include(c => c.Store)
             .FirstOrDefaultAsync(c => c.Id == id, ct);
+    }
 
     public void Add(BonusCard card) => db.BonusCards.Add(card);
 }

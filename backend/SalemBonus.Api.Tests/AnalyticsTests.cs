@@ -14,7 +14,7 @@ public class AnalyticsTests(ApiFixture api)
 {
     private const string A = "/api/pos/v1/analytics";
 
-    private static string Today() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(5)).ToString("yyyy-MM-dd"); // Asia/Almaty
+    private static string Today() => ApiFixture.StoreToday.ToString("yyyy-MM-dd"); // Asia/Almaty
     private static string Day() => $"from={Today()}&to={Today()}";
 
     private static JsonNode Kpi(JsonNode dto, string key) =>

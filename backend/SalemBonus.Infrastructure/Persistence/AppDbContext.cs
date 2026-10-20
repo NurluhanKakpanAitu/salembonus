@@ -5,6 +5,7 @@ using SalemBonus.Domain.Pos;
 using SalemBonus.Domain.Pos.Catalog;
 using SalemBonus.Domain.Pos.Inventory;
 using SalemBonus.Domain.Pos.Finance;
+using SalemBonus.Domain.Pos.Bonus;
 using SalemBonus.Domain.Pos.Sales;
 
 namespace SalemBonus.Infrastructure.Persistence;
@@ -66,6 +67,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
     public DbSet<FinanceOperation> FinanceOperations => Set<FinanceOperation>();
     public DbSet<FinanceEntry> FinanceEntries => Set<FinanceEntry>();
+    public DbSet<LoyaltyStatus> LoyaltyStatuses => Set<LoyaltyStatus>();
+    public DbSet<BonusSettings> BonusSettings => Set<BonusSettings>();
+    public DbSet<BirthdayGrant> BirthdayGrants => Set<BirthdayGrant>();
+    public DbSet<ExpiryWarning> ExpiryWarnings => Set<ExpiryWarning>();
+    public DbSet<BonusCampaign> BonusCampaigns => Set<BonusCampaign>();
+    public DbSet<CampaignRecipient> CampaignRecipients => Set<CampaignRecipient>();
+    public DbSet<BonusTerms> BonusTerms => Set<BonusTerms>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

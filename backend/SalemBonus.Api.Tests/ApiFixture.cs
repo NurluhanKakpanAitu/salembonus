@@ -22,6 +22,13 @@ namespace SalemBonus.Api.Tests;
 /// </summary>
 public sealed class ApiFixture : IAsyncLifetime
 {
+    /// <summary>
+    /// Демо дүкеннің «қазіргі» уақыты — сервер сияқты Asia/Almaty белдеуі ОЖ деректерінен (Windows-та ескі деректер +6 береді):
+    /// тесттің «бүгіні» сервердің «бүгінімен» әрқашан бірдей болады, тәуліктің кез келген сағатында.
+    /// </summary>
+    public static DateTime StoreNow => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Asia/Almaty"));
+    public static DateOnly StoreToday => DateOnly.FromDateTime(StoreNow);
+
     /// <summary>Docker жоқ машинада: SALEMBONUS_TEST_DB=<connection string> — дайын (бос) базаға қосылады, контейнер көтерілмейді.</summary>
     private static readonly string? ExternalDb = Environment.GetEnvironmentVariable("SALEMBONUS_TEST_DB");
     private readonly PostgreSqlContainer? _db = ExternalDb is null ? new PostgreSqlBuilder("postgres:18-alpine").Build() : null;

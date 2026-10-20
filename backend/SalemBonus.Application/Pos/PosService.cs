@@ -59,12 +59,12 @@ public class PosService(
         // Бір сатып алудың барлық операциясы бір чекке жатады.
         var receiptId = Guid.NewGuid();
         Guid? redemptionId = request.RedeemAmount > 0
-            ? await ledger.RedeemAsync(card, customer, store, request.RedeemAmount, request.PurchaseAmount, request.Comment, receiptId, now, ct)
+            ? await ledger.RedeemAsync(card, customer, store, request.RedeemAmount, request.PurchaseAmount, request.Comment, receiptId, now, ct, "pos")
             : null;
 
         var paid = request.PurchaseAmount - request.RedeemAmount;
         // Пайыз клиенттің сол дүкендегі ағымдағы мәртебесі бойынша алынады.
-        var (accrued, accrualId, upgraded) = ledger.Accrue(card, customer, store, paid, request.PurchaseAmount, request.Comment, receiptId, now);
+        var (accrued, accrualId, upgraded) = await ledger.AccrueAsync(card, customer, store, paid, request.PurchaseAmount, request.Comment, receiptId, now, ct, "pos");
 
         await unitOfWork.SaveChangesAsync(ct);
 

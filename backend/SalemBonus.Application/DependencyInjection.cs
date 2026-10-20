@@ -34,6 +34,18 @@ public static class DependencyInjection
         services.AddScoped<ICatalogNodeService, CatalogNodeService>();
         services.AddScoped<ICatalogDictionaryService, CatalogDictionaryService>();
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusProgram>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusAccess>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusMapper>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusBirthdays>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusStatusService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusSettingsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusOperationsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusCampaignService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusReportsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusTermsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusJobs>();
+        services.AddScoped<SalemBonus.Application.Pos.Bonus.BonusExport>();
         services.AddScoped<SalemBonus.Application.BonusCards.BonusLedger>();
         services.AddScoped<ProductExchangeService>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.CashierService>();

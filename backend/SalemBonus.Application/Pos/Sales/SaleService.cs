@@ -215,7 +215,7 @@ public class SaleService(
                     await ledger.RedeemAsync(card, customer, store, request.BonusRedeem, afterDiscount, $"Чек №{sale.Number}", sale.Id, now, ct);
                 // Бонус тек нақты төленген бөліктен: қарызға берілгені есептелмейді.
                 var paidNow = total - sale.DebtAmount;
-                sale.BonusAccrued = ledger.Accrue(card, customer, store, Math.Round(paidNow * eligibleShare, 2), afterDiscount, $"Чек №{sale.Number}", sale.Id, now).Accrued;
+                sale.BonusAccrued = (await ledger.AccrueAsync(card, customer, store, Math.Round(paidNow * eligibleShare, 2), afterDiscount, $"Чек №{sale.Number}", sale.Id, now, ct)).Accrued;
             }
 
             if (debtRequest is { } dr)

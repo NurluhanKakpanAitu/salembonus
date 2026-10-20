@@ -1,4 +1,4 @@
-import type { ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import type { ReactNode, SelectHTMLAttributes } from 'react'
 
 /** Жапсырма + өріс + қате. Модалды формаларда бірдей көрінсін. */
 export function Field({ label, error, required, children, hint }: {
@@ -33,7 +33,7 @@ export function Select({ error, className = '', children, ...rest }: { error?: b
   )
 }
 
-export function Textarea({ className = '', ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({ className = '', ...rest }: React.ComponentProps<'textarea'>) {
   return <textarea {...rest} className={`${control} min-h-24 border-line py-2.5 ${className}`} />
 }
 

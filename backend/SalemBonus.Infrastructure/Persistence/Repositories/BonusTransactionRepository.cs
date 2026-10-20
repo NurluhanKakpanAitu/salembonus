@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Entities;
+using SalemBonus.Domain.Enums;
 
 namespace SalemBonus.Infrastructure.Persistence.Repositories;
 
@@ -29,9 +30,12 @@ public class BonusTransactionRepository(AppDbContext db) : IBonusTransactionRepo
             .ThenBy(t => t.CreatedAt)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<BonusTransaction>> GetExpiredLotsAsync(DateTime now, int take, CancellationToken ct = default) =>
-        await db.BonusTransactions
-            .Where(t => t.Remaining > 0 && t.ExpiresAt != null && t.ExpiresAt <= now)
+    public async Task<IReadOnlyList<BonusTransaction>> GetExpiredLotsAsync(DateTime now, int take, IReadOnlyCollection<Guid> expiryOffStores, CancellationToken ct = default) =>
+        await (from t in db.BonusTransactions
+               join c in db.BonusCards on t.BonusCardId equals c.Id
+               where t.Remaining > 0 && t.ExpiresAt != null && t.ExpiresAt <= now
+                     && (!expiryOffStores.Contains(c.StoreId) || t.Type == BonusTransactionType.Birthday || t.Type == BonusTransactionType.Promo)
+               select t)
             .OrderBy(t => t.ExpiresAt)
             .Take(take)
             .ToListAsync(ct);

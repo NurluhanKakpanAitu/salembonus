@@ -349,7 +349,7 @@ public class InventoryTests(ApiFixture api)
         var product = await pos.CreateProductAsync(price: 1000, stock: 0);
         var doc = (await CreateReceiptAsync(pos, null, ReceiptLine(product, 1, 100))).Ok;
         var number = doc["number"]!.GetValue<string>();
-        var today = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(5)); // Asia/Almaty — демо дүкеннің белдеуі
+        var today = ApiFixture.StoreToday; // Asia/Almaty — демо дүкеннің белдеуі
         var ymd = today.ToString("yyyy-MM-dd");
         var tomorrow = today.AddDays(1).ToString("yyyy-MM-dd");
 

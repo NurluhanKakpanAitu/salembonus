@@ -30,7 +30,7 @@ public class SalesHistoryTests(ApiFixture api)
     private static async Task<JsonArray> HistoryAsync(Pos pos, string query) =>
         (await pos.Get(pos.Owner, $"{Sales}/history?{query}")).Ok["items"]!.AsArray();
 
-    private static string Today() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(5)).ToString("yyyy-MM-dd"); // Asia/Almaty
+    private static string Today() => ApiFixture.StoreToday.ToString("yyyy-MM-dd"); // Asia/Almaty
 
     // ---------- Тізім және сүзгілер (§6–7) ----------
 

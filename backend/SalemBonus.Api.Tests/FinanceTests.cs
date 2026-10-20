@@ -15,7 +15,7 @@ public class FinanceTests(ApiFixture api)
     private const string Inv = "/api/pos/v1/inventory";
 
     private static object Debt(decimal amount) => new { method = "Debt", amount, dueDate = DateOnly.FromDateTime(DateTime.Today.AddDays(7)) };
-    private static string Today() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(5)).ToString("yyyy-MM-dd");
+    private static string Today() => ApiFixture.StoreToday.ToString("yyyy-MM-dd");
     private static string Period() => $"from=2020-01-01&to={Today()}";
 
     private static async Task<JsonNode> AccountsAsync(Pos pos) => (await pos.Get(pos.Owner, $"{F}/accounts")).Ok;

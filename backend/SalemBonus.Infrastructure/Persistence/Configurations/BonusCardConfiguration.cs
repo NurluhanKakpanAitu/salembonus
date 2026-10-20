@@ -11,6 +11,8 @@ public class BonusCardConfiguration : IEntityTypeConfiguration<BonusCard>
         b.HasKey(x => x.Id);
         b.HasIndex(x => new { x.CustomerId, x.StoreId }).IsUnique();
         b.Property(x => x.TotalSpent).HasPrecision(14, 2);
+        b.Property(x => x.StatusReason).HasMaxLength(500);
+        b.HasIndex(x => new { x.StoreId, x.StatusId });
         b.HasOne(x => x.Store).WithMany().HasForeignKey(x => x.StoreId);
         b.HasOne<Customer>().WithMany().HasForeignKey(x => x.CustomerId);
     }

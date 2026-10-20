@@ -613,4 +613,60 @@ public static class Messages
     public static string FinanceOperationNotFound(AppLanguage l) => Pick(l, "Операция табылмады", "Операция не найдена");
     public static string FinanceAllocationTooMuch(AppLanguage l, decimal remaining) => Pick(l,
         $"Бөлу сомасы құжат қарызынан аспауы керек ({remaining:N2} ₸)", $"Сумма распределения не может превышать остаток долга по документу ({remaining:N2} ₸)");
+    // ---------- Бонусы (ТЗ «Бонусы» v1.0) ----------
+    public static string BonusInsufficient(AppLanguage l, int balance) => Pick(l,
+        $"Бонус жеткіліксіз: қолжетімді {balance:N0}", $"Недостаточно бонусов: доступно {balance:N0}");
+    public static string BonusAmountInvalid(AppLanguage l) => Pick(l, "Бонус саны 1-ден 10 000 000-ға дейін болуы керек", "Количество бонусов — от 1 до 10 000 000");
+    public static string BonusReasonRequired(AppLanguage l) => Pick(l, "Себебін көрсетіңіз (кемінде 3 таңба)", "Укажите причину (не короче 3 символов)");
+    public static string BonusCustomerNotFound(AppLanguage l) => Pick(l, "Бағдарламада мұндай клиент жоқ", "Клиент не найден в программе");
+    public static string BonusStatusNotFound(AppLanguage l) => Pick(l, "Мәртебе табылмады", "Статус не найден");
+    public static string BonusStatusNameInvalid(AppLanguage l) => Pick(l, "Атауы 2–60 таңба", "Название — от 2 до 60 символов");
+    public static string BonusStatusDuplicate(AppLanguage l) => Pick(l, "Мұндай атаулы мәртебе бар", "Статус с таким названием уже есть");
+    public static string BonusStatusPercentInvalid(AppLanguage l) => Pick(l, "Есептеу пайызы 0-ден 50%-ға дейін", "Процент начисления — от 0 до 50%");
+    public static string BonusStatusThresholdRequired(AppLanguage l) => Pick(l, "Шарттың мәнін көрсетіңіз", "Укажите значение условия");
+    public static string BonusStatusRuleInvalid(AppLanguage l) => Pick(l, "Тағайындау шарты дұрыс емес", "Неверное условие назначения");
+    public static string BonusStatusValidityInvalid(AppLanguage l) => Pick(l, "Мерзімі 1-ден 3650 күнге дейін", "Срок действия — от 1 до 3650 дней");
+    public static string BonusStatusInUse(AppLanguage l, int count) => Pick(l,
+        $"Мәртебе қолданылуда ({count} клиент) — жоюға болмайды, өшіріңіз", $"Статус используется ({count} клиентов) — удалить нельзя, деактивируйте его");
+    public static string BonusStatusLastRegistration(AppLanguage l) => Pick(l,
+        "Бағдарламада бір белсенді тіркелу мәртебесі қалуы керек", "В программе должен остаться активный статус для регистрации");
+    public static string BonusStatusManualOnly(AppLanguage l) => Pick(l, "Белсенді мәртебені таңдаңыз", "Выберите активный статус");
+    public static string BonusOperationNotFound(AppLanguage l) => Pick(l, "Операция табылмады", "Операция не найдена");
+    public static string BonusNotReversible(AppLanguage l) => Pick(l,
+        "Бұл операция сторноланбайды: сатылым бонусы — қайтарым арқылы, басқасы — қолмен түзетумен", "Эту операцию нельзя сторнировать: бонусы продажи — через возврат, прочие — ручной корректировкой");
+    public static string BonusAlreadyReversed(AppLanguage l) => Pick(l, "Операция бұрын сторноланған", "Операция уже сторнирована");
+    public static string BonusLotSpent(AppLanguage l, int available) => Pick(l,
+        $"Бонустың бір бөлігі жұмсалған — сторноға тек {available:N0} қолжетімді. Қолмен шегеруді қолданыңыз", $"Часть бонусов уже использована — для сторно доступно только {available:N0}. Используйте ручное списание");
+    public static string BonusNotRedemption(AppLanguage l) => Pick(l, "Қайтаруға тек шегеру операциясын таңдаңыз", "Для возврата выберите операцию списания");
+    public static string BonusReturnTooMuch(AppLanguage l, int max) => Pick(l,
+        $"Қайтаруға болатыны {max:N0}-нан аспайды (бастапқы шегеру минус бұрын қайтарылғаны)", $"Можно вернуть не больше {max:N0} (исходное списание за вычетом уже возвращённого)");
+    public static string BonusSettingsValueInvalid(AppLanguage l) => Pick(l, "Мерзім 1-ден 120 айға (3650 күнге) дейін", "Срок — от 1 до 120 месяцев (3650 дней)");
+    public static string BonusWarnDaysInvalid(AppLanguage l) => Pick(l, "Ескерту күндері 1-ден 90-ға дейін", "Дни предупреждения — от 1 до 90");
+    public static string BonusChannelUnavailable(AppLanguage l) => Pick(l,
+        "Арна қосылмаған: тек SalemBonus қосымшасы қолжетімді", "Канал не подключён: доступно только приложение SalemBonus");
+    public static string BonusBirthdayAmountInvalid(AppLanguage l) => Pick(l, "Сыйлық сомасын көрсетіңіз (1-ден 1 000 000-ға дейін)", "Укажите сумму подарка (от 1 до 1 000 000)");
+    public static string BonusBirthdayTimingInvalid(AppLanguage l) => Pick(l, "Күн саны 1-ден 30-ға дейін", "Количество дней — от 1 до 30");
+    public static string BonusBirthdayValidityIncompatible(AppLanguage l) => Pick(l,
+        "«Туған күнге дейін» тек туған күннен бұрын есептегенде мүмкін", "«До дня рождения» возможно только при начислении до дня рождения");
+    public static string BonusBirthdayValidityInvalid(AppLanguage l) => Pick(l, "Жарамдылық мерзімін дұрыс көрсетіңіз", "Укажите корректный срок действия");
+    public static string BonusBirthdayMessageInvalid(AppLanguage l) => Pick(l, "Хабарлама мәтіні 1000 таңбадан аспайды", "Текст уведомления — не длиннее 1000 символов");
+    public static string BonusBirthdayAlreadyGranted(AppLanguage l, int year) => Pick(l,
+        $"Бұл клиентке {year} жылғы сыйлық берілген", $"Подарок за {year} год этому клиенту уже начислен");
+    public static string BonusBirthdayNoBirthDate(AppLanguage l) => Pick(l, "Клиенттің туған күні көрсетілмеген", "У клиента не указана дата рождения");
+    public static string BonusBirthdayDisabled(AppLanguage l) => Pick(l, "Туған күн ережесі бапталмаған — сыйлық сомасын көрсетіңіз", "Правило дня рождения не настроено — укажите сумму подарка");
+    public static string BonusCampaignNotFound(AppLanguage l) => Pick(l, "Тарату табылмады", "Рассылка не найдена");
+    public static string BonusCampaignNameRequired(AppLanguage l) => Pick(l, "Тарату атауын көрсетіңіз (2–120 таңба)", "Укажите название рассылки (2–120 символов)");
+    public static string BonusCampaignMessageRequired(AppLanguage l) => Pick(l, "Хабарлама мәтінін жазыңыз (1000 таңбаға дейін)", "Введите текст сообщения (до 1000 символов)");
+    public static string BonusCampaignPastDate(AppLanguage l) => Pick(l, "Жіберу уақыты өтіп кеткен — болашақ уақытты таңдаңыз", "Время отправки в прошлом — выберите будущее время");
+    public static string BonusCampaignNotEditable(AppLanguage l) => Pick(l, "Таратуды тек черновик не жоспарланған күйде өзгертуге болады", "Изменять можно только черновик или запланированную рассылку");
+    public static string BonusCampaignNotCancellable(AppLanguage l) => Pick(l, "Бұл таратуды тоқтатуға болмайды", "Эту рассылку нельзя отменить");
+    public static string BonusCampaignNoRecipients(AppLanguage l) => Pick(l, "Алушылар жоқ — аудиторияны өзгертіңіз", "Нет получателей — измените аудиторию");
+    public static string BonusCampaignBonusInvalid(AppLanguage l) => Pick(l, "Бонус сомасы 1-ден 100 000-ға дейін, мерзімі 1-ден 365 күнге дейін", "Сумма бонусов — от 1 до 100 000, срок — от 1 до 365 дней");
+    public static string BonusTestCustomerNotFound(AppLanguage l) => Pick(l, "Тест клиенті бағдарламада табылмады", "Тестовый клиент не найден в программе");
+    public static string BonusLotNotFound(AppLanguage l) => Pick(l, "Партия табылмады", "Лот не найден");
+    public static string BonusLotDateInvalid(AppLanguage l) => Pick(l, "Жану күні болашақта болуы керек", "Дата сгорания должна быть в будущем");
+    public static string BonusTermsEmpty(AppLanguage l) => Pick(l, "Ереже мәтіні бос", "Текст правил пуст");
+    public static string BonusTermsTooLong(AppLanguage l) => Pick(l, "Ереже мәтіні тым ұзын (100 000 таңбаға дейін)", "Текст правил слишком длинный (до 100 000 символов)");
+    public static string BonusTermsNoDraft(AppLanguage l) => Pick(l, "Жариялайтын черновик жоқ", "Нет черновика для публикации");
+    public static string BonusTermsNotFound(AppLanguage l) => Pick(l, "Нұсқа табылмады", "Версия не найдена");
 }
