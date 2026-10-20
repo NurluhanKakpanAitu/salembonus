@@ -19,15 +19,17 @@ namespace SalemBonus.Api.Tests;
 /// </summary>
 public sealed class ApiFixture : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _db = new PostgreSqlBuilder("postgres:18-alpine").Build();
+    /// <summary>Docker жоқ машинада: SALEMBONUS_TEST_DB=<connection string> — дайын (бос) базаға қосылады, контейнер көтерілмейді.</summary>
+    private static readonly string? ExternalDb = Environment.GetEnvironmentVariable("SALEMBONUS_TEST_DB");
+    private readonly PostgreSqlContainer? _db = ExternalDb is null ? new PostgreSqlBuilder("postgres:18-alpine").Build() : null;
     private WebApplicationFactory<Program> _factory = null!;
     private (string Owner, string Cashier)? _tokens;
 
     public async Task InitializeAsync()
     {
-        await _db.StartAsync();
+        if (_db is not null) await _db.StartAsync();
         // Program конфигурацияны тіркеу кезінде бірден оқиды — айнымалылар хост құрылмай тұрып қойылады.
-        Environment.SetEnvironmentVariable("ConnectionStrings__Default", _db.GetConnectionString());
+        Environment.SetEnvironmentVariable("ConnectionStrings__Default", ExternalDb ?? _db!.GetConnectionString());
         Environment.SetEnvironmentVariable("Jwt__Key", "integration-tests-signing-key-0123456789-abcdefghij");
         // Тест шығысы SQL логына толмасын: тек ескерту мен қате.
         Environment.SetEnvironmentVariable("Logging__LogLevel__Default", "Warning");
@@ -80,7 +82,7 @@ public sealed class ApiFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await _factory.DisposeAsync();
-        await _db.DisposeAsync();
+        if (_db is not null) await _db.DisposeAsync();
     }
 }
 
@@ -106,6 +108,7 @@ public sealed class Pos(HttpClient http)
 
     public Task<ApiResult> Get(string token, string path) => Send(HttpMethod.Get, token, path, null);
     public Task<ApiResult> Post(string token, string path, object body) => Send(HttpMethod.Post, token, path, body);
+    public Task<ApiResult> Put(string token, string path, object body) => Send(HttpMethod.Put, token, path, body);
 
     public async Task<ApiResult> Send(HttpMethod method, string token, string path, object? body, string? storeId = null)
     {
@@ -123,6 +126,7 @@ public sealed class Pos(HttpClient http)
 
     /// <summary>Жеке тауар: басқа тесттердің қалдығына тәуелді болмау үшін әр тест өзінікін жасайды.</summary>
     private readonly Dictionary<Guid, string> _names = [];
+    public string NameOf(Guid productId) => _names[productId];
 
     public async Task<Guid> CreateProductAsync(decimal price, decimal stock, decimal purchase = 0)
     {

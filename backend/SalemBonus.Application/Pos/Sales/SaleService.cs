@@ -200,8 +200,8 @@ public class SaleService(
                 inventory.AddMovement(new StockMovement
                 {
                     Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = l.ProductId,
-                    Type = StockMovementType.Sale, Quantity = -l.Quantity, StaffUserId = access.StaffUserId,
-                    DocumentId = sale.Id, CreatedAt = now,
+                    Type = StockMovementType.Sale, Quantity = -l.Quantity, BalanceAfter = balance.Quantity, StaffUserId = access.StaffUserId,
+                    DocumentId = sale.Id, DocumentNumber = $"Чек №{sale.Number}", CreatedAt = now,
                 });
             }
 

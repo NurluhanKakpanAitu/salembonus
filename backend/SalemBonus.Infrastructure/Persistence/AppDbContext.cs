@@ -43,6 +43,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<StockBalance> StockBalances => Set<StockBalance>();
     public DbSet<ProductPrice> ProductPrices => Set<ProductPrice>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<StockDocument> StockDocuments => Set<StockDocument>();
+    public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
+    public DbSet<SupplierPayment> SupplierPayments => Set<SupplierPayment>();
+    public DbSet<DocumentCounter> DocumentCounters => Set<DocumentCounter>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<SalePayment> SalePayments => Set<SalePayment>();

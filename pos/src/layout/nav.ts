@@ -21,7 +21,7 @@ const managers: StaffRole[] = ['Owner', 'Admin']
 export const NAV: NavItem[] = [
   { path: '/cashier', label: 'nav.cashier', icon: Calculator, permission: Permission.SalesCreate },
   { path: '/products', label: 'nav.products', icon: Package, permission: Permission.ProductsView },
-  { path: '/warehouse', label: 'nav.warehouse', icon: Warehouse, roles: managers },
+  { path: '/warehouse', label: 'nav.warehouse', icon: Warehouse, permission: Permission.InventoryView },
   { path: '/sales', label: 'nav.sales', icon: ShoppingCart, roles: managers },
   { path: '/statistics', label: 'nav.statistics', icon: ChartColumn, permission: Permission.StatisticsView },
   { path: '/finance', label: 'nav.finance', icon: Wallet, permission: Permission.FinanceView },

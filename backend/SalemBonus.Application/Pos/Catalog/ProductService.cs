@@ -39,7 +39,7 @@ public partial class ProductService(
     public async Task<ProductPageDto> ListAsync(string? search, string? status, Guid? nodeId, Guid? brandId, Guid? unitId,
         int page, int pageSize, CancellationToken ct = default)
     {
-        var (orgId, _) = await access.RequireAsync(StaffPermissions.ProductsView, ct);
+        var (orgId, _) = await access.RequireAnyAsync(ct, StaffPermissions.ProductsView, StaffPermissions.InventoryView);
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
@@ -68,7 +68,7 @@ public partial class ProductService(
     /// <summary>Кез келген байланған штрихкод бір тауарды табады (ТЗ §6.5).</summary>
     public async Task<ProductListItemDto> FindByBarcodeAsync(string barcode, CancellationToken ct = default)
     {
-        var (orgId, _) = await access.RequireAsync(StaffPermissions.ProductsView, ct);
+        var (orgId, _) = await access.RequireAnyAsync(ct, StaffPermissions.ProductsView, StaffPermissions.InventoryView);
         var product = await repo.FindByBarcodeAsync(orgId, barcode.Trim(), ct) ?? throw new NotFoundException(Messages.ProductNotFound(Lang));
         return ToListItem(product, await LookupAsync(orgId, await catalog.ListNodesAsync(orgId, ct), ct));
     }
@@ -434,7 +434,7 @@ public partial class ProductService(
             inventory.AddMovement(new StockMovement
             {
                 Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = product.Id,
-                Type = StockMovementType.Opening, Quantity = quantity, UnitCost = purchase, StaffUserId = access.StaffUserId, CreatedAt = now,
+                Type = StockMovementType.Opening, Quantity = quantity, BalanceAfter = quantity, UnitCost = purchase, StaffUserId = access.StaffUserId, DocumentNumber = "Начальный остаток", CreatedAt = now,
             });
             inventory.AddBalance(new StockBalance { WarehouseId = warehouse.Id, ProductId = product.Id, Quantity = quantity, UpdatedAt = now });
         }

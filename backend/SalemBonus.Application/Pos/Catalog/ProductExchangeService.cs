@@ -603,7 +603,7 @@ public partial class ProductExchangeService(
                 inventory.AddMovement(new StockMovement
                 {
                     Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = p.Id,
-                    Type = StockMovementType.Opening, Quantity = plan.Quantity.Value, UnitCost = plan.PurchasePrice,
+                    Type = StockMovementType.Opening, Quantity = plan.Quantity.Value, BalanceAfter = plan.Quantity.Value, UnitCost = plan.PurchasePrice, DocumentNumber = "Импорт",
                     StaffUserId = access.StaffUserId, CreatedAt = now,
                 });
                 inventory.AddBalance(new StockBalance { WarehouseId = warehouse.Id, ProductId = p.Id, Quantity = plan.Quantity.Value, UpdatedAt = now });

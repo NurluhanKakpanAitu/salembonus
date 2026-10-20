@@ -13,6 +13,7 @@ import { loadRegister } from './lib/register'
 const CashierPage = lazy(() => import('./pages/CashierPage').then((m) => ({ default: m.CashierPage })))
 const ProductsPage = lazy(() => import('./pages/products/ProductsPage').then((m) => ({ default: m.ProductsPage })))
 const StatisticsPage = lazy(() => import('./pages/StatisticsPage').then((m) => ({ default: m.StatisticsPage })))
+const InventoryPage = lazy(() => import('./pages/inventory/InventoryPage').then((m) => ({ default: m.InventoryPage })))
 
 /** Кірмеген пайдаланушы кіру бетіне жіберіледі. Шешімді сервер қабылдайды (ТЗ §11.8). */
 function RequireAuth() {
@@ -55,9 +56,10 @@ export default function App() {
             {NAV.filter((item) => item.path !== '/cashier').map((item) => (
               <Route
                 key={item.path}
-                path={item.path === '/products' ? '/products/*' : item.path}
+                path={item.path === '/products' ? '/products/*' : item.path === '/warehouse' ? '/warehouse/*' : item.path}
                 element={
                   item.path === '/products' ? <ProductsPage />
+                  : item.path === '/warehouse' ? <InventoryPage />
                   : item.path === '/statistics' ? <StatisticsPage />
                   : <SectionPage item={item} />
                 }

@@ -1,8 +1,8 @@
 namespace SalemBonus.Domain.Pos.Inventory;
 
 /// <summary>
-/// Қойма. Әр дүкенде кемінде біреу («Негізгі қойма») болады. Толық «Склад» модулі кейін;
-/// қазір тек тауар жасағанда бастапқы қалдықты енгізу үшін керек (ТЗ «Товар» §6.2).
+/// Қойма (ТЗ «Склад» §3, §6). Әр дүкенде дәл бір негізгі қойма болады: касса мен приёмка әдепкіде соны
+/// алады. Архивтегі қойма жаңа операцияға таңдалмайды, тарихы қалады; физикалық өшірілмейді.
 /// </summary>
 public class Warehouse
 {
@@ -13,5 +13,8 @@ public class Warehouse
     /// <summary>Дүкеннің әдепкі қоймасы: касса қалдықты осыдан алады.</summary>
     public bool IsDefault { get; set; }
     public bool IsActive { get; set; } = true;
+    /// <summary>Түрі: негізгі, сауда залы, резерв не өз атауы (міндетті емес).</summary>
+    public string? Type { get; set; }
+    public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

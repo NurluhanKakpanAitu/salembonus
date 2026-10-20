@@ -41,6 +41,14 @@ export const Permission = {
   SalesCreate: 'sales.create',
   StaffManage: 'staff.manage',
   SettingsManage: 'settings.manage',
+  ProductsEdit: 'products.edit',
+  InventoryView: 'inventory.view',
+  InventoryReceive: 'inventory.receive',
+  InventoryPost: 'inventory.post',
+  InventoryTransfer: 'inventory.transfer',
+  InventoryWriteOff: 'inventory.writeoff',
+  InventoryWarehouses: 'inventory.warehouses',
+  InventorySuppliers: 'inventory.suppliers',
 } as const
 
 export interface PasswordPolicy {

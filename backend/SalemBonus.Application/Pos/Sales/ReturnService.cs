@@ -129,8 +129,8 @@ public class ReturnService(
                 inventory.AddMovement(new StockMovement
                 {
                     Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = item.ProductId,
-                    Type = StockMovementType.Return, Quantity = quantity, StaffUserId = access.StaffUserId,
-                    DocumentId = saleReturn.Id, CreatedAt = now,
+                    Type = StockMovementType.Return, Quantity = quantity, BalanceAfter = balance.Quantity, StaffUserId = access.StaffUserId,
+                    DocumentId = saleReturn.Id, DocumentNumber = $"Возврат по чеку №{sale.Number}", CreatedAt = now,
                 });
             }
 

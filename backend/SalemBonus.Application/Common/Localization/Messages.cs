@@ -348,6 +348,52 @@ public static class Messages
 
     public static string DefaultWarehouseName(AppLanguage l) => Pick(l, "Негізгі қойма", "Основной склад");
 
+    // «Склад»
+    public static string WarehouseArchived(AppLanguage l) => Pick(l, "Қойма архивте: жаңа операцияға таңдалмайды", "Склад в архиве: его нельзя выбрать для новых операций");
+    public static string WarehouseDefaultCannotArchive(AppLanguage l) => Pick(l,
+        "Негізгі қойманы архивтеу алдында басқа қойманы негізгі етіңіз", "Сначала назначьте основным другой склад, потом архивируйте этот");
+    public static string WarehouseHasStock(AppLanguage l, decimal units) => Pick(l,
+        $"Қоймада {units:0.###} бірлік тауар бар: алдымен басқа қоймаға ауыстырыңыз не есептен шығарыңыз",
+        $"На складе {units:0.###} ед. товара: сначала переместите их на другой склад или спишите");
+    public static string WarehouseHasOpenDocuments(AppLanguage l) => Pick(l,
+        "Қойма бойынша аяқталмаған құжат бар (черновик не жолдағы перемещение)", "По складу есть незавершённые документы (черновик или перемещение в пути)");
+    public static string DocumentNotFound(AppLanguage l) => Pick(l, "Құжат табылмады", "Документ не найден");
+    public static string DocumentNotDraft(AppLanguage l) => Pick(l, "Тек черновикті өзгертуге болады", "Изменять можно только черновик");
+    public static string DocumentNotPosted(AppLanguage l) => Pick(l, "Құжат проведён емес", "Документ не проведён");
+    public static string DocumentLinesRequired(AppLanguage l) => Pick(l, "Кемінде бір тауар қосыңыз", "Добавьте хотя бы один товар");
+    public static string DocumentTooManyLines(AppLanguage l, int max) => Pick(l, $"Бір құжатта {max} жолдан артық болмайды", $"В одном документе не больше {max} строк");
+    public static string DocumentLineQuantityInvalid(AppLanguage l, string name) => Pick(l, $"«{name}»: саны нөлден көп болуы керек", $"«{name}»: количество должно быть больше нуля");
+    public static string DocumentLinePriceInvalid(AppLanguage l, string name) => Pick(l, $"«{name}»: бағаны дұрыс енгізіңіз", $"«{name}»: укажите корректную цену");
+    public static string DocumentProductArchived(AppLanguage l, string name) => Pick(l, $"«{name}» архивте: алдымен қалпына келтіріңіз", $"«{name}» в архиве: сначала восстановите товар");
+    public static string WriteOffReasonRequired(AppLanguage l) => Pick(l, "Списание себебін таңдаңыз", "Укажите причину списания");
+    public static string WriteOffReasonInvalid(AppLanguage l) => Pick(l, "Белгісіз себеп", "Неизвестная причина списания");
+    public static string WriteOffCommentRequired(AppLanguage l) => Pick(l, "«Другое» себебіне түсініктеме міндетті", "Для причины «Другое» нужен комментарий");
+    public static string ReversalReasonRequired(AppLanguage l) => Pick(l, "Сторно себебін жазыңыз", "Укажите причину сторно");
+    public static string ReceiptHasPayments(AppLanguage l) => Pick(l,
+        "Приёмка бойынша төлем бар: алдымен төлемдерді сторнолаңыз", "По приёмке есть оплаты: сначала сторнируйте оплаты");
+    public static string PaymentNeedsSupplier(AppLanguage l) => Pick(l, "Приёмкада жеткізуші көрсетілмеген", "В приёмке не указан поставщик");
+    public static string SupplierPaymentAmountInvalid(AppLanguage l) => Pick(l, "Төлем сомасы нөлден көп болуы керек", "Сумма оплаты должна быть больше нуля");
+    public static string PaymentExceedsDebt(AppLanguage l, decimal remaining) => Pick(l,
+        $"Сома қарыздан асады: қалған қарыз {remaining:N0} ₸", $"Сумма больше остатка долга: осталось {remaining:N0} ₸");
+    public static string SupplierPaymentMethodInvalid(AppLanguage l) => Pick(l, "Төлем түрін таңдаңыз", "Выберите способ оплаты");
+    public static string PaymentNotFound(AppLanguage l) => Pick(l, "Төлем табылмады", "Оплата не найдена");
+    public static string SupplierNotFound(AppLanguage l) => Pick(l, "Жеткізуші табылмады", "Поставщик не найден");
+    public static string SupplierArchived(AppLanguage l) => Pick(l, "Жеткізуші архивте", "Поставщик в архиве");
+    public static string SupplierTypeInvalid(AppLanguage l) => Pick(l, "Жеткізуші түрі дұрыс емес", "Неверный тип поставщика");
+    public static string SupplierHasOpenDocuments(AppLanguage l) => Pick(l,
+        "Жеткізушіде аяқталмаған приёмка (черновик) бар", "У поставщика есть незавершённые приёмки (черновики)");
+    public static string TransferNotFound(AppLanguage l) => Pick(l, "Перемещение табылмады", "Перемещение не найдено");
+    public static string TransferNotDraft(AppLanguage l) => Pick(l, "Тек черновикті өзгертуге не жоюға болады", "Изменять или отменять можно только черновик");
+    public static string TransferNotInTransit(AppLanguage l) => Pick(l, "Құжат «В пути» күйінде емес", "Документ не в статусе «В пути»");
+    public static string TransferSameWarehouse(AppLanguage l) => Pick(l, "Жіберуші мен алушы қойма бірдей", "Склад-отправитель и склад-получатель совпадают");
+    public static string TransferStoreForbidden(AppLanguage l) => Pick(l, "Алушы дүкенге рұқсатыңыз жоқ", "Нет доступа к магазину-получателю");
+    public static string TransferWrongStore(AppLanguage l) => Pick(l,
+        "Қабылдауды алушы дүкеннің контекстінде жасаңыз (жоғарыда дүкенді ауыстырыңыз)", "Приёмку делает магазин-получатель: переключите магазин вверху");
+    public static string TransferReceivedTooMuch(AppLanguage l, string name, decimal sent) => Pick(l,
+        $"«{name}»: жіберілгені {sent:0.###}, одан артық қабылдауға болмайды", $"«{name}»: отправлено {sent:0.###}, принять больше нельзя");
+    public static string TransferDiscrepancyReason(AppLanguage l, string name) => Pick(l,
+        $"«{name}»: сан жіберілгеннен аз — айырмашылық себебін жазыңыз", $"«{name}»: принято меньше отправленного — укажите причину расхождения");
+
     // Файл жүктеу
     public static string UploadKindInvalid(AppLanguage l) => Pick(l, "Файл түрі белгісіз", "Неизвестный тип файла");
 

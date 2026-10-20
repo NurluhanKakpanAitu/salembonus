@@ -14,7 +14,7 @@ public class WarehouseService(IInventoryRepository repo, CatalogAccess access, I
 {
     public async Task<IReadOnlyList<WarehouseDto>> ListAsync(CancellationToken ct = default)
     {
-        var (orgId, m) = await access.RequireAsync(StaffPermissions.ProductsView, ct);
+        var (orgId, m) = await access.RequireAnyAsync(ct, StaffPermissions.ProductsView, StaffPermissions.InventoryView);
         var list = await repo.ListWarehousesAsync(m.StoreId, ct);
         if (list.Count == 0)
         {

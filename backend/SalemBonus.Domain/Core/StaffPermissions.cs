@@ -30,12 +30,25 @@ public static class StaffPermissions
     public const string StaffManage = "staff.manage";
     public const string SettingsManage = "settings.manage";
 
+    // «Склад» (ТЗ «Склад» §16)
+    public const string InventoryView = "inventory.view";
+    /// <summary>Приёмка жасау мен черновикті өңдеу.</summary>
+    public const string InventoryReceive = "inventory.receive";
+    /// <summary>Приёмканы проведение/сторно, төлем тіркеу.</summary>
+    public const string InventoryPost = "inventory.post";
+    /// <summary>Перемещение: жасау, жіберу, қабылдау.</summary>
+    public const string InventoryTransfer = "inventory.transfer";
+    public const string InventoryWriteOff = "inventory.writeoff";
+    public const string InventoryWarehouses = "inventory.warehouses";
+    public const string InventorySuppliers = "inventory.suppliers";
+
     public static readonly IReadOnlyList<string> All =
     [
         StatisticsView, FinanceView,
         ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle, CatalogDictionaries,
         SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove,
         StaffManage, SettingsManage,
+        InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
     ];
 
     /// <summary>Рөлдің әдепкі рұқсаттары.</summary>
@@ -46,10 +59,12 @@ public static class StaffPermissions
         [
             StatisticsView, ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle,
             CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove,
+            InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
         ],
         // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,
         // «Товар» бөлімі мен оның API-і кассирге ашылмайды. Иесі қажет болса жеке кеңейтеді.
-        StaffRole.Cashier => [SalesCreate],
+        // Кассир қалдықты өз дүкені бойынша көреді (ТЗ «Склад» §16), құжат жасамайды.
+        StaffRole.Cashier => [SalesCreate, InventoryView],
         _ => [],
     };
 }

@@ -8,6 +8,18 @@ public enum StockMovementType
     Sale,
     /// <summary>Сатылымды қайтару (оң).</summary>
     Return,
+    /// <summary>Приёмка: жеткізушіден кіріс (оң).</summary>
+    Receipt,
+    /// <summary>Списание (теріс).</summary>
+    WriteOff,
+    /// <summary>Перемещение: жіберуші қоймадан шығыс (теріс).</summary>
+    TransferOut,
+    /// <summary>Перемещение: алушы қоймаға кіріс (оң).</summary>
+    TransferIn,
+    /// <summary>Инвентаризациялық түзету.</summary>
+    Adjustment,
+    /// <summary>Сторно: проведённый құжаттың қозғалысын кері қайтару.</summary>
+    Reversal,
 }
 
 /// <summary>
@@ -25,9 +37,15 @@ public class StockMovement
     public decimal Quantity { get; set; }
     /// <summary>Бір бірліктің өзіндік құны (кіріс кезінде).</summary>
     public decimal? UnitCost { get; set; }
+    /// <summary>Осы қозғалыстан кейінгі қалдық (тауар + қойма) — журналда бірден көрінеді (ТЗ «Склад» §14).</summary>
+    public decimal BalanceAfter { get; set; }
     public Guid? StaffUserId { get; set; }
-    /// <summary>Құжат: сатылым не қайтару.</summary>
+    /// <summary>Құжат: сатылым, қайтару, приёмка, списание, перемещение.</summary>
     public Guid? DocumentId { get; set; }
+    /// <summary>Құжат нөмірі журналда көрсету үшін («Чек №12», «ПР-000012»).</summary>
+    public string? DocumentNumber { get; set; }
+    /// <summary>Себеп/түсініктеме: списание, түзету, сторно.</summary>
+    public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
