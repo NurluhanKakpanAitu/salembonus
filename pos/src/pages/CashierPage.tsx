@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Loader2, Monitor, Unplug } from 'lucide-react'
 import { PosScreen } from '../components/cashier/PosScreen'
 import { Button } from '../components/ui/Button'
+import { confirmDialog } from '../components/ui/Confirm'
 import { ApiError } from '../lib/api'
 import { activeStore, can, useAuth } from '../lib/auth'
 import { useT } from '../lib/i18n'
@@ -41,7 +42,7 @@ export function CashierPage() {
   }
 
   const deactivate = async () => {
-    if (!window.confirm(t('register.disconnectConfirm'))) return
+    if (!(await confirmDialog({ title: t('register.disconnect'), message: t('register.disconnectConfirm'), confirmLabel: t('register.disconnectAction'), danger: true }))) return
     setBusy('off')
     try {
       await registerApi.deactivate()

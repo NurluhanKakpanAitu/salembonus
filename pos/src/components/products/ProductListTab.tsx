@@ -12,6 +12,7 @@ import { CategoriesPanel } from './CategoriesPanel'
 import { ClassificationPicker } from './ClassificationPicker'
 import { ImportModal } from './ImportModal'
 import { toast } from '../ui/Toast'
+import { confirmDialog } from '../ui/Confirm'
 import { catalogKeys, treeOrder, useBrands, useCatalogAction, useCatalogNodes, useCatalogPermissions, useUnits } from '../../lib/catalogHooks'
 import type { CatalogStatus, ProductListItem } from '../../lib/catalogTypes'
 import { productApi } from '../../lib/productApi'
@@ -108,7 +109,8 @@ export function ProductListTab() {
     if (perms.lifecycle && p.status === 'Active')
       list.push({
         label: t('catalog.archive'), icon: <Archive size={16} />,
-        onClick: () => window.confirm(t('product.archiveConfirm', { name: p.name })) && void run(() => productApi.archive(p.id), t('catalog.archived')),
+        onClick: () => void confirmDialog({ title: t('catalog.archive'), message: t('product.archiveConfirm', { name: p.name }), confirmLabel: t('catalog.archive') })
+          .then((ok) => ok && run(() => productApi.archive(p.id), t('catalog.archived'))),
       })
     if (perms.lifecycle && p.status === 'Archived')
       list.push({ label: t('catalog.restore'), icon: <ArchiveRestore size={16} />, onClick: () => void run(() => productApi.restore(p.id), t('catalog.restored')) })

@@ -5,6 +5,7 @@ import { CustomerCardModal } from './CustomerCard'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Field'
 import { Modal } from '../ui/Modal'
+import { confirmDialog } from '../ui/Confirm'
 import { ApiError } from '../../lib/api'
 import { cart, totals, useCart } from '../../lib/cart'
 import { cashierApi } from '../../lib/cashierApi'
@@ -43,7 +44,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <h2 className="text-[18px] font-bold">{t('pos.cart', { n: count })}</h2>
         {count > 0 && (
-          <button type="button" onClick={() => window.confirm(t('pos.clearConfirm')) && cart.clear()}
+          <button type="button" onClick={() => void confirmDialog({ title: t('pos.clearConfirm'), message: t('pos.clearHint'), confirmLabel: t('pos.clear'), danger: true }).then((ok) => ok && cart.clear())}
             className="flex items-center gap-1.5 text-[13px] text-ink-2 hover:text-danger">
             <Trash2 size={15} /> {t('pos.clear')}
           </button>

@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Field, Input, Select, Toggle } from '../ui/Field'
 import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
+import { confirmDialog } from '../ui/Confirm'
 import { PasswordModal, PinModal } from '../CredentialModals'
 import { ApiError } from '../../lib/api'
 import { useAuth } from '../../lib/auth'
@@ -70,7 +71,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   }
 
   const removeRecipient = async (r: TransferRecipient) => {
-    if (!window.confirm(t('settings.removeRecipientConfirm', { name: `${r.bankName} ${r.account}` }))) return
+    if (!(await confirmDialog({ title: t('catalog.delete'), message: t('settings.removeRecipientConfirm', { name: `${r.bankName} ${r.account}` }), confirmLabel: t('catalog.delete'), danger: true }))) return
     try {
       await cashierApi.removeRecipient(r.id)
       await qc.invalidateQueries({ queryKey: ['cashier'] })

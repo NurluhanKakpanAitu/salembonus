@@ -6,6 +6,7 @@ import { OrderControl } from '../ui/OrderControl'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
 import { SearchInput } from '../ui/SearchInput'
 import { StatusBadge } from '../ui/StatusBadge'
+import { confirmDialog } from '../ui/Confirm'
 import { catalogApi } from '../../lib/catalogApi'
 import { catalogKeys, useCatalogAction, useCatalogNodes, useCatalogPermissions } from '../../lib/catalogHooks'
 import type { CatalogNode } from '../../lib/catalogTypes'
@@ -34,10 +35,10 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
   const [archiving, setArchiving] = useState<{ node: CatalogNode; mode: 'archive' | 'delete' } | null>(null)
 
   // ТЗ §7.3, §16: бос түйін — растап өшіру; ішінде бірдеңе болса — физикалық өшіру жоқ, таңдау: ауыстыру не архив.
-  const requestDelete = (n: CatalogNode) => {
+  const requestDelete = async (n: CatalogNode) => {
     setForm(null)
     if (n.descendantCount > 0 || n.productCount > 0) setArchiving({ node: n, mode: 'delete' })
-    else if (window.confirm(t('catalog.deleteConfirm', { name: n.name })))
+    else if (await confirmDialog({ title: t('catalog.delete'), message: t('catalog.deleteConfirm', { name: n.name }), confirmLabel: t('catalog.delete'), danger: true }))
       void run(() => catalogApi.deleteNode(n.id), t('catalog.deleted'))
   }
 
@@ -90,7 +91,7 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
     if (perms.lifecycle && n.status === 'Archived')
       items.push({ label: t('catalog.restore'), icon: <ArchiveRestore size={16} />, onClick: () => void run(() => catalogApi.restoreNode(n.id), t('catalog.restored')) })
     if (perms.lifecycle)
-      items.push({ label: t('catalog.delete'), icon: <Trash2 size={16} />, danger: true, onClick: () => requestDelete(n) })
+      items.push({ label: t('catalog.delete'), icon: <Trash2 size={16} />, danger: true, onClick: () => void requestDelete(n) })
     return items
   }
 
@@ -216,7 +217,7 @@ export function NodeTreeTable({ mode }: { mode: Mode }) {
 
       {form && (
         <NodeFormModal node={form.node} parentId={form.parentId} nodes={nodes} onClose={() => setForm(null)}
-          onSaved={(msg) => void run(async () => undefined, msg).then(() => setForm(null))} onDelete={requestDelete} />
+          onSaved={(msg) => void run(async () => undefined, msg).then(() => setForm(null))} onDelete={(n) => void requestDelete(n)} />
       )}
       {archiving && (
         <ArchiveNodeModal node={archiving.node} mode={archiving.mode} onClose={() => setArchiving(null)}

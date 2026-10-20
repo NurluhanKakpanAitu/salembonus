@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Archive, ArchiveRestore, ArrowLeft, Boxes, FolderTree, Image, Info, ListChecks, Loader2, SlidersHorizontal } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { toast } from '../../components/ui/Toast'
+import { confirmDialog } from '../../components/ui/Confirm'
 import {
   CharacteristicsSection, ClassificationSection, ExtraSection, MainSection, MediaSection, StockSection,
 } from '../../components/products/ProductSections'
@@ -33,17 +34,23 @@ const NUMERIC: { field: string; get: (d: ProductDraft) => string }[] = [
   { field: 'maxDiscountPercent', get: (d) => d.maxDiscountPercent },
 ]
 
-/** Сілтеме басылғанда сақталмаған өзгерісті сұрау (сол жақ мәзір, тақырып т.б.). */
-function useLeaveGuard(dirty: boolean, message: string) {
+/**
+ * Сілтеме басылғанда сақталмаған өзгерісті сұрау (сол жақ мәзір, тақырып т.б.): өту тоқтатылады,
+ * растаса — сол сілтемеге бағдарлама өзі өтеді. Жаңа вкладкада ашылатын сілтеме (касса) беттен кетпейді.
+ * Бетті жабу/жаңарту — браузердің өз сұрағы (оны безендіру мүмкін емес).
+ */
+function useLeaveGuard(dirty: boolean, ask: () => Promise<boolean>) {
+  const navigate = useNavigate()
   useEffect(() => {
     if (!dirty) return
     const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault()
     const onClick = (e: MouseEvent) => {
-      const link = (e.target as HTMLElement).closest('a[href]')
-      if (link && !window.confirm(message)) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
+      const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href]')
+      if (!link || link.target === '_blank') return
+      e.preventDefault()
+      e.stopPropagation()
+      const href = link.getAttribute('href')!
+      void ask().then((ok) => ok && navigate(href))
     }
     window.addEventListener('beforeunload', onBeforeUnload)
     document.addEventListener('click', onClick, true)
@@ -51,7 +58,7 @@ function useLeaveGuard(dirty: boolean, message: string) {
       window.removeEventListener('beforeunload', onBeforeUnload)
       document.removeEventListener('click', onClick, true)
     }
-  }, [dirty, message])
+  }, [dirty, ask, navigate])
 }
 
 /**
@@ -106,12 +113,16 @@ function ProductForm({ product }: { product?: import('../../lib/catalogTypes').P
 
   const canSave = product ? perms.edit : perms.create
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial)
-  useLeaveGuard(dirty && !savedRef.current, t('product.leaveConfirm'))
+  const askLeave = useCallback(
+    () => confirmDialog({ title: t('product.leaveTitle'), message: t('product.leaveConfirm'), confirmLabel: t('product.leaveAnyway'), danger: true }),
+    [t],
+  )
+  useLeaveGuard(dirty && !savedRef.current, askLeave)
 
   const patch = (p: Partial<ProductDraft>) => setDraft((d) => ({ ...d, ...p }))
   const backTo = `/products${(location.state as { from?: string } | null)?.from ?? ''}`
-  const close = () => {
-    if (dirty && !window.confirm(t('product.leaveConfirm'))) return
+  const close = async () => {
+    if (dirty && !(await askLeave())) return
     navigate(backTo)
   }
 
@@ -152,7 +163,7 @@ function ProductForm({ product }: { product?: import('../../lib/catalogTypes').P
 
   const lifecycle = async (action: 'archive' | 'restore') => {
     if (!product) return
-    if (action === 'archive' && !window.confirm(t('product.archiveConfirm', { name: product.name }))) return
+    if (action === 'archive' && !(await confirmDialog({ title: t('catalog.archive'), message: t('product.archiveConfirm', { name: product.name }), confirmLabel: t('catalog.archive') }))) return
     try {
       await (action === 'archive' ? productApi.archive(product.id) : productApi.restore(product.id))
       await qc.invalidateQueries({ queryKey: catalogKeys.products })
@@ -166,7 +177,7 @@ function ProductForm({ product }: { product?: import('../../lib/catalogTypes').P
   return (
     <form onSubmit={(e) => void submit(e)} noValidate>
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <button type="button" onClick={close} aria-label={t('common.back')}
+        <button type="button" onClick={() => void close()} aria-label={t('common.back')}
           className="flex size-10 items-center justify-center rounded-xl border border-line bg-surface text-ink-2 hover:bg-field">
           <ArrowLeft size={19} />
         </button>
@@ -214,7 +225,7 @@ function ProductForm({ product }: { product?: import('../../lib/catalogTypes').P
       <div className="sticky bottom-0 z-10 -mx-4 mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-line bg-bg/95 px-4 py-3 backdrop-blur lg:-mx-6 lg:px-6">
         {errors.form && <p className="mr-auto text-[14px] text-danger">{errors.form}</p>}
         {!errors.form && Object.keys(errors).length > 0 && <p className="mr-auto text-[14px] text-danger">{t('product.fixErrors')}</p>}
-        <Button type="button" variant="secondary" onClick={close}>{t('common.cancel')}</Button>
+        <Button type="button" variant="secondary" onClick={() => void close()}>{t('common.cancel')}</Button>
         {canSave && <Button type="submit" loading={saving}>{product ? t('common.save') : t('product.create')}</Button>}
       </div>
     </form>
