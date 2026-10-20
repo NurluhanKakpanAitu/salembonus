@@ -5,7 +5,10 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Infrastructure.Identity;
 using SalemBonus.Infrastructure.Persistence;
 using Testcontainers.PostgreSql;
@@ -23,6 +26,7 @@ public sealed class ApiFixture : IAsyncLifetime
     private static readonly string? ExternalDb = Environment.GetEnvironmentVariable("SALEMBONUS_TEST_DB");
     private readonly PostgreSqlContainer? _db = ExternalDb is null ? new PostgreSqlBuilder("postgres:18-alpine").Build() : null;
     private WebApplicationFactory<Program> _factory = null!;
+    public FakeInvoiceRecognizer Recognizer { get; } = new();
     private (string Owner, string Cashier)? _tokens;
 
     public async Task InitializeAsync()
@@ -34,7 +38,12 @@ public sealed class ApiFixture : IAsyncLifetime
         // Тест шығысы SQL логына толмасын: тек ескерту мен қате.
         Environment.SetEnvironmentVariable("Logging__LogLevel__Default", "Warning");
 
-        _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b => b.UseEnvironment("Testing"));
+        _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Testing");
+            // Накладнаяны тану (§8): тесттер Claude-қа бармайды — жалған танушы, тест не қойса соны қайтарады.
+            b.ConfigureTestServices(s => { s.RemoveAll<IInvoiceRecognizer>(); s.AddSingleton<IInvoiceRecognizer>(Recognizer); });
+        });
         using var scope = _factory.Services.CreateScope(); // хост көтеріледі: миграциялар + дүкендер
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await StaffSeeder.SeedAsync(db);
@@ -109,6 +118,23 @@ public sealed class Pos(HttpClient http)
     public Task<ApiResult> Get(string token, string path) => Send(HttpMethod.Get, token, path, null);
     public Task<ApiResult> Post(string token, string path, object body) => Send(HttpMethod.Post, token, path, body);
     public Task<ApiResult> Put(string token, string path, object body) => Send(HttpMethod.Put, token, path, body);
+
+    /// <summary>Файл жүктеу (multipart): тану эндпоинті үшін.</summary>
+    public async Task<ApiResult> PostFile(string token, string path, byte[] content, string contentType, string fileName, params (string Name, string Value)[] fields)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, path);
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue("ru"));
+        var form = new MultipartFormDataContent();
+        var file = new ByteArrayContent(content);
+        file.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        form.Add(file, "file", fileName);
+        foreach (var (name, value) in fields) form.Add(new StringContent(value), name);
+        req.Content = form;
+        using var res = await http.SendAsync(req);
+        var text = await res.Content.ReadAsStringAsync();
+        return new ApiResult(res.StatusCode, string.IsNullOrWhiteSpace(text) ? null : JsonNode.Parse(text));
+    }
 
     public async Task<ApiResult> Send(HttpMethod method, string token, string path, object? body, string? storeId = null)
     {

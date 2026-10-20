@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<SalemBonus.Application.Pos.Inventory.SupplierService>();
         services.AddScoped<SalemBonus.Application.Pos.Inventory.TransferService>();
         services.AddScoped<MediaService>();
+        services.AddScoped<SalemBonus.Application.Pos.Inventory.InvoiceRecognitionService>();
         return services;
     }
 }

@@ -406,6 +406,16 @@ public static class Messages
     public static string StorageNotConfigured(AppLanguage l) => Pick(l,
         "Файл қоймасы бапталмаған", "Хранилище файлов не настроено");
 
+    // Накладнаяны тану (ТЗ «Склад» §8)
+    public static string RecognitionNotConfigured(AppLanguage l) => Pick(l,
+        "Накладнаяны тану бапталмаған: Claude API кілті жоқ", "Распознавание накладных не настроено: нет ключа Claude API");
+    public static string RecognitionFileTypeInvalid(AppLanguage l) => Pick(l,
+        "Тек JPG, PNG, WebP суреті не PDF", "Только изображение JPG, PNG, WebP или PDF");
+    public static string RecognitionFailed(AppLanguage l) => Pick(l,
+        "Накладнаяны тану мүмкін болмады, қайталап көріңіз", "Не удалось распознать накладную, попробуйте ещё раз");
+    public static string RecognitionNothingFound(AppLanguage l) => Pick(l,
+        "Накладнаядан тауар жолдары табылмады: анығырақ фото не PDF жүктеңіз", "В накладной не найдены строки товаров: загрузите более чёткое фото или PDF");
+
     // Импорт / экспорт
     public static string StatusActive(AppLanguage l) => Pick(l, "Белсенді", "Активный");
     public static string StatusArchived(AppLanguage l) => Pick(l, "Архивте", "Архивный");

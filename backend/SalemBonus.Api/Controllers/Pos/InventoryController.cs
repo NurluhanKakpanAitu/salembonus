@@ -12,7 +12,8 @@ namespace SalemBonus.Api.Controllers.Pos;
 [ApiController]
 [Route("api/pos/v1/inventory")]
 [Authorize(Policy = StaffAuth.Policy)]
-public class InventoryController(InventoryService inventory, StockDocumentService documents, SupplierService suppliers, TransferService transfers)
+public class InventoryController(InventoryService inventory, StockDocumentService documents, SupplierService suppliers, TransferService transfers,
+    InvoiceRecognitionService recognition)
     : ControllerBase
 {
     // ---------- Қоймалар ----------
@@ -69,6 +70,18 @@ public class InventoryController(InventoryService inventory, StockDocumentServic
     [HttpPost("receipts")]
     public async Task<ActionResult<StockDocumentDto>> CreateReceipt([FromBody] SaveReceiptRequest request, CancellationToken ct) =>
         Ok(await documents.CreateReceiptAsync(request, ct));
+
+    /// <summary>
+    /// Накладнаяны тану (ТЗ «Склад» §8): фото не PDF → черновик ұсынысы (жеткізуші, реквизиттер, каталогпен сәйкестендірілген жолдар).
+    /// Ештеңе сақталмайды және өткізілмейді — нәтижені пайдаланушы формада тексеріп, өзі қолданады.
+    /// </summary>
+    [HttpPost("receipts/recognize")]
+    [RequestSizeLimit(InvoiceRecognitionService.MaxBytes + 64 * 1024)]
+    public async Task<ActionResult<InvoiceRecognitionDto>> RecognizeInvoice(IFormFile? file, [FromForm] Guid? warehouseId, CancellationToken ct)
+    {
+        await using var stream = file?.OpenReadStream() ?? Stream.Null;
+        return Ok(await recognition.RecognizeAsync(stream, file?.ContentType, file?.Length ?? 0, warehouseId, ct));
+    }
 
     [HttpPut("receipts/{id:guid}")]
     public async Task<ActionResult<StockDocumentDto>> UpdateReceipt(Guid id, [FromBody] SaveReceiptRequest request, CancellationToken ct) =>

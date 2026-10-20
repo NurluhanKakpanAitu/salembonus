@@ -38,6 +38,8 @@ services:
       R2__AccessKeyId: ${R2_ACCESS_KEY_ID:-}
       R2__SecretAccessKey: ${R2_SECRET_ACCESS_KEY:-}
       R2__PublicUrl: ${R2_PUBLIC_URL:-}
+      # Накладнаяны тану (ТЗ «Склад» §8): Claude API кілті. Бос болса — тек сол батырма қате қайтарады.
+      Claude__ApiKey: ${CLAUDE_API_KEY:-}
     expose:
       - "8080"
     depends_on:

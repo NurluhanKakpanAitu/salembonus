@@ -287,3 +287,45 @@ export interface SaveTransfer {
 export interface ReceiveTransfer { lines: { productId: string; quantityReceived: number; discrepancyReason: string | null }[] }
 
 export interface TransferTarget { storeId: string; storeName: string; warehouses: { id: string; name: string; isDefault: boolean }[] }
+
+// ---------- Накладнаяны тану (ТЗ «Склад» §8) ----------
+
+export type RecognizedStatus = 'Matched' | 'Review' | 'NotFound'
+
+export interface RecognizedProduct {
+  id: string
+  name: string
+  article: string | null
+  barcode: string | null
+  imageUrl: string | null
+  unit: string | null
+  stockNow: number | null
+  purchasePrice: number | null
+  catalogRetailPrice: number | null
+}
+
+/** Накладнаядағы бір жол: түпнұсқа мәндер + каталогпен сәйкестендіру нәтижесі. */
+export interface RecognizedLine {
+  index: number
+  name: string | null
+  article: string | null
+  barcode: string | null
+  quantity: number | null
+  price: number | null
+  lineTotal: number | null
+  status: RecognizedStatus
+  matchedBy: 'None' | 'Barcode' | 'Article' | 'Name'
+  confidence: number
+  product: RecognizedProduct | null
+}
+
+export interface InvoiceRecognition {
+  supplierName: string | null
+  supplierId: string | null
+  invoiceNumber: string | null
+  date: string | null
+  lines: RecognizedLine[]
+  matched: number
+  review: number
+  notFound: number
+}

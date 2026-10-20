@@ -11,6 +11,7 @@ using SalemBonus.Infrastructure.Identity;
 using SalemBonus.Infrastructure.Persistence;
 using SalemBonus.Infrastructure.Persistence.Repositories;
 using SalemBonus.Infrastructure.Sms;
+using SalemBonus.Infrastructure.Ai;
 using SalemBonus.Infrastructure.Storage;
 
 namespace SalemBonus.Infrastructure;
@@ -35,6 +36,8 @@ public static class DependencyInjection
         services.Configure<StaffAuthOptions>(configuration.GetSection(StaffAuthOptions.Section));
         services.Configure<R2Options>(configuration.GetSection(R2Options.Section));
         services.AddSingleton<IFileStorage, R2FileStorage>();
+        services.Configure<ClaudeOptions>(configuration.GetSection(ClaudeOptions.Section));
+        services.AddSingleton<IInvoiceRecognizer, ClaudeInvoiceRecognizer>();
         services.AddSingleton<ISpreadsheet, XlsxSpreadsheet>();
 
         services.AddHttpContextAccessor();

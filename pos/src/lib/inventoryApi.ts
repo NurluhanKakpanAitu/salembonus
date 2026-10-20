@@ -1,6 +1,6 @@
 import { api } from './api'
 import type {
-  DocumentPage, Movement, Page, ReceiveTransfer, RegisterPayment, SaveReceipt, SaveSupplier, SaveTransfer, SaveWarehouse, SaveWriteOff,
+  DocumentPage, InvoiceRecognition, Movement, Page, ReceiveTransfer, RegisterPayment, SaveReceipt, SaveSupplier, SaveTransfer, SaveWarehouse, SaveWriteOff,
   StockDocument, StockKpi, StockRow, Supplier, SupplierCard, Transfer, TransferPage, TransferTarget, WarehouseRow,
 } from './inventoryTypes'
 
@@ -38,6 +38,13 @@ export const inventoryApi = {
   createReceipt: (body: SaveReceipt) => api<StockDocument>(`${base}/receipts`, json('POST', body)),
   updateReceipt: (id: string, body: SaveReceipt) => api<StockDocument>(`${base}/receipts/${id}`, json('PUT', body)),
   registerPayment: (id: string, body: RegisterPayment) => api<StockDocument>(`${base}/receipts/${id}/payments`, json('POST', body)),
+  /** Накладнаяны тану (ТЗ §8): файл → черновик ұсынысы; ештеңе сақталмайды. */
+  recognizeInvoice: (file: File, warehouseId: string | null) => {
+    const form = new FormData()
+    form.set('file', file)
+    if (warehouseId) form.set('warehouseId', warehouseId)
+    return api<InvoiceRecognition>(`${base}/receipts/recognize`, { method: 'POST', body: form })
+  },
   reversePayment: (id: string, reason: string) => api<void>(`${base}/payments/${id}/reverse`, json('POST', { reason })),
 
   writeOffs: (q: DocumentQuery) => api<DocumentPage>(`${base}/write-offs${qs(q)}`),

@@ -161,6 +161,7 @@ nano .env
 `nano`-да толтыр:
 - `R2_ACCOUNT_ID` — Cloudflare → R2 → оң жақтағы Account ID
 - `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` — `salem-api-prod` токені
+- `CLAUDE_API_KEY` — накладнаяны ИИ-мен тану (console.anthropic.com → API keys); бос қалса тек сол батырма істемейді
 - `BACKUP_R2_BUCKET=salem-backups`, `BACKUP_R2_ACCESS_KEY_ID`, `BACKUP_R2_SECRET_ACCESS_KEY` — `salem-backup-prod`
 - `ACME_EMAIL` — сертификат хабарламалары баратын пошта
 - `STATIC_OTP_CODE` — төмендегі ескертуді оқы

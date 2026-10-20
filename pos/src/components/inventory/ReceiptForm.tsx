@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Ban, Check, FileText, Plus, Save, Undo2, Wallet } from 'lucide-react'
+import { ArrowLeft, Ban, Check, FileText, Plus, Save, Sparkles, Undo2, Wallet } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -17,6 +17,7 @@ import { num, tenge } from '../../lib/money'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { LinesEditor, toNum, type LineDraft } from './LinesEditor'
 import { SupplierModal } from './SuppliersTab'
+import { InvoiceRecognizeModal, type RecognizedHeader } from './InvoiceRecognizeModal'
 import { DocStatus, ReasonModal, useInventoryAction, useInventoryPermissions } from './inventoryUi'
 
 interface Header { warehouseId: string; date: string; supplierId: string; supplierInvoiceNumber: string; basis: string; comment: string }
@@ -56,6 +57,7 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
   const [addingSupplier, setAddingSupplier] = useState(false)
   const [paying, setPaying] = useState(false)
   const [reversing, setReversing] = useState<{ kind: 'doc' } | { kind: 'payment'; id: string } | null>(null)
+  const [recognizing, setRecognizing] = useState(false)
 
   // Жүктелген құжат → форма (бір рет); жаңа құжат → әдепкі қойма.
   useEffect(() => {
@@ -121,6 +123,27 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
     }
   }
 
+  /** ИИ ұсынысын формаға қолдану (ТЗ §8): реквизиттер толтырылады, жолдар бар жолдарға қосылады; сақтау — пайдаланушыда. */
+  const applyRecognized = (recognized: LineDraft[], header: RecognizedHeader) => {
+    set({
+      supplierId: header.supplierId ?? h.supplierId,
+      supplierInvoiceNumber: header.invoiceNumber ?? h.supplierInvoiceNumber,
+      date: header.date ?? h.date,
+    })
+    setLines((current) => {
+      const next = [...current]
+      for (const l of recognized) {
+        const i = next.findIndex((x) => x.productId === l.productId)
+        if (i >= 0) next[i] = { ...next[i], quantity: String((toNum(next[i].quantity) ?? 0) + (toNum(l.quantity) ?? 0)), purchasePrice: l.purchasePrice || next[i].purchasePrice }
+        else next.push(l)
+      }
+      return next
+    })
+    setErrors((e) => ({ ...e, lines: '' }))
+    setRecognizing(false)
+    toast(t('inv.ai.applied', { n: recognized.length }))
+  }
+
   const cancelDraft = async () => {
     if (!doc || !(await confirmDialog({ title: t('inv.doc.cancel'), message: t('inv.doc.cancelConfirm', { number: doc.number }), confirmLabel: t('inv.doc.cancel'), danger: true }))) return
     if (await run(() => inventoryApi.cancelDocument(doc.id), t('inv.doc.cancelled'))) navigate('/warehouse/receipts')
@@ -142,6 +165,9 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
         </div>
         {doc && <DocStatus status={doc.status} kind="doc" />}
         <div className="ml-auto flex flex-wrap gap-2">
+          {!readOnly && perms.receive && (
+            <Button type="button" variant="secondary" icon={<Sparkles size={17} />} disabled={!!saving} onClick={() => setRecognizing(true)}>{t('inv.ai.button')}</Button>
+          )}
           {!readOnly && perms.receive && (
             <Button type="submit" variant="secondary" icon={<Save size={17} />} loading={saving === 'draft'} disabled={!!saving}>{t('inv.doc.saveDraft')}</Button>
           )}
@@ -272,6 +298,7 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
       </div>
 
       {addingSupplier && <SupplierModal onClose={() => setAddingSupplier(false)} onSaved={(s: Supplier) => { void qc.invalidateQueries({ queryKey: inventoryKeys.suppliers }); set({ supplierId: s.id }); setAddingSupplier(false); toast(t('catalog.created')) }} />}
+      {recognizing && <InvoiceRecognizeModal warehouseId={h.warehouseId || null} suppliers={suppliers} onClose={() => setRecognizing(false)} onApply={applyRecognized} />}
       {paying && doc && <PaymentModal doc={doc} onClose={() => setPaying(false)} onDone={() => { setPaying(false); void qc.invalidateQueries({ queryKey: inventoryKeys.all }) }} />}
       {reversing?.kind === 'doc' && doc && (
         <ReasonModal title={t('inv.doc.reverseTitle', { number: doc.number })} hint={t('inv.doc.reverseHint')} confirmLabel={t('inv.doc.reverse')} onClose={() => setReversing(null)}
