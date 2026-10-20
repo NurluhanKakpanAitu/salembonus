@@ -121,7 +121,7 @@ public class CashierService(
     /// </summary>
     public async Task<IReadOnlyList<CashierCustomerDto>> SearchCustomersAsync(string? query, CancellationToken ct = default)
     {
-        var (_, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
+        var (_, m) = await access.RequireAnyAsync(ct, StaffPermissions.SalesCreate, StaffPermissions.SalesView);
         var q = query?.Trim() ?? string.Empty;
         if (q.Length < 2) return [];
         var store = await stores.GetByIdAsync(m.StoreId, ct) ?? throw new NotFoundException(Messages.StoreNotFound(Lang));

@@ -1,3 +1,5 @@
+import type { ReturnCondition, ReturnReason, ReturnStockAction } from './salesTypes'
+
 export type PaymentMethod = 'Cash' | 'Card' | 'Qr' | 'Transfer' | 'Debt'
 
 export interface TransferRecipient { id: string; bankName: string; account: string; holderName: string }
@@ -106,6 +108,11 @@ export interface ReceiptReturn {
   bonusReversed: number
   reason: string | null
   items: { name: string; quantity: number; amount: number }[]
+  /** ТЗ «Продажи» §10: себеп, тауар күйі, қоймалық әрекет, кабинеттен рәсімделді ме. */
+  reasonCode: ReturnReason | null
+  condition: ReturnCondition
+  stockAction: ReturnStockAction
+  fromBackOffice: boolean
 }
 
 export interface SaleListItem {

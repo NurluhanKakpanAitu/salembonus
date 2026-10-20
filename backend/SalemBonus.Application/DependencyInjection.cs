@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<SalemBonus.Application.Pos.Sales.DebtService>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.StoreNotifier>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.FinanceService>();
+        services.AddScoped<SalemBonus.Application.Pos.Sales.SalesHistoryService>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.CashierSettingsService>();
         services.AddScoped<SalemBonus.Application.Pos.Dashboard.DashboardService>();
         services.AddScoped<WarehouseService>();

@@ -2092,6 +2092,11 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("ClientRequestId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2099,12 +2104,19 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<bool>("FromBackOffice")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Reason")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("RefundMethod")
                         .HasMaxLength(16)
@@ -2122,6 +2134,11 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("StaffUserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("StockAction")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<Guid>("StoreId")
                         .HasColumnType("uuid");

@@ -121,15 +121,16 @@ export function MovementsTab() {
 
 const num = (n: number) => new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 3 }).format(n)
 
+const WO_REASONS = new Set(['Damage', 'Expired', 'Loss', 'InternalUse', 'Adjustment', 'Other'])
+
 /** Списание қозғалысында себеп коды сақталады («Damage: ...») — экранда аудармасы көрсетіледі. */
 function useComment() {
   const t = useT()
   return (m: { type: MovementType; comment: string | null }) => {
     if (!m.comment || m.type !== 'WriteOff') return m.comment
     const [code, ...rest] = m.comment.split(': ')
-    const key = `inv.wo.reasons.${code}` as TranslationKey
-    const label = t(key)
-    if (label === key) return m.comment
+    if (!WO_REASONS.has(code)) return m.comment
+    const label = t(`inv.wo.reasons.${code}` as TranslationKey)
     return rest.length ? `${label}: ${rest.join(': ')}` : label
   }
 }

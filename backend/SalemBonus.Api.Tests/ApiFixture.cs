@@ -119,6 +119,16 @@ public sealed class Pos(HttpClient http)
     public Task<ApiResult> Post(string token, string path, object body) => Send(HttpMethod.Post, token, path, body);
     public Task<ApiResult> Put(string token, string path, object body) => Send(HttpMethod.Put, token, path, body);
 
+    /// <summary>Файл жауабы (экспорт): мәртебе, түрі, көлемі.</summary>
+    public async Task<(HttpStatusCode Status, string? ContentType, long Length)> Raw(string token, string path)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, path);
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        using var res = await http.SendAsync(req);
+        var bytes = await res.Content.ReadAsByteArrayAsync();
+        return (res.StatusCode, res.Content.Headers.ContentType?.MediaType, bytes.LongLength);
+    }
+
     /// <summary>Файл жүктеу (multipart): тану эндпоинті үшін.</summary>
     public async Task<ApiResult> PostFile(string token, string path, byte[] content, string contentType, string fileName, params (string Name, string Value)[] fields)
     {
@@ -154,13 +164,15 @@ public sealed class Pos(HttpClient http)
     private readonly Dictionary<Guid, string> _names = [];
     public string NameOf(Guid productId) => _names[productId];
 
-    public async Task<Guid> CreateProductAsync(decimal price, decimal stock, decimal purchase = 0)
+    public async Task<Guid> CreateProductAsync(decimal price, decimal stock, decimal purchase = 0, string? article = null, string? barcode = null)
     {
         var units = (await Get(Owner, "/api/pos/v1/catalog/units")).Ok.AsArray();
         var name = "Тест " + Guid.NewGuid().ToString("N")[..8];
         var res = await Post(Owner, "/api/pos/v1/products", new
         {
             name,
+            article,
+            barcodes = barcode is null ? null : new[] { new { barcode, isPrimary = true } },
             unitId = units[0]!["id"]!.GetValue<Guid>(),
             opening = new { quantity = stock, purchasePrice = purchase, salePrice = price },
         });

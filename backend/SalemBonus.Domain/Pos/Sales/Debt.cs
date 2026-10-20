@@ -72,6 +72,14 @@ public class SaleReturn
     public int BonusRestored { get; set; }
     public int BonusReversed { get; set; }
     public string? Reason { get; set; }
+    /// <summary>Қайтару себебі (ТЗ «Продажи» §10.2): міндетті; «Другое» болса — <see cref="Reason"/> (коммент) міндетті.</summary>
+    public ReturnReason? ReasonCode { get; set; }
+    /// <summary>Тауардың күйі: сатуға жарамды, бүлінген, тексеру керек.</summary>
+    public ReturnCondition Condition { get; set; } = ReturnCondition.Sellable;
+    /// <summary>Қоймалық әрекет: жарамды қалдыққа қайтады не бірден списание (бүлінген тауар сатылатын қалдыққа түспейді).</summary>
+    public ReturnStockAction StockAction { get; set; } = ReturnStockAction.ToStock;
+    /// <summary>Кассадан емес, кабинеттің «Продажи» бөлімінен рәсімделді (касса құрылғысынсыз).</summary>
+    public bool FromBackOffice { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public List<SaleReturnItem> Items { get; set; } = [];
@@ -86,4 +94,31 @@ public class SaleReturnItem
     public string Name { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
     public decimal Amount { get; set; }
+}
+
+/// <summary>Қайтару себебі (ТЗ «Продажи» §10.2).</summary>
+public enum ReturnReason
+{
+    /// <summary>Не подошёл.</summary>
+    NotSuitable,
+    /// <summary>Брак / повреждение.</summary>
+    Defect,
+    /// <summary>Ошибочная продажа.</summary>
+    WrongSale,
+    Other,
+}
+
+/// <summary>Қайтарылған тауардың күйі (ТЗ «Продажи» §10.2).</summary>
+public enum ReturnCondition
+{
+    Sellable,
+    Damaged,
+    NeedsCheck,
+}
+
+/// <summary>Қайтарылған тауармен не істеледі: қалдыққа қайтады не списание.</summary>
+public enum ReturnStockAction
+{
+    ToStock,
+    WriteOff,
 }

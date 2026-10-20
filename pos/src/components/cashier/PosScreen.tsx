@@ -17,7 +17,8 @@ import { SearchBox, useBarcodeScanner } from './SearchBox'
 import { ReceiptsPanel } from './ReceiptsPanel'
 import { FinancePanel } from './FinancePanel'
 import { SettingsModal } from './SettingsModal'
-import { printReceipt, ReceiptModal, ReturnModal } from './ReceiptView'
+import { printReceipt, ReceiptModal } from './ReceiptView'
+import { ReturnWizard } from '../sales/ReturnWizard'
 
 const VIEW_KEY = 'salempos.pos.view'
 const readView = (): 'grid' | 'list' => {
@@ -188,7 +189,7 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
           onReturn={() => { setReturning(viewing); setViewing(null) }} />
       )}
       {returning && (
-        <ReturnModal saleId={returning} onClose={() => setReturning(null)}
+        <ReturnWizard saleId={returning} source="cashier" onClose={() => setReturning(null)}
           onDone={(r) => { setReturning(null); setViewing(r.id) }} />
       )}
     </div>

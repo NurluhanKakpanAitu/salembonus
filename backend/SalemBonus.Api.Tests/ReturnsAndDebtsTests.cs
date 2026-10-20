@@ -16,6 +16,7 @@ public class ReturnsAndDebtsTests(ApiFixture api)
         clientRequestId = requestId ?? Guid.NewGuid(),
         items = new[] { new { saleItemId, quantity } },
         refundMethod = "Cash",
+        reasonCode = "NotSuitable",
         reason = "Тест",
     };
 

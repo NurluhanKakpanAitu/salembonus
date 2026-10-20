@@ -41,7 +41,7 @@ export const cashierApi = {
     return api<SalePage>(`/pos/v1/sales?${p}`)
   },
   createReturn: (saleId: string, body: { clientRequestId: string; items: { saleItemId: string; quantity: number }[];
-    refundMethod: PaymentMethod | null; reason: string | null }) =>
+    refundMethod: PaymentMethod | null; reason: string | null; reasonCode: string; condition: string; stockAction: string }) =>
     api<Receipt>(`/pos/v1/sales/${saleId}/returns`, json('POST', body)),
   customerCard: (customerId: string) => api<CustomerCard>(`${base}/customers/${customerId}/card`),
   finance: (from: string, to: string) => api<Finance>(`${base}/finance?from=${from}&to=${to}`),

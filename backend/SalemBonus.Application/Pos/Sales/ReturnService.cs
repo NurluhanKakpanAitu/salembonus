@@ -33,10 +33,12 @@ public class ReturnService(
     public async Task<ReceiptDto> CreateAsync(Guid saleId, CreateReturnRequest request, string? deviceToken, CancellationToken ct = default)
     {
         var (orgId, m) = await access.RequireAsync(StaffPermissions.SalesReturn, ct);
-        var register = await cashier.RequireRegisterAsync(deviceToken, m, ct);
         if (request.ClientRequestId == Guid.Empty) throw new ValidationException(Messages.SaleRequestIdRequired(Lang));
 
         var sale = await sales.GetSaleForUpdateAsync(m.StoreId, saleId, ct) ?? throw new NotFoundException(Messages.SaleNotFound(Lang));
+        // Касса құрылғысынан — сол касса. Кабинеттен («Продажи», sales.view) құрылғысыз рәсімделсе — чектің өз кассасы жазылады (ТЗ «Продажи» §10).
+        var backOffice = deviceToken is null && m.Has(StaffPermissions.SalesView);
+        var registerId = backOffice ? sale.RegisterId : (await cashier.RequireRegisterAsync(deviceToken, m, ct)).Id;
         var previous = await sales.ListReturnsAsync(sale.Id, ct);
         // Қайта жіберілсе (екі рет басылды) — сол қайтару, екінші рет ақша берілмейді.
         if (previous.Any(r => r.ClientRequestId == request.ClientRequestId)) return await saleService.ReceiptAsync(sale, ct);
@@ -47,6 +49,20 @@ public class ReturnService(
             .Select(g => (ItemId: g.Key, Quantity: Math.Round(g.Sum(x => x.Quantity), 3)))
             .ToList();
         if (lines.Count == 0) throw new ValidationException(Messages.ReturnEmpty(Lang), "items");
+
+        // Себеп міндетті (ТЗ «Продажи» §10.2); брак әдепкіде «бүлінген» және сатылатын қалдыққа түспейді.
+        var reasonCode = Enum.TryParse<ReturnReason>(request.ReasonCode, true, out var rc) ? rc
+            : throw new ValidationException(Messages.ReturnReasonRequired(Lang), "reasonCode");
+        var comment = CatalogAccess.Optional(request.Reason, 300);
+        if (reasonCode == ReturnReason.Other && comment is null) throw new ValidationException(Messages.ReturnCommentRequired(Lang), "reason");
+        var condition = request.Condition is null ? (reasonCode == ReturnReason.Defect ? ReturnCondition.Damaged : ReturnCondition.Sellable)
+            : Enum.TryParse<ReturnCondition>(request.Condition, true, out var cond) ? cond
+            : throw new ValidationException(Messages.ReturnConditionInvalid(Lang), "condition");
+        var stockAction = request.StockAction is null ? (condition == ReturnCondition.Damaged ? ReturnStockAction.WriteOff : ReturnStockAction.ToStock)
+            : Enum.TryParse<ReturnStockAction>(request.StockAction, true, out var sa) ? sa
+            : throw new ValidationException(Messages.ReturnStockActionInvalid(Lang), "stockAction");
+        if (stockAction == ReturnStockAction.WriteOff && condition == ReturnCondition.Sellable)
+            throw new ValidationException(Messages.ReturnWriteOffNeedsCondition(Lang), "stockAction");
 
         var returnedMoneyByItem = previous.SelectMany(r => r.Items).GroupBy(i => i.SaleItemId).ToDictionary(g => g.Key, g => g.Sum(i => i.Amount));
         var returnItems = new List<(SaleItem Item, decimal Quantity, decimal Amount)>();
@@ -88,9 +104,10 @@ public class ReturnService(
 
             var saleReturn = new SaleReturn
             {
-                Id = Guid.NewGuid(), OrganizationId = orgId, StoreId = m.StoreId, SaleId = sale.Id, RegisterId = register.Id,
+                Id = Guid.NewGuid(), OrganizationId = orgId, StoreId = m.StoreId, SaleId = sale.Id, RegisterId = registerId,
                 StaffUserId = access.StaffUserId, ClientRequestId = request.ClientRequestId, Amount = money, Refunded = refund,
-                RefundMethod = refundMethod, DebtReduced = debtReduced, Reason = CatalogAccess.Optional(request.Reason, 300), CreatedAt = now,
+                RefundMethod = refundMethod, DebtReduced = debtReduced, Reason = comment, ReasonCode = reasonCode, Condition = condition,
+                StockAction = stockAction, FromBackOffice = backOffice, CreatedAt = now,
             };
             saleReturn.Items = returnItems.Select(x => new SaleReturnItem
             {
@@ -104,7 +121,7 @@ public class ReturnService(
                 sales.AddDebtPayment(new DebtPayment
                 {
                     Id = Guid.NewGuid(), DebtId = debt.Id, Amount = debtReduced, IsReturn = true, RemainingAfter = debt.Remaining,
-                    StaffUserId = access.StaffUserId, RegisterId = register.Id, CreatedAt = now,
+                    StaffUserId = access.StaffUserId, RegisterId = registerId, CreatedAt = now,
                 });
                 if (debt.Remaining <= 0)
                 {
@@ -132,6 +149,19 @@ public class ReturnService(
                     Type = StockMovementType.Return, Quantity = quantity, BalanceAfter = balance.Quantity, StaffUserId = access.StaffUserId,
                     DocumentId = saleReturn.Id, DocumentNumber = $"Возврат по чеку №{sale.Number}", CreatedAt = now,
                 });
+                if (stockAction == ReturnStockAction.WriteOff)
+                {
+                    // Бүлінген тауар сатылатын қалдыққа түспейді: қайтарым да, списание да журналда қалады (ТЗ «Продажи» §10.1).
+                    balance.Quantity -= quantity;
+                    inventory.AddMovement(new StockMovement
+                    {
+                        Id = Guid.NewGuid(), OrganizationId = orgId, WarehouseId = warehouse.Id, ProductId = item.ProductId,
+                        Type = StockMovementType.WriteOff, Quantity = -quantity, BalanceAfter = balance.Quantity, StaffUserId = access.StaffUserId,
+                        DocumentId = saleReturn.Id, DocumentNumber = $"Возврат по чеку №{sale.Number}",
+                        Comment = $"{(condition == ReturnCondition.Damaged ? "Damage" : "Other")}: Возврат по чеку №{sale.Number}{(comment is null ? "" : ", " + comment)}",
+                        CreatedAt = now.AddTicks(1), // журналда қайтарымнан кейін тұрады
+                    });
+                }
             }
 
             // Бонус: шегерілгені қайтарылады, есептелгені алынады — қайтарылған үлеске сай.
@@ -157,7 +187,8 @@ public class ReturnService(
             access.Audit(orgId, m.StoreId, "sale.return", "sale", sale.Id, null, new
             {
                 sale.Number, Amount = money, Refunded = refund, RefundMethod = refundMethod?.ToString(), DebtReduced = debtReduced,
-                saleReturn.BonusRestored, saleReturn.BonusReversed, saleReturn.Reason,
+                saleReturn.BonusRestored, saleReturn.BonusReversed, saleReturn.Reason, ReasonCode = reasonCode.ToString(),
+                Condition = condition.ToString(), StockAction = stockAction.ToString(), BackOffice = backOffice,
                 Items = saleReturn.Items.Select(i => new { i.Name, i.Quantity, i.Amount }),
             });
             await unitOfWork.SaveChangesAsync(ct);

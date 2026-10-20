@@ -14,6 +14,7 @@ const CashierPage = lazy(() => import('./pages/CashierPage').then((m) => ({ defa
 const ProductsPage = lazy(() => import('./pages/products/ProductsPage').then((m) => ({ default: m.ProductsPage })))
 const StatisticsPage = lazy(() => import('./pages/StatisticsPage').then((m) => ({ default: m.StatisticsPage })))
 const InventoryPage = lazy(() => import('./pages/inventory/InventoryPage').then((m) => ({ default: m.InventoryPage })))
+const SalesPage = lazy(() => import('./pages/sales/SalesPage').then((m) => ({ default: m.SalesPage })))
 
 /** Кірмеген пайдаланушы кіру бетіне жіберіледі. Шешімді сервер қабылдайды (ТЗ §11.8). */
 function RequireAuth() {
@@ -60,7 +61,8 @@ export default function App() {
                 element={
                   item.path === '/products' ? <ProductsPage />
                   : item.path === '/warehouse' ? <InventoryPage />
-                  : item.path === '/statistics' ? <StatisticsPage />
+                  : item.path === '/sales' ? <SalesPage />
+          : item.path === '/statistics' ? <StatisticsPage />
                   : <SectionPage item={item} />
                 }
               />

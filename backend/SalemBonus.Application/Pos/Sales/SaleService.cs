@@ -315,7 +315,7 @@ public class SaleService(
 
     public async Task<ReceiptDto> GetAsync(Guid id, CancellationToken ct = default)
     {
-        var (_, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
+        var (_, m) = await access.RequireAnyAsync(ct, StaffPermissions.SalesCreate, StaffPermissions.SalesView);
         var sale = await sales.GetSaleAsync(m.StoreId, id, ct) ?? throw new NotFoundException(Messages.SaleNotFound(Lang));
         return await ToReceiptAsync(sale, ct);
     }
@@ -354,7 +354,8 @@ public class SaleService(
         var names = await sales.StaffNamesAsync(list.Select(r => r.StaffUserId).Distinct().ToList(), ct);
         return list.Select(r => new ReceiptReturnDto(r.Id, r.CreatedAt, names.GetValueOrDefault(r.StaffUserId) ?? string.Empty,
             r.Amount, r.Refunded, r.RefundMethod?.ToString(), r.DebtReduced, r.BonusRestored, r.BonusReversed, r.Reason,
-            r.Items.Select(i => new ReceiptReturnItemDto(i.Name, i.Quantity, i.Amount)).ToList())).ToList();
+            r.Items.Select(i => new ReceiptReturnItemDto(i.Name, i.Quantity, i.Amount)).ToList(),
+            r.ReasonCode?.ToString(), r.Condition.ToString(), r.StockAction.ToString(), r.FromBackOffice)).ToList();
     }
 
     /// <summary>Чектер тарихы (ТЗ §12): күн кезеңі дүкеннің уақыт белдеуімен, соңғылары жоғарыда.</summary>

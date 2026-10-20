@@ -19,6 +19,10 @@ public static class StaffPermissions
     /// <summary>Бренд, өлшем бірлігі, сипаттамалар анықтамалықтары.</summary>
     public const string CatalogDictionaries = "catalog.dictionaries";
 
+    /// <summary>«Продажи» бөлімі: тарих, чек карточкасы, KPI (ТЗ «Продажи» §13).</summary>
+    public const string SalesView = "sales.view";
+    /// <summary>Сатылым тізімін Excel-ге экспорттау.</summary>
+    public const string SalesExport = "sales.export";
     public const string SalesCreate = "sales.create";
     public const string SalesReturn = "sales.return";
     public const string SalesDebt = "sales.debt";
@@ -46,7 +50,7 @@ public static class StaffPermissions
     [
         StatisticsView, FinanceView,
         ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle, CatalogDictionaries,
-        SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove,
+        SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove, SalesView, SalesExport,
         StaffManage, SettingsManage,
         InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
     ];
@@ -58,7 +62,7 @@ public static class StaffPermissions
         StaffRole.Admin =>
         [
             StatisticsView, ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle,
-            CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove,
+            CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove, SalesView, SalesExport,
             InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
         ],
         // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,

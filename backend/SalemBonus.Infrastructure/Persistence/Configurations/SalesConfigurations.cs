@@ -158,6 +158,9 @@ public class SaleReturnConfiguration : IEntityTypeConfiguration<SaleReturn>
         b.Property(x => x.DebtReduced).HasPrecision(18, 2);
         b.Property(x => x.RefundMethod).HasConversion<string>().HasMaxLength(16);
         b.Property(x => x.Reason).HasMaxLength(300);
+        b.Property(x => x.ReasonCode).HasConversion<string>().HasMaxLength(20);
+        b.Property(x => x.Condition).HasConversion<string>().HasMaxLength(20);
+        b.Property(x => x.StockAction).HasConversion<string>().HasMaxLength(20);
         b.HasIndex(x => new { x.SaleId, x.ClientRequestId }).IsUnique();
         b.HasIndex(x => new { x.StoreId, x.CreatedAt });
         b.HasOne<Sale>().WithMany().HasForeignKey(x => x.SaleId).OnDelete(DeleteBehavior.Restrict);

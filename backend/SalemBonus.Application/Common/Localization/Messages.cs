@@ -556,4 +556,23 @@ public static class Messages
 
     public static string SettingsNeedPaymentMethod(AppLanguage l) => Pick(l,
         "Кемінде бір төлем түрі қосулы болуы керек", "Должен быть включён хотя бы один способ оплаты");
+
+    // «Продажи» (ТЗ «Продажи» §10, §12)
+    public static string ReturnReasonRequired(AppLanguage l) => Pick(l,
+        "Қайтару себебін таңдаңыз", "Укажите причину возврата");
+
+    public static string ReturnCommentRequired(AppLanguage l) => Pick(l,
+        "«Басқа» себебіне түсініктеме міндетті", "Для причины «Другое» обязателен комментарий");
+
+    public static string ReturnConditionInvalid(AppLanguage l) => Pick(l,
+        "Тауардың күйі дұрыс емес", "Неверное состояние товара");
+
+    public static string ReturnStockActionInvalid(AppLanguage l) => Pick(l,
+        "Қоймалық әрекет дұрыс емес", "Неверное складское действие");
+
+    public static string ReturnWriteOffNeedsCondition(AppLanguage l) => Pick(l,
+        "Списание тек бүлінген не тексеруді қажет ететін тауарға", "Списание возможно только для повреждённого товара или товара, требующего проверки");
+
+    public static string SalesExportTooLarge(AppLanguage l, int max) => Pick(l,
+        $"Экспортқа {max} жолдан артық болмауы керек — кезеңді тарылтыңыз", $"В экспорт помещается не больше {max} строк — сузьте период или фильтры");
 }

@@ -72,7 +72,8 @@ public record ReceiptReturnItemDto(string Name, decimal Quantity, decimal Amount
 
 public record ReceiptReturnDto(Guid Id, DateTime CreatedAt, string CashierName, decimal Amount, decimal Refunded,
     string? RefundMethod, decimal DebtReduced, int BonusRestored, int BonusReversed, string? Reason,
-    IReadOnlyList<ReceiptReturnItemDto> Items);
+    IReadOnlyList<ReceiptReturnItemDto> Items,
+    string? ReasonCode = null, string Condition = "Sellable", string StockAction = "ToStock", bool FromBackOffice = false);
 
 public record ReceiptDto(
     Guid Id,
@@ -104,8 +105,12 @@ public record SalePageDto(IReadOnlyList<SaleListItemDto> Items, int Total, int P
 
 public record ReturnLineRequest(Guid SaleItemId, decimal Quantity);
 
+/// <summary>
+/// Қайтару (ТЗ «Продажи» §10): ReasonCode міндетті (NotSuitable / Defect / WrongSale / Other; Other → Reason-коммент міндетті),
+/// Condition (Sellable / Damaged / NeedsCheck), StockAction (ToStock / WriteOff). Бос қалса — себепке сай әдепкі.
+/// </summary>
 public record CreateReturnRequest(Guid ClientRequestId, IReadOnlyList<ReturnLineRequest>? Items, string? RefundMethod,
-    Guid? TransferRecipientId, string? Reason);
+    Guid? TransferRecipientId, string? Reason, string? ReasonCode = null, string? Condition = null, string? StockAction = null);
 
 public record DebtPaymentDto(decimal Amount, string? Method, bool IsReturn, string? TransferRecipient, decimal RemainingAfter,
     DateTime CreatedAt, string CashierName);

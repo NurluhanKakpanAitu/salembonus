@@ -23,6 +23,7 @@ public class DashboardAndAccessTests(ApiFixture api)
             clientRequestId = Guid.NewGuid(),
             items = new[] { new { saleItemId = sale["items"]![0]!["id"]!.GetValue<Guid>(), quantity = 1m } },
             refundMethod = "Cash",
+            reasonCode = "WrongSale",
         })).EnsureOk();
         var after = await pos.Get(pos.Owner, "/api/pos/v1/dashboard");
 
