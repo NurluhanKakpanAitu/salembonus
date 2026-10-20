@@ -126,6 +126,7 @@ public sealed class Pos(HttpClient http)
     public Task<ApiResult> Get(string token, string path) => Send(HttpMethod.Get, token, path, null);
     public Task<ApiResult> Post(string token, string path, object body) => Send(HttpMethod.Post, token, path, body);
     public Task<ApiResult> Put(string token, string path, object body) => Send(HttpMethod.Put, token, path, body);
+    public Task<ApiResult> Delete(string token, string path) => Send(HttpMethod.Delete, token, path, null);
 
     /// <summary>Файл жауабы (экспорт): мәртебе, түрі, көлемі.</summary>
     public async Task<(HttpStatusCode Status, string? ContentType, long Length)> Raw(string token, string path)

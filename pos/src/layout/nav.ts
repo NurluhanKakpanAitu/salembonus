@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
-  Calculator, ChartColumn, Gift, Package, Settings, ShoppingCart, UserCog, Users, Wallet, Warehouse,
+  ArrowLeftRight, Banknote, Calculator, ChartColumn, FileText, Gift, HandCoins, Landmark, LayoutDashboard, ListOrdered, Package, PieChart, Settings,
+  ShoppingCart, TrendingUp, Truck, UserCog, Users, Wallet, Warehouse,
 } from 'lucide-react'
 import type { TranslationKey } from '../lib/i18n'
 import { Permission, type StaffRole, type StaffStore } from '../lib/types'
@@ -14,6 +15,22 @@ export interface NavItem {
   /** ТЗ-сы әлі жоқ бөлімдер — әзірге иесі мен әкімшіге ғана көрінеді. */
   roles?: StaffRole[]
 }
+
+export interface SubNavItem { path: string; label: TranslationKey; icon: LucideIcon }
+
+/** «Финансы» подразделдері (ТЗ «Финансы» §1, §2): сол жақ мәзірде ашылады, белсендісі бөлектеледі. */
+export const FINANCE_SECTIONS: SubNavItem[] = [
+  { path: '', label: 'fin.section.overview', icon: LayoutDashboard },
+  { path: 'pnl', label: 'fin.section.pnl', icon: PieChart },
+  { path: 'cash-flow', label: 'fin.section.cash-flow', icon: TrendingUp },
+  { path: 'income-expense', label: 'fin.section.income-expense', icon: ArrowLeftRight },
+  { path: 'transactions', label: 'fin.section.transactions', icon: ListOrdered },
+  { path: 'accounts', label: 'fin.section.accounts', icon: Landmark },
+  { path: 'product-profit', label: 'fin.section.product-profit', icon: Banknote },
+  { path: 'customer-debts', label: 'fin.section.customer-debts', icon: HandCoins },
+  { path: 'supplier-debts', label: 'fin.section.supplier-debts', icon: Truck },
+  { path: 'documents', label: 'fin.section.documents', icon: FileText },
+]
 
 const managers: StaffRole[] = ['Owner', 'Admin']
 

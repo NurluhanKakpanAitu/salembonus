@@ -24,6 +24,7 @@ public class ReturnService(
     CashierService cashier,
     SaleService saleService,
     BonusLedger ledger,
+    Finance.FinanceLedger finance,
     StoreNotifier notifier,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
@@ -181,6 +182,12 @@ public class ReturnService(
             sale.ReturnedAmount += money;
             sale.Status = fullyReturned ? SaleStatus.Returned : SaleStatus.PartiallyReturned;
             sales.AddReturn(saleReturn);
+            // Финанс: қолға берілген ақша шоттан кетеді (қарызды азайтқан бөлігі — ақша емес).
+            if (refund > 0 && refundMethod is { } rmethod)
+                await finance.PostAsync(orgId, m.StoreId, new Finance.FinancePosting(Domain.Pos.Finance.FinanceOperationType.Refund, now,
+                    [new Finance.FinanceLine((await finance.AccountForMethodAsync(orgId, m.StoreId, rmethod, ct)).Id, -refund)],
+                    $"Возврат по чеку №{sale.Number}", CounterpartyType: sale.CustomerId is null ? null : Domain.Pos.Finance.CounterpartyType.Customer, CounterpartyId: sale.CustomerId,
+                    Method: rmethod, SourceModule: "sales", SourceDocumentId: sale.Id, SourceOperationId: saleReturn.Id, Comment: comment, AllowNegative: true), ct);
             var staffName = (await sales.StaffNamesAsync([access.StaffUserId], ct)).GetValueOrDefault(access.StaffUserId);
             await notifier.NotifyAsync(m.StoreId, StoreNotificationType.SaleReturn, null, money, sale.Number, staffName, ct);
 
@@ -200,7 +207,7 @@ public class ReturnService(
 }
 
 /// <summary>Қарыздар (ТЗ «Касса» §11.6–11.12): клиенттің қарыздары және бөліп не толық өтеу.</summary>
-public class DebtService(ISalesRepository sales, CashierService cashier, StoreNotifier notifier, CatalogAccess access, IUnitOfWork unitOfWork)
+public class DebtService(ISalesRepository sales, CashierService cashier, Finance.FinanceLedger finance, StoreNotifier notifier, CatalogAccess access, IUnitOfWork unitOfWork)
 {
     private AppLanguage Lang => access.Lang;
 
@@ -217,7 +224,8 @@ public class DebtService(ISalesRepository sales, CashierService cashier, StoreNo
     public async Task<DebtDto> RepayAsync(Guid debtId, RepayDebtRequest request, string? deviceToken, CancellationToken ct = default)
     {
         var (orgId, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
-        var register = await cashier.RequireRegisterAsync(deviceToken, m, ct);
+        // Кассадан — касса құрылғысы; кабинеттің «Финансы» бөлімінен (finance.operations) — құрылғысыз.
+        Guid? registerId = deviceToken is null && m.Has(StaffPermissions.FinanceOperate) ? null : (await cashier.RequireRegisterAsync(deviceToken, m, ct)).Id;
         var debt = await sales.GetDebtForUpdateAsync(m.StoreId, debtId, ct) ?? throw new NotFoundException(Messages.DebtNotFound(Lang));
         if (debt.Status == DebtStatus.Paid) throw new ValidationException(Messages.DebtAlreadyPaid(Lang), "amount");
 
@@ -238,16 +246,22 @@ public class DebtService(ISalesRepository sales, CashierService cashier, StoreNo
 
         var now = DateTime.UtcNow;
         debt.Paid += amount;
-        sales.AddDebtPayment(new DebtPayment
+        var payment = new DebtPayment
         {
             Id = Guid.NewGuid(), DebtId = debt.Id, Amount = amount, Method = method, TransferRecipient = recipient,
-            RemainingAfter = debt.Remaining, StaffUserId = access.StaffUserId, RegisterId = register.Id, CreatedAt = now,
-        });
+            RemainingAfter = debt.Remaining, StaffUserId = access.StaffUserId, RegisterId = registerId, CreatedAt = now,
+        };
+        sales.AddDebtPayment(payment);
         if (debt.Remaining <= 0)
         {
             debt.Status = DebtStatus.Paid;
             debt.ClosedAt = now;
         }
+        // Финанс (ТЗ «Финансы» §3.1): ақша шотқа түседі, қарыз азаяды, выручка қайта есептелмейді.
+        await finance.PostAsync(orgId, m.StoreId, new Finance.FinancePosting(Domain.Pos.Finance.FinanceOperationType.CustomerPayment, now,
+            [new Finance.FinanceLine((await finance.AccountForMethodAsync(orgId, m.StoreId, method, ct)).Id, amount)],
+            $"Погашение долга клиента · чек №{debt.SaleNumber}", CounterpartyType: Domain.Pos.Finance.CounterpartyType.Customer, CounterpartyId: debt.CustomerId,
+            Method: method, SourceModule: "sales", SourceDocumentId: debt.SaleId, SourceOperationId: payment.Id, AllowNegative: true), ct);
         var names = await sales.CustomerNamesAsync([debt.CustomerId], ct);
         var cashierName = (await sales.StaffNamesAsync([access.StaffUserId], ct)).GetValueOrDefault(access.StaffUserId);
         await notifier.NotifyAsync(m.StoreId, StoreNotificationType.DebtRepaid, names.GetValueOrDefault(debt.CustomerId), amount,

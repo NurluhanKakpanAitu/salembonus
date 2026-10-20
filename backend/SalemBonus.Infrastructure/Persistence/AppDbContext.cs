@@ -4,6 +4,7 @@ using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Pos;
 using SalemBonus.Domain.Pos.Catalog;
 using SalemBonus.Domain.Pos.Inventory;
+using SalemBonus.Domain.Pos.Finance;
 using SalemBonus.Domain.Pos.Sales;
 
 namespace SalemBonus.Infrastructure.Persistence;
@@ -59,6 +60,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
     public DbSet<SaleReturnItem> SaleReturnItems => Set<SaleReturnItem>();
     public DbSet<StoreNotification> StoreNotifications => Set<StoreNotification>();
+
+    // Финанс (ТЗ «Финансы»)
+    public DbSet<FinanceAccount> FinanceAccounts => Set<FinanceAccount>();
+    public DbSet<FinanceCategory> FinanceCategories => Set<FinanceCategory>();
+    public DbSet<FinanceOperation> FinanceOperations => Set<FinanceOperation>();
+    public DbSet<FinanceEntry> FinanceEntries => Set<FinanceEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

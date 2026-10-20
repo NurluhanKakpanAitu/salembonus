@@ -45,6 +45,11 @@ public static class DependencyInjection
         services.AddScoped<SalemBonus.Application.Pos.Sales.SalesHistoryService>();
         services.AddScoped<SalemBonus.Application.Pos.Sales.CashierSettingsService>();
         services.AddScoped<SalemBonus.Application.Pos.Analytics.AnalyticsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Finance.FinanceLedger>();
+        services.AddScoped<SalemBonus.Application.Pos.Finance.FinanceOperationsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Finance.FinanceReportsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Finance.FinanceDebtsService>();
+        services.AddScoped<SalemBonus.Application.Pos.Finance.FinanceExport>();
         services.AddScoped<WarehouseService>();
         services.AddScoped<SalemBonus.Application.Pos.Inventory.StockPosting>();
         services.AddScoped<SalemBonus.Application.Pos.Inventory.InventoryService>();

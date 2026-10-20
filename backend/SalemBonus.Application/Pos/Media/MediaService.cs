@@ -19,10 +19,12 @@ public class MediaService(IFileStorage storage, CatalogAccess access)
         ["image/jpeg"] = "jpg",
         ["image/png"] = "png",
         ["image/webp"] = "webp",
+        ["application/pdf"] = "pdf", // қаржы құжаттарының вложениесі (ТЗ «Финансы» §7)
     };
 
     public static string BrandPrefix(Guid orgId) => $"org/{orgId:N}/brands/";
-    public static string CatalogPrefix(Guid orgId) => $"org/{orgId:N}/catalog/";
+    public static string CatalogPrefix(Guid orgId) => $"org/{orgId:N}/catalog/";
+    public static string FinancePrefix(Guid orgId) => $"org/{orgId:N}/finance/";
 
     public async Task<UploadDto> CreateUploadAsync(UploadRequest request, CancellationToken ct = default)
     {
@@ -32,6 +34,7 @@ public class MediaService(IFileStorage storage, CatalogAccess access)
             "product" => ((await access.RequireAnyAsync(ct, StaffPermissions.ProductsCreate, StaffPermissions.ProductsEdit)).OrgId, (Func<Guid, string>)ProductService.ImagePrefix),
             "brand" => ((await access.RequireAsync(StaffPermissions.CatalogDictionaries, ct)).OrgId, BrandPrefix),
             "category" => ((await access.RequireAsync(StaffPermissions.CatalogStructure, ct)).OrgId, CatalogPrefix),
+            "finance" => ((await access.RequireAsync(StaffPermissions.FinanceOperate, ct)).OrgId, FinancePrefix),
             _ => throw new ValidationException(Messages.UploadKindInvalid(lang), "kind"),
         };
 

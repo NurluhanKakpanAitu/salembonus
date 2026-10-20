@@ -144,6 +144,8 @@ public class InventoryTests(ApiFixture api)
         var beforePosting = await pos.Post(pos.Owner, $"{Inv}/receipts/{id}/payments", new { amount = 1000m, method = "Cash" });
         Assert.Equal(HttpStatusCode.BadRequest, beforePosting.Status); // тек проведённыйға
         (await pos.Post(pos.Owner, $"{Inv}/documents/{id}/post", new { })).EnsureOk();
+        // Финанс (ТЗ «Финансы» §17): жеткізушіге төлем шоттағы ақшадан — алдымен картамен сатылым, банк шотына 4000 түседі.
+        (await pos.SellAsync(pos.Owner, [Pos.Line(product, 2)], [Pos.Card(4000)])).EnsureOk();
 
         var requestId = Guid.NewGuid();
         var first = (await pos.Post(pos.Owner, $"{Inv}/receipts/{id}/payments", new { clientRequestId = requestId, amount = 3000m, method = "Transfer", reference = "№1" })).Ok;

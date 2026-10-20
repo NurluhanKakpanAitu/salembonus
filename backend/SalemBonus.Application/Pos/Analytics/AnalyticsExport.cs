@@ -60,7 +60,7 @@ public partial class AnalyticsService
     }
 
     /// <summary>CSV: UTF-8 BOM, «;» бөлгіш (Excel орыс локалінде дұрыс ашылады), бөлшек — нүктемен.</summary>
-    private static byte[] Csv(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<object?>> rows)
+    internal static byte[] Csv(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<object?>> rows)
     {
         static string Esc(object? v)
         {

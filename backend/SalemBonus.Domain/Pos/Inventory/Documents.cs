@@ -95,6 +95,8 @@ public class StockDocument
     public decimal Total { get; set; }
     /// <summary>Тіркелген төлемдер (тек приёмка). Долг = Total − Paid.</summary>
     public decimal Paid { get; set; }
+    /// <summary>Жеткізушіге төлеу мерзімі (ТЗ «Финансы» §12): өтсе — просрочка; бос — мерзімсіз.</summary>
+    public DateOnly? PaymentDueDate { get; set; }
 
     public Guid CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

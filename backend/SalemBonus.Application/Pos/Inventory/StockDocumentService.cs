@@ -21,6 +21,8 @@ public class StockDocumentService(
     ICatalogRepository catalog,
     StockPosting posting,
     WarehouseService warehouses,
+    Finance.FinanceLedger finance,
+    IFinanceRepository financeAccounts,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
 {
@@ -140,6 +142,7 @@ public class StockDocumentService(
         doc.SupplierId = r.SupplierId;
         doc.SupplierInvoiceNumber = CatalogAccess.Optional(r.SupplierInvoiceNumber, 64);
         doc.Basis = CatalogAccess.Optional(r.Basis, 120);
+        doc.PaymentDueDate = r.PaymentDueDate;
         doc.AttachmentUrl = CatalogAccess.Optional(r.AttachmentUrl, 500);
         doc.Comment = CatalogAccess.Optional(r.Comment, 1000);
         await ApplyLinesAsync(orgId, doc, r.Lines, requirePrice: true, ct);
@@ -344,12 +347,25 @@ public class StockDocumentService(
             Date = r.Date ?? DateOnly.FromDateTime(DateTime.UtcNow), Comment = CatalogAccess.Optional(r.Comment, 500),
             ClientRequestId = r.ClientRequestId, CreatedBy = access.StaffUserId,
         };
-        repo.AddPayment(payment);
-        doc.Paid += amount;
-        doc.UpdatedAt = DateTime.UtcNow;
-        access.Audit(orgId, doc.StoreId, "inventory.supplier.payment", "supplier_payment", payment.Id, null,
-            new { doc.Number, payment.Amount, Method = method.ToString(), payment.Reference, Remaining = doc.Remaining });
-        await unitOfWork.SaveChangesAsync(ct);
+        var supplierName = (await repo.GetSupplierAsync(orgId, supplierId, ct))?.Name;
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            repo.AddPayment(payment);
+            doc.Paid += amount;
+            doc.UpdatedAt = DateTime.UtcNow;
+            // Финанс (ТЗ «Финансы» §12): ақша таңдалған шоттан (не әдістің әдепкі шотынан) кетеді; қалдық жетпесе — тыйым (§17).
+            var account = r.AccountId is { } aid
+                ? await financeAccounts.GetAccountAsync(orgId, aid, ct) ?? throw new ValidationException(Messages.FinanceAccountNotFound(Lang), "accountId")
+                : await finance.AccountForMethodAsync(orgId, m.StoreId, method, ct);
+            await finance.PostAsync(orgId, doc.StoreId, new Finance.FinancePosting(Domain.Pos.Finance.FinanceOperationType.SupplierPayment, DateTime.UtcNow,
+                [new Finance.FinanceLine(account.Id, -amount)], $"Оплата поставщику · {doc.Number}", CounterpartyType: Domain.Pos.Finance.CounterpartyType.Supplier,
+                CounterpartyId: supplierId, CounterpartyName: supplierName, Method: method, DocumentNumber: payment.Reference, Comment: payment.Comment,
+                SourceModule: "inventory", SourceDocumentId: doc.Id, SourceOperationId: payment.Id), ct);
+            access.Audit(orgId, doc.StoreId, "inventory.supplier.payment", "supplier_payment", payment.Id, null,
+                new { doc.Number, payment.Amount, Method = method.ToString(), payment.Reference, Account = account.Name, Remaining = doc.Remaining });
+            await unitOfWork.SaveChangesAsync(ct);
+            return payment;
+        }, ct);
         return await GetAsync(doc.Id, ct);
     }
 
@@ -368,8 +384,14 @@ public class StockDocumentService(
         payment.ReversedAt = DateTime.UtcNow;
         payment.ReversedBy = access.StaffUserId;
         payment.ReversalReason = reason;
-        access.Audit(orgId, m.StoreId, "inventory.supplier.payment.reverse", "supplier_payment", payment.Id, null, new { payment.Amount, Reason = reason });
-        await unitOfWork.SaveChangesAsync(ct);
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            // Финанс: кері жазба — ақша шотқа қайтады, түпнұсқа операция Reversed.
+            await finance.ReverseBySourceAsync(orgId, payment.Id, reason, ct);
+            access.Audit(orgId, m.StoreId, "inventory.supplier.payment.reverse", "supplier_payment", payment.Id, null, new { payment.Amount, Reason = reason });
+            await unitOfWork.SaveChangesAsync(ct);
+            return payment;
+        }, ct);
     }
 
     // ---------- Көмекшілер ----------
@@ -427,7 +449,7 @@ public class StockDocumentService(
             d.ReversedAt, d.ReversalReason, lines,
             payments.Select(p => new SupplierPaymentDto(p.Id, p.SupplierId, l.Suppliers.GetValueOrDefault(p.SupplierId)?.Name ?? "", p.DocumentId,
                 d.Number, p.Amount, p.Method.ToString(), p.Reference, p.Date, p.Comment, p.Status.ToString(),
-                payStaff.GetValueOrDefault(p.CreatedBy) ?? "", p.CreatedAt, p.ReversalReason)).ToList());
+                payStaff.GetValueOrDefault(p.CreatedBy) ?? "", p.CreatedAt, p.ReversalReason)).ToList(), d.PaymentDueDate);
     }
 
     private static object Snapshot(StockDocument d) => new

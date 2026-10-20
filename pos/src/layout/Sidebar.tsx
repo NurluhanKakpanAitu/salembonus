@@ -1,9 +1,9 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { ChevronsLeft, ChevronsRight, ExternalLink, X } from 'lucide-react'
 import { Logo } from '../components/Logo'
 import { activeStore, useAuth } from '../lib/auth'
 import { useT } from '../lib/i18n'
-import { canSee, NAV } from './nav'
+import { canSee, FINANCE_SECTIONS, NAV } from './nav'
 
 /** Қара сол жақ мәзір. Тек рұқсат етілген бөлімдер көрінеді; мобильдіде шығып тұратын панель. */
 export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
@@ -15,6 +15,9 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
   const t = useT()
   const store = useAuth(activeStore)
   const items = NAV.filter((i) => canSee(i, store))
+  const location = useLocation()
+  const financeOpen = location.pathname.startsWith('/finance')
+  const financeSection = FINANCE_SECTIONS.find((s) => s.path !== '' && location.pathname.startsWith(`/finance/${s.path}`))?.path ?? ''
 
   return (
     <>
@@ -70,6 +73,19 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
                     >
                       {content}
                     </NavLink>
+                  )}
+                  {item.path === '/finance' && financeOpen && !collapsed && (
+                    // «Финансы» подразделдері (ТЗ «Финансы» §2): бөлім ашық тұрғанда мәзір ішінде, белсендісі бөлектеледі.
+                    <ul className="mt-1 flex flex-col gap-0.5 pl-4">
+                      {FINANCE_SECTIONS.map((s) => (
+                        <li key={s.path}>
+                          <NavLink to={`/finance/${s.path}${location.search}`} end={s.path === ''} onClick={onClose}
+                            className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] ${financeSection === s.path ? 'bg-nav-2 font-semibold text-white' : 'text-nav-ink/80 hover:bg-nav-2 hover:text-white'}`}>
+                            <s.icon size={15} className="shrink-0" /><span className="truncate">{t(s.label)}</span>
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </li>
               )

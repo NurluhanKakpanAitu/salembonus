@@ -49,7 +49,8 @@ public record StockDocumentDto(
     Guid? SupplierId, string? SupplierName, string? SupplierInvoiceNumber, string? Basis, string? AttachmentUrl, string? Comment,
     string? Reason, bool IsQuick, decimal Total, decimal Paid, decimal Remaining, int LineCount, decimal TotalQuantity,
     string CreatedByName, DateTime CreatedAt, DateTime? PostedAt, string? PostedByName, DateTime? ReversedAt, string? ReversalReason,
-    IReadOnlyList<DocumentLineDto> Lines, IReadOnlyList<SupplierPaymentDto> Payments);
+    IReadOnlyList<DocumentLineDto> Lines, IReadOnlyList<SupplierPaymentDto> Payments,
+    DateOnly? PaymentDueDate = null);
 
 public record StockDocumentListItemDto(
     Guid Id, string Number, DateTime Date, string Status, Guid WarehouseId, string WarehouseName, Guid? SupplierId, string? SupplierName,
@@ -64,7 +65,7 @@ public record SaveDocumentLineRequest(Guid ProductId, decimal Quantity, decimal?
 
 public record SaveReceiptRequest(
     Guid? WarehouseId, DateTime? Date, Guid? SupplierId, string? SupplierInvoiceNumber, string? Basis, string? AttachmentUrl,
-    string? Comment, bool IsQuick, IReadOnlyList<SaveDocumentLineRequest>? Lines);
+    string? Comment, bool IsQuick, IReadOnlyList<SaveDocumentLineRequest>? Lines, DateOnly? PaymentDueDate = null);
 
 public record SaveWriteOffRequest(
     Guid? WarehouseId, DateTime? Date, string? Reason, string? Comment, string? AttachmentUrl, IReadOnlyList<SaveDocumentLineRequest>? Lines);
@@ -72,7 +73,9 @@ public record SaveWriteOffRequest(
 public record ReverseRequest(string? Reason);
 
 public record RegisterPaymentRequest(
-    Guid? ClientRequestId, Guid? DocumentId, decimal Amount, string? Method, string? Reference, DateOnly? Date, string? Comment);
+    Guid? ClientRequestId, Guid? DocumentId, decimal Amount, string? Method, string? Reference, DateOnly? Date, string? Comment,
+    /// <summary>Ақша қай шоттан кетеді (ТЗ «Финансы» §12.2); бос — төлем әдісінің әдепкі шоты.</summary>
+    Guid? AccountId = null);
 
 // ---------- Жеткізушілер (§12–13) ----------
 

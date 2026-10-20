@@ -585,4 +585,32 @@ public static class Messages
 
     public static string AnalyticsTabUnknown(AppLanguage l) => Pick(l,
         "Мұндай есеп жоқ", "Такого отчёта нет");
+
+    // «Финансы» (ТЗ «Финансы» §7, §9, §17)
+    public static string FinanceNoAccount(AppLanguage l) => Pick(l, "Белсенді ақша шоты жоқ", "Нет активного денежного счёта");
+    public static string FinanceNotDraft(AppLanguage l) => Pick(l, "Тек черновикті өзгертуге/проведениеге болады", "Изменять и проводить можно только черновик");
+    public static string FinanceNotPosted(AppLanguage l) => Pick(l, "Операция проведённый емес", "Операция не проведена");
+    public static string FinanceAlreadyReversed(AppLanguage l) => Pick(l, "Операция бұрын сторноланған", "Операция уже сторнирована");
+    public static string FinanceAmountInvalid(AppLanguage l) => Pick(l, "Сома нөлден үлкен болуы керек", "Сумма должна быть больше нуля");
+    public static string FinanceAccountNotFound(AppLanguage l) => Pick(l, "Шот табылмады", "Счёт не найден");
+    public static string FinanceAccountInactive(AppLanguage l, string name) => Pick(l, $"«{name}» шоты белсенді емес", $"Счёт «{name}» неактивен");
+    public static string FinanceInsufficientFunds(AppLanguage l, string name, decimal balance, decimal shortage) => Pick(l,
+        $"«{name}» шотында ақша жетпейді: қалдық {balance:N2} ₸, жетіспейді {shortage:N2} ₸", $"Недостаточно денег на счёте «{name}»: доступно {balance:N2} ₸, не хватает {shortage:N2} ₸");
+    public static string FinanceAccountHasBalance(AppLanguage l, decimal balance) => Pick(l,
+        $"Қалдығы бар шотты өшіруге болмайды ({balance:N2} ₸) — алдымен аударыңыз", $"Нельзя деактивировать счёт с остатком {balance:N2} ₸ — сначала переведите деньги");
+    public static string FinanceOpeningLocked(AppLanguage l) => Pick(l, "Проводкасы бар шоттың бастапқы қалдығы өзгертілмейді — түзету операциясын қолданыңыз", "У счёта с проводками начальный остаток не меняется — используйте корректировку");
+    public static string FinanceOpeningDateRequired(AppLanguage l) => Pick(l, "Бастапқы қалдық күнін көрсетіңіз", "Укажите дату начального остатка");
+    public static string FinanceTypeInvalid(AppLanguage l) => Pick(l, "Түрі дұрыс емес", "Неверный тип");
+    public static string FinanceDescriptionInvalid(AppLanguage l) => Pick(l, "Сипаттама 3–250 таңба", "Описание — от 3 до 250 символов");
+    public static string FinanceDateInFuture(AppLanguage l) => Pick(l, "Операция күні болашақта бола алмайды", "Дата операции не может быть в будущем");
+    public static string FinanceCategoryRequired(AppLanguage l) => Pick(l, "Санатты таңдаңыз", "Выберите категорию");
+    public static string FinanceCategoryInvalid(AppLanguage l) => Pick(l, "Санат табылмады не түрі сәйкес емес не архивте", "Категория не найдена, не того типа или в архиве");
+    public static string FinanceCounterpartyRequired(AppLanguage l) => Pick(l, "Контрагентті көрсетіңіз", "Укажите контрагента");
+    public static string FinanceSameAccount(AppLanguage l) => Pick(l, "Шоттар бірдей болмауы керек", "Счёт списания и зачисления должны отличаться");
+    public static string FinanceReasonRequired(AppLanguage l) => Pick(l, "Себебін көрсетіңіз", "Укажите причину");
+    public static string FinanceSourceReverse(AppLanguage l) => Pick(l,
+        "Бұл операция бастапқы модульден түскен — сторно сол жерде (чек қайтарымы, төлем сторносы)", "Эта операция пришла из исходного модуля — сторнируйте её там (возврат чека, сторно оплаты)");
+    public static string FinanceOperationNotFound(AppLanguage l) => Pick(l, "Операция табылмады", "Операция не найдена");
+    public static string FinanceAllocationTooMuch(AppLanguage l, decimal remaining) => Pick(l,
+        $"Бөлу сомасы құжат қарызынан аспауы керек ({remaining:N2} ₸)", $"Сумма распределения не может превышать остаток долга по документу ({remaining:N2} ₸)");
 }

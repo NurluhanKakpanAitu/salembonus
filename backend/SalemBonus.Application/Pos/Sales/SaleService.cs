@@ -29,6 +29,7 @@ public class SaleService(
     WarehouseService warehouses,
     CashierService cashier,
     BonusLedger ledger,
+    Finance.FinanceLedger finance,
     StoreNotifier notifier,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
@@ -233,6 +234,15 @@ public class SaleService(
             }
 
             sales.AddSale(sale);
+            // Финанс (ТЗ «Финансы» §1.2, §3.1): чектің ақшасы төлем әдісіне сай шотқа — бір операция, бір рет; қарыз бөлігі ақша емес.
+            var moneyLines = new List<Finance.FinanceLine>();
+            foreach (var group in payments.Where(p => p.Method != PaymentMethod.Debt).GroupBy(p => p.Method))
+                moneyLines.Add(new Finance.FinanceLine((await finance.AccountForMethodAsync(orgId, m.StoreId, group.Key, ct)).Id, group.Sum(p => p.Amount)));
+            if (moneyLines.Count > 0)
+                await finance.PostAsync(orgId, m.StoreId, new Finance.FinancePosting(Domain.Pos.Finance.FinanceOperationType.SalePayment, sale.CreatedAt, moneyLines,
+                    $"Продажа · чек №{sale.Number}", CounterpartyType: customer is null ? null : Domain.Pos.Finance.CounterpartyType.Customer, CounterpartyId: customer?.Id,
+                    CounterpartyName: customer?.FullName, Method: moneyLines.Count == 1 ? payments.First(p => p.Method != PaymentMethod.Debt).Method : null,
+                    SourceModule: "sales", SourceDocumentId: sale.Id, SourceOperationId: sale.Id, AllowNegative: true), ct);
             access.Audit(orgId, m.StoreId, "sale.create", "sale", sale.Id, null, new
             {
                 sale.Number, sale.Total, sale.Subtotal, sale.DiscountAmount, sale.BonusRedeemed, sale.BonusAccrued,

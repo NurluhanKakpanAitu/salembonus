@@ -12,6 +12,12 @@ public static class StaffPermissions
     /// <summary>Клиенттің телефоны мен жеке деректері (статистикада, экспортта).</summary>
     public const string CustomersContacts = "customers.contacts";
     public const string FinanceView = "finance.view";
+    /// <summary>«Финансы»: қолмен операциялар, аударымдар, жеткізушіге/клиенттен төлем (ТЗ «Финансы» §15.2).</summary>
+    public const string FinanceOperate = "finance.operations";
+    /// <summary>Сторно мен қалдық түзетуі — бөлек құқық, себебі мен аудитпен.</summary>
+    public const string FinanceReverse = "finance.reverse";
+    /// <summary>Шоттар мен санаттарды басқару.</summary>
+    public const string FinanceAccounts = "finance.accounts";
 
     public const string ProductsView = "products.view";
     public const string ProductsCreate = "products.create";
@@ -52,7 +58,7 @@ public static class StaffPermissions
 
     public static readonly IReadOnlyList<string> All =
     [
-        StatisticsView, FinanceView, StatisticsExport, CustomersContacts,
+        StatisticsView, FinanceView, StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
         ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle, CatalogDictionaries,
         SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove, SalesView, SalesExport,
         StaffManage, SettingsManage,
@@ -68,7 +74,7 @@ public static class StaffPermissions
             StatisticsView, ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle,
             CatalogDictionaries, SalesCreate, SalesReturn, SalesDebt, DiscountApprove, SalesView, SalesExport,
             InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
-            StatisticsExport, CustomersContacts,
+            StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
         ],
         // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,
         // «Товар» бөлімі мен оның API-і кассирге ашылмайды. Иесі қажет болса жеке кеңейтеді.
