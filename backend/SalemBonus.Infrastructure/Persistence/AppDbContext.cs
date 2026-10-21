@@ -7,6 +7,7 @@ using SalemBonus.Domain.Pos.Inventory;
 using SalemBonus.Domain.Pos.Finance;
 using SalemBonus.Domain.Pos.Bonus;
 using SalemBonus.Domain.Pos.Clients;
+using SalemBonus.Domain.Platform;
 using SalemBonus.Domain.Pos.Sales;
 
 namespace SalemBonus.Infrastructure.Persistence;
@@ -82,6 +83,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ClientCommunication> ClientCommunications => Set<ClientCommunication>();
     public DbSet<ClientMergeLog> ClientMergeLog => Set<ClientMergeLog>();
     public DbSet<ClientImport> ClientImports => Set<ClientImport>();
+    public DbSet<PlatformAdmin> PlatformAdmins => Set<PlatformAdmin>();
+    public DbSet<PlatformPlan> PlatformPlans => Set<PlatformPlan>();
+    public DbSet<PlatformPayment> PlatformPayments => Set<PlatformPayment>();
+    public DbSet<PlatformAuditEntry> PlatformAudit => Set<PlatformAuditEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

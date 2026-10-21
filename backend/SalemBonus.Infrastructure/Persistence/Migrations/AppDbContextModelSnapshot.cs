@@ -97,18 +97,64 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)");
 
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.PrimitiveCollection<List<string>>("Modules")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<decimal?>("MonthlyFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<DateOnly?>("PaidUntil")
+                        .HasColumnType("date");
+
+                    b.Property<Guid?>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SuspendReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("SuspendedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("TrialUntil")
+                        .HasColumnType("date");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PaidUntil");
 
                     b.ToTable("organizations", "core");
                 });
@@ -795,6 +841,190 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("StoreLevels");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Platform.PlatformAdmin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("admins", "platform");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Platform.PlatformAuditEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("AdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Data")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Entity")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Ip")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("OrganizationId", "CreatedAt");
+
+                    b.ToTable("audit_log", "platform");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Platform.PlatformPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("PaidOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PeriodTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("VoidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VoidedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaidOn");
+
+                    b.HasIndex("OrganizationId", "PaidOn");
+
+                    b.ToTable("payments", "platform");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Platform.PlatformPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<List<string>>("Modules")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<decimal>("MonthlyPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("plans", "platform");
                 });
 
             modelBuilder.Entity("SalemBonus.Domain.Pos.Bonus.BirthdayGrant", b =>
@@ -3578,10 +3808,12 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("SalemBonus.Domain.Entities.Store", b =>
                 {
-                    b.HasOne("SalemBonus.Domain.Core.Organization", null)
+                    b.HasOne("SalemBonus.Domain.Core.Organization", "Organization")
                         .WithMany()
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Organization");
                 });
 
             modelBuilder.Entity("SalemBonus.Domain.Entities.StoreLevel", b =>
@@ -3593,6 +3825,15 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Platform.PlatformPayment", b =>
+                {
+                    b.HasOne("SalemBonus.Domain.Core.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SalemBonus.Domain.Pos.Catalog.Brand", b =>

@@ -29,6 +29,7 @@ public class Store
     public string JoinCode { get; set; } = string.Empty;
     /// <summary>Дүкен қай бизнеске тиесілі. SalemPos қолданбайтын серіктесте бос.</summary>
     public Guid? OrganizationId { get; set; }
+    public SalemBonus.Domain.Core.Organization? Organization { get; set; }
     /// <summary>
     /// Дүкен тұрған елді мекеннің КАТО коды. Кассада тіркелген клиенттің өңірі осыдан алынады.
     /// </summary>

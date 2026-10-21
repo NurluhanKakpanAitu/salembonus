@@ -19,5 +19,9 @@ public class StoreMembership
     public StaffUser? StaffUser { get; set; }
     public Store? Store { get; set; }
 
-    public bool Has(string permission) => Role == StaffRole.Owner || Permissions.Contains(permission);
+    /// <summary>
+    /// Рұқсат бар ма: иесіне — бәрі, қалғанына — берілгені; бірақ бизнесте модуль өшірулі болса — ешкімге (дүкеннің ұйымы жүктелгенде).
+    /// </summary>
+    public bool Has(string permission) =>
+        (Role == StaffRole.Owner || Permissions.Contains(permission)) && (Store?.Organization is not { } org || org.HasModuleFor(permission));
 }

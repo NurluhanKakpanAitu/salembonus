@@ -56,6 +56,7 @@ public sealed class ApiFixture : IAsyncLifetime
         await StaffSeeder.SeedAsync(db);
         await CatalogDemoSeeder.SeedAsync(db);
         await CashierDemoSeeder.SeedAsync(db);
+        await AdminSeeder.SeedAsync(db);
         // Нақты өмірде кассирде құпиясөз жоқ (тек PIN). Тесттерде кассирдің токенін құпиясөзбен алу оңай:
         // PIN-мен кіру үшін әр «құрылғыда» кассаны алдын ала қосу керек болар еді.
         var cashier = await db.StaffUsers.SingleAsync(u => u.Phone == StaffSeeder.CashierPhone);

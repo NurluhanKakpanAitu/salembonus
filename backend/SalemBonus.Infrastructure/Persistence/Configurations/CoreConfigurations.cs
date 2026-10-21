@@ -14,6 +14,7 @@ internal static class Schemas
 {
     public const string Core = "core";
     public const string Pos = "pos";
+    public const string Platform = "platform";
 }
 
 public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
@@ -24,6 +25,14 @@ public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
         b.HasKey(x => x.Id);
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.Property(x => x.Bin).HasMaxLength(12);
+        b.Property(x => x.MonthlyFee).HasPrecision(18, 2);
+        b.Property(x => x.ContactName).HasMaxLength(120);
+        b.Property(x => x.ContactPhone).HasMaxLength(20);
+        b.Property(x => x.ContactEmail).HasMaxLength(200);
+        b.Property(x => x.City).HasMaxLength(100);
+        b.Property(x => x.Comment).HasMaxLength(1000);
+        b.Property(x => x.SuspendReason).HasMaxLength(500);
+        b.HasIndex(x => x.PaidUntil);
     }
 }
 

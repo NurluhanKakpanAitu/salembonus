@@ -52,6 +52,11 @@ public class StaffAuthService(
             await FailAsync(user, phone, "disabled", ct);
             throw new ValidationException(Messages.StaffDisabled(Lang), "phone");
         }
+        if (user.Organization is { IsActive: false })
+        {
+            await FailAsync(user, phone, "suspended", ct);
+            throw new ValidationException(Messages.OrganizationSuspended(Lang), "phone");
+        }
         // Кассирде құпиясөз жоқ — ол тек тіркелген кассада PIN-мен кіреді (SignInWithPinAsync).
         if (user.PasswordHash is null)
         {
@@ -98,7 +103,7 @@ public class StaffAuthService(
 
         var user = await staff.GetByIdForUpdateAsync(stored.StaffUserId, ct);
         // Иесі қызметкерді өшірсе немесе дүкеннен алып тастаса, келесі жаңартуда сеанс жабылады.
-        if (user is null || !user.IsActive)
+        if (user is null || !user.IsActive || user.Organization is { IsActive: false })
             throw new UnauthorizedException(Messages.SessionExpired(Lang));
         var me = ToMe(user);
         if (me.Stores.Count == 0)
@@ -150,7 +155,7 @@ public class StaffAuthService(
         Guid staffUserId, string? pin, Guid storeId, Guid registerId, string? device, CancellationToken ct = default)
     {
         var user = await staff.GetByIdForUpdateAsync(staffUserId, ct);
-        if (user is null || !user.IsActive || !CanSellIn(user, storeId))
+        if (user is null || !user.IsActive || user.Organization is { IsActive: false } || !CanSellIn(user, storeId))
             throw new ValidationException(Messages.StaffNotAllowedOnRegister(Lang), "staff");
 
         var now = DateTime.UtcNow;
@@ -279,13 +284,23 @@ public class StaffAuthService(
                 m.Store!.Name,
                 m.Store.Address,
                 m.Role.ToString(),
-                m.Role == StaffRole.Owner ? StaffPermissions.All : m.Permissions))
+                // Бизнесте өшірулі модульдің рұқсаттары берілмейді — мәзір мен батырмалар өзі жасырылады.
+                (m.Role == StaffRole.Owner ? StaffPermissions.All : m.Permissions).Where(p => user.Organization?.HasModuleFor(p) ?? true).ToList()))
             .ToList();
 
-        // ТЗ «Статистика» §3: иесі мен статистиканы көре алатын әкімші — Статистика, қалғаны — Касса.
-        var startPage = stores.Any(s => s.Permissions.Contains(StaffPermissions.StatisticsView))
-            ? "statistics"
-            : "cashier";
+        // ТЗ «Статистика» §3: иесі мен статистиканы көре алатын әкімші — Статистика, қалғаны — Касса;
+        // модульдері өшірілсе — бірінші қолжетімді бөлім.
+        bool Any(string p) => stores.Any(s => s.Permissions.Contains(p));
+        var startPage = Any(StaffPermissions.StatisticsView) ? "statistics"
+            : Any(StaffPermissions.SalesCreate) ? "cashier"
+            : Any(StaffPermissions.ProductsView) ? "products"
+            : Any(StaffPermissions.SalesView) ? "sales"
+            : Any(StaffPermissions.InventoryView) ? "warehouse"
+            : Any(StaffPermissions.FinanceView) ? "finance"
+            : Any(StaffPermissions.BonusView) ? "bonus"
+            : Any(StaffPermissions.ClientsView) ? "clients"
+            : Any(StaffPermissions.StaffManage) ? "staff"
+            : "settings";
 
         return new StaffMeDto(
             user.Id, user.Phone, user.FirstName, user.LastName, user.Language,

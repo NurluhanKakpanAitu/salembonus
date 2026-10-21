@@ -74,6 +74,8 @@ public static class DependencyInjection
         services.AddScoped<IFinanceRepository, FinanceRepository>();
         services.AddScoped<IBonusRepository, BonusRepository>();
         services.AddScoped<IClientRepository, ClientRepository>();
+        services.AddScoped<IPlatformRepository, PlatformRepository>();
+        services.AddScoped<ICurrentAdmin, SalemBonus.Infrastructure.Identity.HttpCurrentAdmin>();
         // Meta-ның Authentication шаблоны бекітілгенше кодтар логқа жазылады.
         services.AddSingleton<IWhatsAppSender, LogWhatsAppSender>();
         return services;
@@ -107,6 +109,7 @@ public static class DependencyInjection
             await StaffSeeder.SeedAsync(db, ct);
             await CatalogDemoSeeder.SeedAsync(db, ct);
             await CashierDemoSeeder.SeedAsync(db, ct);
+            await AdminSeeder.SeedAsync(db, ct);
         }
     }
 }

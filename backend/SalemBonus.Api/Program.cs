@@ -43,13 +43,23 @@ builder.Services
     {
         o.MapInboundClaims = false;
         o.TokenValidationParameters = TokenParameters(jwt.StaffAudience);
+    })
+    // SalemTech әкімшісі (admin.salemtech.kz): өз audience-і — бизнес не клиент токенімен кіруге болмайды.
+    .AddJwtBearer(SalemBonus.Api.Controllers.AdminAuth.Scheme, o =>
+    {
+        o.MapInboundClaims = false;
+        o.TokenValidationParameters = TokenParameters(jwt.AdminAudience);
     });
 builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
     .AddPolicy(StaffAuth.Policy, p => p
         .AddAuthenticationSchemes(StaffAuth.Scheme)
         .RequireAuthenticatedUser()
-        .RequireClaim(JwtTokenService.StaffTypeClaim, JwtTokenService.StaffTypeValue));
+        .RequireClaim(JwtTokenService.StaffTypeClaim, JwtTokenService.StaffTypeValue))
+    .AddPolicy(SalemBonus.Api.Controllers.AdminAuth.Policy, p => p
+        .AddAuthenticationSchemes(SalemBonus.Api.Controllers.AdminAuth.Scheme)
+        .RequireAuthenticatedUser()
+        .RequireClaim(JwtTokenService.StaffTypeClaim, JwtTokenService.AdminTypeValue));
 
 // Құпиясөзді теріп көрудің алдын алу: бір IP-ден минутына 10 кіру әрекеті.
 // Бұған қоса әр аккаунт 5 қатеден кейін 15 минутқа бұғатталады (StaffAuthService).

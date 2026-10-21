@@ -31,3 +31,21 @@ pos.salemtech.kz {
 		reverse_proxy pos-web:80
 	}
 }
+
+# SalemTech әкімшілігі: бизнестер, төлемдер, модульдер. Сол pos-web образы — nginx Host бойынша admin.html береді.
+admin.salemtech.kz {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		X-Robots-Tag "noindex, nofollow"
+	}
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy pos-web:80
+	}
+}

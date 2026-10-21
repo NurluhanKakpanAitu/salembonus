@@ -29,6 +29,24 @@ public class HttpCurrentStaff(IHttpContextAccessor accessor, ICurrentLanguage la
 /// X-Store-Id тақырыбынан дүкенді алып, қызметкердің сонда белсенді мүшелігін тексереді.
 /// Тақырып жоқ болса — алғашқы белсенді дүкен. Бір сұраныс ішінде нәтиже сақталады.
 /// </summary>
+/// <summary>SalemTech әкімшісі: тек admin токені («typ» = admin, өз audience-і).</summary>
+public class HttpCurrentAdmin(IHttpContextAccessor accessor, ICurrentLanguage language) : ICurrentAdmin
+{
+    private Guid? Read()
+    {
+        var user = accessor.HttpContext?.User;
+        if (user?.FindFirst(JwtTokenService.StaffTypeClaim)?.Value != JwtTokenService.AdminTypeValue) return null;
+        var sub = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.FindFirst("sub")?.Value;
+        return Guid.TryParse(sub, out var id) ? id : null;
+    }
+
+    public bool IsAuthenticated => Read() is not null;
+
+    public Guid AdminId => Read() ?? throw new UnauthorizedException(Messages.LoginRequired(language.Value));
+
+    public string? Ip => accessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+}
+
 public class HttpStoreContext(
     IHttpContextAccessor accessor,
     ICurrentStaff current,
@@ -62,6 +80,12 @@ public class HttpStoreContext(
         }
 
         _cached = membership ?? throw new ForbiddenException(Messages.StaffStoreForbidden(lang));
+        // SalemTech бизнесті тоқтатса — ашық сеанстар да келесі сұраныста тоқтайды.
+        if (_cached.Store?.Organization is { IsActive: false })
+        {
+            _cached = null;
+            throw new ForbiddenException(Messages.OrganizationSuspended(lang));
+        }
         return _cached;
     }
 

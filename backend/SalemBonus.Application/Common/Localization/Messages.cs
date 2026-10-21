@@ -715,4 +715,40 @@ public static class Messages
     public static string ClientSettingsInvalid(AppLanguage l) => Pick(l,
         "Шектер: белсенді 1–365 күн, пассив белсендіден үлкен (730-ға дейін), жаңа 1–365, «скоро срок» 0–60",
         "Пороги: активный 1–365 дней, пассивный больше активного (до 730), новый 1–365, «скоро срок» 0–60");
+
+    // ---------- SalemTech әкімшілігі (admin.salemtech.kz) ----------
+    public static string OrganizationSuspended(AppLanguage l) => Pick(l,
+        "Бизнестің қолжетімділігі уақытша тоқтатылған. SalemTech-ке хабарласыңыз", "Доступ бизнеса временно приостановлен. Обратитесь в SalemTech");
+    public static string AdminCredentialsRequired(AppLanguage l) => Pick(l, "E-mail мен құпиясөзді енгізіңіз", "Введите e-mail и пароль");
+    public static string AdminWrongCredentials(AppLanguage l) => Pick(l, "E-mail не құпиясөз қате", "Неверный e-mail или пароль");
+    public static string AdminLockedOut(AppLanguage l, int minutes) => Pick(l,
+        $"Тым көп сәтсіз әрекет. {minutes} минуттан кейін қайталаңыз", $"Слишком много неудачных попыток. Повторите через {minutes} мин.");
+    public static string AdminEmailInvalid(AppLanguage l) => Pick(l, "E-mail дұрыс емес", "Некорректный e-mail");
+    public static string AdminEmailExists(AppLanguage l) => Pick(l, "Бұл e-mail-мен әкімші бар", "Администратор с таким e-mail уже есть");
+    public static string AdminNameRequired(AppLanguage l) => Pick(l, "Атын көрсетіңіз", "Укажите имя");
+    public static string AdminNotFound(AppLanguage l) => Pick(l, "Әкімші табылмады", "Администратор не найден");
+    public static string AdminSelf(AppLanguage l) => Pick(l, "Өз аккаунтыңызды өшіруге болмайды", "Нельзя отключить собственный аккаунт");
+    public static string AdminWrongPassword(AppLanguage l) => Pick(l, "Ағымдағы құпиясөз қате", "Текущий пароль указан неверно");
+    public static string BusinessNotFound(AppLanguage l) => Pick(l, "Бизнес табылмады", "Бизнес не найден");
+    public static string BusinessNameRequired(AppLanguage l) => Pick(l, "Бизнес атауын көрсетіңіз (2–200 таңба)", "Укажите название бизнеса (2–200 символов)");
+    public static string BusinessBinInvalid(AppLanguage l) => Pick(l, "БСН/ЖСН — 12 цифр", "БИН/ИИН — 12 цифр");
+    public static string BusinessModuleUnknown(AppLanguage l, string module) => Pick(l, $"Белгісіз модуль: {module}", $"Неизвестный модуль: {module}");
+    public static string BusinessFeeInvalid(AppLanguage l) => Pick(l, "Айлық төлем 0-ден 10 000 000 ₸-ге дейін", "Ежемесячная плата — от 0 до 10 000 000 ₸");
+    public static string BusinessTrialInvalid(AppLanguage l) => Pick(l, "Сынақ мерзімі 0–90 күн", "Пробный период — от 0 до 90 дней");
+    public static string BusinessStoreRequired(AppLanguage l) => Pick(l, "Дүкен атауын көрсетіңіз", "Укажите название магазина");
+    public static string BusinessTimeZoneInvalid(AppLanguage l) => Pick(l, "Уақыт белдеуі белгісіз", "Неизвестный часовой пояс");
+    public static string BusinessStoreNotFound(AppLanguage l) => Pick(l, "Дүкен табылмады", "Магазин не найден");
+    public static string PlanNotFound(AppLanguage l) => Pick(l, "Тариф табылмады", "Тариф не найден");
+    public static string PlanNameRequired(AppLanguage l) => Pick(l, "Тариф атауын көрсетіңіз", "Укажите название тарифа");
+    public static string PlatformStaffNotFound(AppLanguage l) => Pick(l, "Қызметкер табылмады", "Сотрудник не найден");
+    public static string PlatformStaffPinOnly(AppLanguage l) => Pick(l,
+        "Кассирде құпиясөз жоқ — PIN-ді иесі «Сотрудники» бөлімінде ауыстырады", "У кассира нет пароля — PIN меняет владелец в разделе «Сотрудники»");
+    public static string PlatformStaffRoleInvalid(AppLanguage l) => Pick(l, "Рөл: иесі не әкімші", "Роль: владелец или администратор");
+    public static string PlatformPhoneExists(AppLanguage l) => Pick(l, "Бұл телефонмен қызметкер бар", "Сотрудник с таким телефоном уже есть");
+    public static string PlatformReasonRequired(AppLanguage l) => Pick(l, "Себебін көрсетіңіз (кемінде 3 таңба)", "Укажите причину (не менее 3 символов)");
+    public static string PlatformPaymentAmountInvalid(AppLanguage l) => Pick(l, "Төлем сомасы 0-ден үлкен болуы керек", "Сумма платежа должна быть больше 0");
+    public static string PlatformPaymentPeriodInvalid(AppLanguage l) => Pick(l, "Кезең: 1–36 ай, соңы басынан кейін", "Период: 1–36 месяцев, окончание после начала");
+    public static string PlatformPaymentMethodInvalid(AppLanguage l) => Pick(l, "Төлем тәсілі белгісіз", "Неизвестный способ оплаты");
+    public static string PlatformPaymentNotFound(AppLanguage l) => Pick(l, "Төлем табылмады", "Платёж не найден");
+    public static string PlatformPaymentAlreadyVoided(AppLanguage l) => Pick(l, "Төлем бұрын жойылған", "Платёж уже аннулирован");
 }

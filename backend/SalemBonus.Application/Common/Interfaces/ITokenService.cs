@@ -7,6 +7,8 @@ public interface ITokenService
     AccessToken CreateAccessToken(Guid customerId, string phone);
     /// <summary>Қызметкер токені: басқа audience, клиенттің эндпоинттері оны қабылдамайды және керісінше.</summary>
     AccessToken CreateStaffAccessToken(Guid staffUserId, string phone);
+    /// <summary>SalemTech әкімшісінің токені: өз audience-і, бизнес пен клиент API-ы оны қабылдамайды.</summary>
+    AccessToken CreateAdminAccessToken(Guid adminId, string email);
     /// <summary>Кездейсоқ refresh токен мәні (клиентке беріледі).</summary>
     string CreateRefreshTokenValue();
     /// <summary>OTP код пен refresh токенді базада сақтау үшін бір бағытты хэш.</summary>

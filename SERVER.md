@@ -7,6 +7,8 @@ salembonus.kz, www      -> Caddy -> web      (SalemBonus PWA, nginx)
 api.salembonus.kz       -> Caddy -> api      (.NET)
 pos.salemtech.kz        -> Caddy -> pos-web  (SalemPos, nginx)
 pos.salemtech.kz/api/*  -> Caddy -> api      (сол API, cookie бір доменде болуы үшін)
+admin.salemtech.kz      -> Caddy -> pos-web  (SalemTech әкімшілігі: сол образ, nginx Host бойынша admin.html)
+admin.salemtech.kz/api/* -> Caddy -> api
                                     api -> db (PostgreSQL 18, тек ішкі желі)
 Тауар суреттері         -> Cloudflare R2 (cdn.salemtech.kz)
 ```
@@ -235,6 +237,7 @@ Worker доменін алып таста: **Workers & Pages** → `salembonus` 
 | Түрі | Аты | Мәні | Proxy |
 |---|---|---|---|
 | A | `pos` | СЕРВЕР_IP | **DNS only** |
+| A | `admin` | СЕРВЕР_IP | **DNS only** |
 
 Бұлт **сұр** болуы міндетті: Caddy сертификатты тікелей алады. Таралғанын тексер:
 
@@ -242,6 +245,7 @@ Worker доменін алып таста: **Workers & Pages** → `salembonus` 
 dig +short salembonus.kz @8.8.8.8
 dig +short api.salembonus.kz @8.8.8.8
 dig +short pos.salemtech.kz @8.8.8.8
+dig +short admin.salemtech.kz @8.8.8.8
 ```
 
 Үшеуі де СЕРВЕР_IP қайтаруы керек (5–30 минут).
@@ -286,7 +290,18 @@ docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos
 
 `reset-password` жаңа уақытша құпиясөзді бір рет шығарады, барлық сеансты жабады және PIN-ді өшіреді.
 
-**Жаңа дүкен иесін қосу** (тіркелу беті жоқ):
+**SalemTech әкімшілігі (admin.salemtech.kz).** Бизнес қосу, иесінің аккаунты, абонент төлемдері, модульдер мен тарифтер —
+әкімшілік бетінде. Бірінші әкімшіні серверде бір рет жасайды (уақытша құпиясөз бір рет шығады; қалған әкімшілерді бет ішінен қосады):
+
+```bash
+docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos create-admin --email you@salemtech.kz --name "Аты Тегі"
+```
+
+Сол команда бар әкімшінің құпиясөзін де жаңартады (ұмытылса). Сервер Traefik-пен жұмыс істесе (`docker-compose.override.yml`),
+`pos.salemtech.kz`-тің маршруттарын `admin.salemtech.kz`-ке де қайталау керек: `/api` → `api`, қалғаны → `pos-web`
+(Host тақырыбы сақталсын — nginx соған қарап admin.html береді).
+
+**Жаңа дүкен иесін CLI-мен қосу** (әкімшілік бетінің баламасы; тіркелу беті жоқ):
 
 ```bash
 docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos stores

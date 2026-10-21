@@ -50,6 +50,8 @@ public static class PosBootstrap
                 return await ResetPinAsync(db, Parse(args.Skip(1)), ct);
             case "deactivate":
                 return await DeactivateAsync(db, Parse(args.Skip(1)), ct);
+            case "create-admin":
+                return await CreateAdminAsync(db, Parse(args.Skip(1)), ct);
             default:
                 Console.Error.WriteLine("""
                     Командалар:
@@ -59,6 +61,7 @@ public static class PosBootstrap
                       pos add-cashier --store <id> --phone <+7...> --first-name <..> --last-name <..> --pin <4 цифр> [--max-discount <%>]
                       pos reset-pin --phone <+7...> --pin <4 цифр>
                       pos deactivate --phone <+7...>
+                      pos create-admin --email <..> --name <..>   (SalemTech әкімшісі, admin.salemtech.kz)
                     """);
                 return 2;
         }
@@ -158,6 +161,39 @@ public static class PosBootstrap
             Console.Error.WriteLine(ex.Message);
             return 2;
         }
+    }
+
+    /// <summary>SalemTech әкімшісі (admin.salemtech.kz): бірінші әкімші осылай жасалады, қалғанын әкімшілік бетінен қосады. Бар болса — құпиясөзі жаңарады.</summary>
+    private static async Task<int> CreateAdminAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)
+    {
+        var email = o.GetValueOrDefault("email")?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            Console.Error.WriteLine("--email міндетті");
+            return 2;
+        }
+        var password = GeneratePassword();
+        var hash = new Pbkdf2PasswordHasher().Hash(password);
+        var admin = await db.PlatformAdmins.FirstOrDefaultAsync(a => a.Email == email, ct);
+        if (admin is null)
+        {
+            db.PlatformAdmins.Add(new SalemBonus.Domain.Platform.PlatformAdmin
+            {
+                Id = Guid.NewGuid(), Email = email, Name = o.GetValueOrDefault("name")?.Trim() is { Length: > 0 } n ? n : email, PasswordHash = hash,
+            });
+        }
+        else
+        {
+            admin.PasswordHash = hash;
+            admin.IsActive = true;
+            admin.FailedLoginCount = 0;
+            admin.LockedUntil = null;
+        }
+        await db.SaveChangesAsync(ct);
+        Console.WriteLine(admin is null ? $"Әкімші жасалды: {email}" : $"Әкімшінің құпиясөзі жаңартылды: {email}");
+        Console.WriteLine($"Уақытша құпиясөз: {password}");
+        Console.WriteLine("https://admin.salemtech.kz — кіріп, профильде құпиясөзді ауыстырыңыз.");
+        return 0;
     }
 
     private static async Task<int> ResetPasswordAsync(AppDbContext db, Dictionary<string, string> o, CancellationToken ct)

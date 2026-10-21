@@ -9,7 +9,8 @@ public class StaffRepository(AppDbContext db) : IStaffRepository
     private IQueryable<StaffUser> WithAccess() => db.StaffUsers
         .Include(u => u.Organization)
         .Include(u => u.Memberships.Where(m => m.IsActive))
-        .ThenInclude(m => m.Store);
+        .ThenInclude(m => m.Store)
+        .ThenInclude(s => s!.Organization);
 
     public Task<StaffUser?> GetByPhoneForUpdateAsync(string phone, CancellationToken ct = default) =>
         WithAccess().FirstOrDefaultAsync(u => u.Phone == phone, ct);
@@ -24,6 +25,7 @@ public class StaffRepository(AppDbContext db) : IStaffRepository
         db.StoreMemberships
             .AsNoTracking()
             .Include(m => m.Store)
+            .ThenInclude(s => s!.Organization)
             .FirstOrDefaultAsync(m =>
                 m.StaffUserId == staffUserId && m.StoreId == storeId && m.IsActive
                 && m.Store!.IsActive && m.StaffUser!.IsActive, ct);

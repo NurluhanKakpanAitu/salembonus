@@ -23,10 +23,15 @@ public class JwtTokenService(IOptions<JwtOptions> options) : ITokenService
     public AccessToken CreateStaffAccessToken(Guid staffUserId, string phone) =>
         Create(_opt.StaffAudience, staffUserId, phone, [new Claim(StaffTypeClaim, StaffTypeValue)]);
 
-    private AccessToken Create(string audience, Guid subject, string phone, Claim[] extra)
+    public const string AdminTypeValue = "admin";
+
+    public AccessToken CreateAdminAccessToken(Guid adminId, string email) =>
+        Create(_opt.AdminAudience, adminId, email, [new Claim(StaffTypeClaim, AdminTypeValue)], TimeSpan.FromHours(_opt.AdminAccessTokenHours));
+
+    private AccessToken Create(string audience, Guid subject, string phone, Claim[] extra, TimeSpan? lifetime = null)
     {
         var now = DateTime.UtcNow;
-        var expires = now.AddMinutes(_opt.AccessTokenMinutes);
+        var expires = now.Add(lifetime ?? TimeSpan.FromMinutes(_opt.AccessTokenMinutes));
         var creds = new SigningCredentials(SigningKey(_opt.Key), SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             issuer: _opt.Issuer,
