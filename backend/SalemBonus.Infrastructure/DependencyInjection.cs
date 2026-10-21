@@ -13,6 +13,7 @@ using SalemBonus.Infrastructure.Persistence.Repositories;
 using SalemBonus.Infrastructure.Sms;
 using SalemBonus.Infrastructure.Ai;
 using SalemBonus.Infrastructure.Storage;
+using SalemBonus.Infrastructure.Push;
 
 namespace SalemBonus.Infrastructure;
 
@@ -29,7 +30,15 @@ public static class DependencyInjection
         if (csb.KeepAlive == 0) csb.KeepAlive = 30;
         if (csb.ConnectionIdleLifetime == 300) csb.ConnectionIdleLifetime = 60;
         if (csb.Timeout == 15) csb.Timeout = 20;
-        services.AddDbContext<AppDbContext>(options => options.UseNpgsql(csb.ConnectionString));
+        // Push (STORE.md 7): жаңа хабарлама сақталған соң кезекке, PushWorker фонда FCM/APNs-ке жібереді.
+        services.Configure<PushOptions>(configuration.GetSection(PushOptions.Section));
+        services.AddSingleton<IPushSender, PushSender>();
+        services.AddSingleton<PushQueue>();
+        services.AddSingleton<PushNotificationInterceptor>();
+        services.AddHostedService<PushWorker>();
+        services.AddDbContext<AppDbContext>((sp, options) => options
+            .UseNpgsql(csb.ConnectionString)
+            .AddInterceptors(sp.GetRequiredService<PushNotificationInterceptor>()));
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.Section));
         services.Configure<AuthOptions>(configuration.GetSection(AuthOptions.Section));
@@ -53,6 +62,7 @@ public static class DependencyInjection
         services.AddScoped<IBonusCardRepository, BonusCardRepository>();
         services.AddScoped<IBonusTransactionRepository, BonusTransactionRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IPushDeviceRepository, PushDeviceRepository>();
         services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 

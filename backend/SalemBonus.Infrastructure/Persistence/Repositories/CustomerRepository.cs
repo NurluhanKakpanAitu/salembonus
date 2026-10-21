@@ -36,6 +36,8 @@ public class CustomerRepository(AppDbContext db) : ICustomerRepository
         await db.BonusCards.Where(c => c.CustomerId == customerId).ExecuteDeleteAsync(ct);
         await db.Notifications.Where(n => n.CustomerId == customerId).ExecuteDeleteAsync(ct);
         await db.RefreshTokens.Where(r => r.CustomerId == customerId).ExecuteDeleteAsync(ct);
+        // Құрылғылар да: клиент жазбасы (қарызы болса) қалса да, өшірілген аккаунтқа push кетпейді.
+        await db.PushDevices.Where(d => d.CustomerId == customerId).ExecuteDeleteAsync(ct);
         if (phone is not null)
             await db.OtpCodes.Where(o => o.Phone == phone).ExecuteDeleteAsync(ct);
         await db.ClientProfiles.Where(p => p.CustomerId == customerId).ExecuteDeleteAsync(ct);

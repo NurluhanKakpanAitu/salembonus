@@ -43,6 +43,15 @@ services:
       R2__PublicUrl: ${R2_PUBLIC_URL:-}
       # Накладнаяны тану (ТЗ «Склад» §8): Claude API кілті. Бос болса — тек сол батырма қате қайтарады.
       Claude__ApiKey: ${CLAUDE_API_KEY:-}
+      # Push (STORE.md 7): Android — Firebase service account JSON, iOS — APNs .p8 кілті. Файлдар ./secrets-те.
+      # Бос болса — сол платформаға push жіберілмейді, қалғаны бұрынғыдай жұмыс істейді.
+      Push__Fcm__ServiceAccountFile: ${PUSH_FCM_FILE:-}
+      Push__Apns__KeyId: ${APNS_KEY_ID:-}
+      Push__Apns__TeamId: ${APNS_TEAM_ID:-}
+      Push__Apns__PrivateKeyFile: ${APNS_KEY_FILE:-}
+      Push__Apns__Sandbox: ${APNS_SANDBOX:-false}
+    volumes:
+      - ./secrets:/app/secrets:ro
     expose:
       - "8080"
     depends_on:

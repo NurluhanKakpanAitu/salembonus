@@ -27,6 +27,10 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
     },
+    PushNotifications: {
+      // iOS: қосымша ашық тұрғанда да push баннері көрінеді (Android-та бет тізімді өзі жаңартады).
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
     SystemBars: {
       // Android 15+ (edge-to-edge): қауіпсіз аймақтар CSS айнымалылары ретінде беріледі.
       insetsHandling: 'css',

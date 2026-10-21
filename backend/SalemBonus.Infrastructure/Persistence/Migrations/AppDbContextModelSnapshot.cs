@@ -681,6 +681,46 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.ToTable("OtpCodes");
                 });
 
+            modelBuilder.Entity("SalemBonus.Domain.Entities.PushDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.ToTable("PushDevices");
+                });
+
             modelBuilder.Entity("SalemBonus.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3870,6 +3910,15 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Store");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Entities.PushDevice", b =>
+                {
+                    b.HasOne("SalemBonus.Domain.Entities.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("SalemBonus.Domain.Entities.RefreshToken", b =>

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { authApi } from '../lib/api'
 import { useAuth } from '../lib/auth'
+import { unregisterPush } from '../lib/push'
 import { PageTitle } from '../components/PageTitle'
 import { ProfileRow } from '../components/profile/ProfileRow'
 import { ErrorBox, Skeleton } from '../components/Skeleton'
@@ -39,6 +40,8 @@ export function ProfilePage() {
 
   const logout = async () => {
     const { refreshToken, clear } = useAuth.getState()
+    // Токен әлі жарамды кезде: бұл телефонға шыққан аккаунттың push-ы енді келмейді.
+    await unregisterPush()
     if (refreshToken) await authApi.logout(refreshToken).catch(() => undefined)
     clear()
     qc.clear()

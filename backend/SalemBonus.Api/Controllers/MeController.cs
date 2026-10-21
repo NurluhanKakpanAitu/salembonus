@@ -1,13 +1,34 @@
 using Microsoft.AspNetCore.Mvc;
 using SalemBonus.Application.Customers;
 using SalemBonus.Application.Customers.Dtos;
+using SalemBonus.Application.Notifications;
+using SalemBonus.Application.Notifications.Dtos;
 
 namespace SalemBonus.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MeController(ICustomerService service) : ControllerBase
+public class MeController(ICustomerService service, IPushDeviceService devices) : ControllerBase
 {
+    /// <summary>
+    /// Push алатын құрылғыны тіркеу (App Store / Google Play қосымшасы, кірген соң және токен жаңарғанда).
+    /// Сол токен басқа аккаунтта тұрса, осы аккаунтқа көшеді.
+    /// </summary>
+    [HttpPost("devices")]
+    public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequest request, CancellationToken ct)
+    {
+        await devices.RegisterAsync(request, ct);
+        return NoContent();
+    }
+
+    /// <summary>Шыққанда: бұл құрылғыға енді push келмейді. Токен табылмаса да 204.</summary>
+    [HttpDelete("devices")]
+    public async Task<IActionResult> UnregisterDevice([FromBody] UnregisterDeviceRequest request, CancellationToken ct)
+    {
+        await devices.UnregisterAsync(request.Token, ct);
+        return NoContent();
+    }
+
     [HttpGet]
     public async Task<ActionResult<CustomerDto>> Get(CancellationToken ct)
     {

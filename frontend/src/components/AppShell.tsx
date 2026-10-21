@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { TabBar } from './TabBar'
+import { PushPrompt } from './PushPrompt'
 
 export function AppShell() {
   return (
@@ -8,6 +9,7 @@ export function AppShell() {
         <Outlet />
       </main>
       <TabBar />
+      <PushPrompt />
     </div>
   )
 }

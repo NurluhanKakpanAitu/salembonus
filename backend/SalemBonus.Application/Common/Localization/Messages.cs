@@ -758,4 +758,8 @@ public static class Messages
     public static string LeadNotFound(AppLanguage l) => Pick(l, "Өтінім табылмады", "Заявка не найдена");
     public static string LeadStatusInvalid(AppLanguage l) => Pick(l, "Өтінім күйі белгісіз", "Неизвестный статус заявки");
     public static string PlatformPaymentAlreadyVoided(AppLanguage l) => Pick(l, "Төлем бұрын жойылған", "Платёж уже аннулирован");
+
+    // Push-хабарлама құрылғысы
+    public static string PushTokenInvalid(AppLanguage l) => Pick(l, "Құрылғы токені дұрыс емес", "Неверный токен устройства");
+    public static string PushPlatformInvalid(AppLanguage l) => Pick(l, "Платформа android не ios болуы керек", "Платформа должна быть android или ios");
 }

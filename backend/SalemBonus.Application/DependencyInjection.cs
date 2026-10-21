@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddScoped<IBonusCardService, BonusCardService>();
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IPushDeviceService, PushDeviceService>();
+        services.AddScoped<PushDispatcher>();
         services.AddScoped<IPosService, PosService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IStoreService, StoreService>();

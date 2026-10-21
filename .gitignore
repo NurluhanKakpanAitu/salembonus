@@ -27,6 +27,11 @@ pos/dist/
 !.env.production
 !.env.native
 
+# Push кілттері (STORE.md 7): сервердегі secrets/, APNs .p8, Firebase конфигі
+secrets/
+*.p8
+frontend/android/app/google-services.json
+
 # OS
 .DS_Store
 Thumbs.db

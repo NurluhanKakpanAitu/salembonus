@@ -34,6 +34,7 @@ public sealed class ApiFixture : IAsyncLifetime
     private readonly PostgreSqlContainer? _db = ExternalDb is null ? new PostgreSqlBuilder("postgres:18-alpine").Build() : null;
     private WebApplicationFactory<Program> _factory = null!;
     public FakeInvoiceRecognizer Recognizer { get; } = new();
+    public FakePushSender Push { get; } = new();
     private (string Owner, string Cashier)? _tokens;
 
     public async Task InitializeAsync()
@@ -53,7 +54,14 @@ public sealed class ApiFixture : IAsyncLifetime
         {
             b.UseEnvironment("Testing");
             // Накладнаяны тану (§8): тесттер Claude-қа бармайды — жалған танушы, тест не қойса соны қайтарады.
-            b.ConfigureTestServices(s => { s.RemoveAll<IInvoiceRecognizer>(); s.AddSingleton<IInvoiceRecognizer>(Recognizer); });
+            b.ConfigureTestServices(s =>
+            {
+                s.RemoveAll<IInvoiceRecognizer>();
+                s.AddSingleton<IInvoiceRecognizer>(Recognizer);
+                // Push (STORE.md 7): FCM мен APNs-ке бармайды — жалған жіберуші не жіберілгенін жазып алады.
+                s.RemoveAll<IPushSender>();
+                s.AddSingleton<IPushSender>(Push);
+            });
         });
         using var scope = _factory.Services.CreateScope(); // хост көтеріледі: миграциялар + дүкендер
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

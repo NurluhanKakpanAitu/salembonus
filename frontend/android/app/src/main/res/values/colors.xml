@@ -2,4 +2,6 @@
 <resources>
     <!-- Сайттың фонымен бірдей (index.css: --color-bg). -->
     <color name="splash_background">#F4F5F8</color>
+    <!-- Хабарлама иконкасының түсі (index.css: --color-brand). -->
+    <color name="notification_color">#0A84F8</color>
 </resources>

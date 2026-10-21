@@ -78,5 +78,8 @@ public class NotificationRepository(AppDbContext db) : INotificationRepository
         return q.ExecuteUpdateAsync(u => u.SetProperty(n => n.IsRead, true), ct);
     }
 
+    public Task<Notification?> GetWithStoreAsync(Guid id, CancellationToken ct = default) =>
+        db.Notifications.AsNoTracking().Include(n => n.Store).FirstOrDefaultAsync(n => n.Id == id, ct);
+
     public void Add(Notification notification) => db.Notifications.Add(notification);
 }

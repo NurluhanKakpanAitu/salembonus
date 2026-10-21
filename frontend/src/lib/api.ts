@@ -210,6 +210,13 @@ export const meApi = {
   remove: () => api<void>('/me', { method: 'DELETE' }),
 }
 
+/** Push алатын құрылғы (App Store / Google Play қосымшасы): кірген соң тіркеледі, шыққанда өшіріледі. */
+export const devicesApi = {
+  register: (body: { token: string; platform: 'android' | 'ios'; language: string }) =>
+    api<void>('/me/devices', { method: 'POST', body: JSON.stringify(body) }),
+  unregister: (token: string) => api<void>('/me/devices', { method: 'DELETE', body: JSON.stringify({ token }) }),
+}
+
 export type NotificationType =
   | 'BonusAccrued' | 'BonusRedeemed' | 'Birthday' | 'Promo' | 'StoreAdded' | 'ProfileUpdated' | 'System'
 export type NotificationCategory = 'Bonus' | 'Promo' | 'System' | 'Store'

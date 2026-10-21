@@ -34,6 +34,11 @@
   1320×2868 және Google Play 1080×1920, орысша мен қазақша жазумен). Қайта жасау: `npm run native:assets`.
 - iOS: камера мен фото рұқсатының мәтіні (орысша / қазақша), `PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption = NO`
   (экспорттық шифрлау сұрағы қайта қойылмайды).
+- **Push-хабарламалар** (7-бөлім): бонус есептелді / шегерілді, туған күн бонусы, дүкен акциясы, деңгей, бонустың жануы —
+  клиенттің телефонына, қосымшада таңдалған тілде. Кірген соң қосымша алдымен неге керегін түсіндіреді (4-бөлім), сосын
+  жүйе рұқсат сұрайды; шыққанда не аккаунт өшірілгенде құрылғы серверден өшіріледі. Android — Firebase Cloud Messaging,
+  iOS — APNs-ке тікелей (iOS-қа Firebase SDK керек емес). Кілттер серверде болмаса, push жай жіберілмейді — қалғаны жұмыс істейді.
+  Firebase-сіз (google-services.json жоқ) жиналған Android билді push-ты сұрамайды да, құламайды.
 
 ---
 
@@ -51,7 +56,9 @@
    сатылым жаса — тексеруші картаны, балансты, операцияларды және хабарламаны көрсін. Дүкеннің QR коды плакатын не
    кодын да тексерушіге бер (2.4 және 3.4-тегі «Notes»).
 4. `support@salembonus.kz` пошта жәшігі жұмыс істейтінін тексер — дүкен беттерінде көрсетіледі.
-5. Құпиялылық саясатын заңгерге көрсет ([MOBILE.md](MOBILE.md) 1.2).
+5. Құпиялылық саясатын заңгерге көрсет ([MOBILE.md](MOBILE.md) 1.2). Push қосылды — саясатта «құрылғы
+   идентификаторы (push токені) хабарлама жіберу үшін сақталады, аккаунт өшірілгенде жойылады» деген жол болсын.
+6. **Push кілттері** — 7-бөлім (Firebase мен APNs). Онсыз да шығаруға болады, бірақ Apple 4.2 бойынша push — ең күшті дәлел.
 
 ---
 
@@ -91,6 +98,9 @@ cd android
 ./gradlew bundleRelease          # Windows: gradlew.bat bundleRelease
 ```
 
+Билд алдында `frontend/android/app/google-services.json` орнында болсын (7.1) — әйтпесе Android-та push болмайды
+(қосымша құламайды, жай рұқсат сұрамайды). Файл git-ке кірмейді (`.gitignore`), әр билд машинасына қолмен көшіріледі.
+
 Нәтиже: `frontend/android/app/build/outputs/bundle/release/app-release.aab`. Тексеру үшін телефонға: Android Studio →
 **Open** `frontend/android` → ▶ Run (USB арқылы қосылған телефон).
 
@@ -129,6 +139,11 @@ cd android
 | Personal info → User IDs | Yes | Required | App functionality |
 | Financial info → Purchase history | Yes | Required | App functionality |
 | Photos and videos → Photos (профиль суреті) | Yes | Optional | App functionality |
+| Device or other IDs (push токені) | Yes | Optional | App functionality |
+
+Device or other IDs: **Is this data processed ephemerally? — No** (сервер токенді сақтайды), **Shared — No** (Firebase мен
+Apple біздің атымыздан жеткізеді — Google мұны service provider деп санайды, sharing емес). Optional — пайдаланушы
+хабарламаға рұқсат бермесе, токен жиналмайды.
 
 Камера кадрлары құрылғыдан шықпайды — оларды «жиналады» деп белгілеме. Орналасу, контактілер, жарнама ID — жиналмайды.
 
@@ -149,7 +164,8 @@ https://developer.apple.com/programs/enroll/ → **Organization** (D-U-N-S). Т�
 
 ### 3.2. Bundle ID
 developer.apple.com → Certificates, IDs & Profiles → **Identifiers** → `+` → App IDs → App →
-Bundle ID **Explicit** `kz.salembonus.app`, Capabilities — әзірге ешқайсысы (push кейін).
+Bundle ID **Explicit** `kz.salembonus.app`, Capabilities — **Push Notifications** ✓ (басқасы керек емес).
+Bundle ID бұрын push-сыз жасалса — сол жерде App ID-ді ашып, Push Notifications-ты қос та, Save.
 Сертификат пен профильді қолмен жасаудың қажеті жоқ — Xcode автоматты қолтаңбамен өзі жасайды.
 
 ### 3.3. Билд (Mac)
@@ -165,12 +181,16 @@ npx cap open ios
 
 Xcode-та:
 1. Сол жақта **App** жобасы → **Signing & Capabilities** → **Automatically manage signing** ✓ → **Team** — ұйымның командасы.
-   Bundle Identifier `kz.salembonus.app` болуы керек.
+   Bundle Identifier `kz.salembonus.app` болуы керек. Сол бетте **Push Notifications** capability тұруы керек (жоба оны
+   `App/App.entitlements` арқылы өзі қосады). Көрінбесе: **+ Capability** → **Push Notifications**. Signing қатесі
+   («provisioning profile doesn't include the aps-environment entitlement») шықса — 3.2-дегі App ID-де Push қосылмаған.
+   **Background Modes** керек емес.
 2. Жоғарыда құрылғы ретінде **Any iOS Device (arm64)** таңда.
 3. **Product → Archive** → Organizer ашылады → **Distribute App** → **App Store Connect** → Upload.
 4. Келесі жаңартуда **General → Build** санын (1 → 2 …) және қажет болса **Version** көтер.
 
 Симуляторда тексеру: құрылғы ретінде iPhone 17 таңдап ▶. Камера симуляторда жоқ — сканер «кодты қолмен енгізу»-ге ауысады.
+Push-ты тек нақты iPhone-да тексер (7.3): Xcode-тан ▶ арқылы орнатылған билд **sandbox** токенін береді.
 
 ### 3.4. App Store Connect
 
@@ -198,7 +218,7 @@ https://appstoreconnect.apple.com → **Apps → +** → New App: iOS, аты `S
 | Contact Info | Name, Email Address, Phone Number |
 | Location | Coarse Location (пайдаланушы өзі таңдаған облыс/елді мекен) |
 | User Content | Photos or Videos (профиль суреті, міндетті емес) |
-| Identifiers | User ID |
+| Identifiers | User ID, **Device ID** (push токені — хабарлама жіберу үшін) |
 | Purchases | Purchase History |
 | Other Data | Other Data Types (туған күні) |
 
@@ -210,14 +230,17 @@ https://appstoreconnect.apple.com → **Apps → +** → New App: iOS, аты `S
 > Sign in: enter the phone number above, tap the button, enter the code above (no SMS is sent to this number).
 > Native features: camera QR scanner to add a store's bonus card (Stores tab → the blue scan button at the top; store code for manual entry: <КОД>),
 > automatic full screen brightness while the customer's QR code is shown at the checkout, haptic feedback,
+> push notifications when bonuses are earned or spent at a partner store, on the customer's birthday and for store promotions
+> (allow notifications after sign-in; tapping one opens that store's messages),
 > account deletion inside the app (Profile → Delete account).
 
 ### 3.5. Жіберу
 Билд Connect-ке түскен соң (15–30 мин) → **TestFlight** → өзіңді Internal Tester ретінде қосып, телефонда тексер →
 App Store бетіне қайт → **Build** таңда → **Add for Review** → **Submit** (1–7 күн).
 
-Ең ықтимал қайтару — **4.2 Minimum Functionality**. Онда Resolution Center-де қай мүмкіндік жетіспейтінін сұра; дайын
-жоспар — push-хабарлама (бонус есептелгенде), MOBILE.md 1.4.
+Ең ықтимал қайтару — **4.2 Minimum Functionality**. Push (7-бөлім) осыған қарсы жасалған: тексерушіге көрінуі үшін
+1-бөлімнің 3-қадамындағы демо сатылымды тексеру алдында қайталап, хабарламаның келгенін өзің көр. Бәрібір қайтарса —
+Resolution Center-де қай мүмкіндік жетіспейтінін сұра (MOBILE.md 1.4).
 
 ---
 
@@ -228,7 +251,7 @@ App Store бетіне қайт → **Build** таңда → **Add for Review** 
 | iOS `NSCameraUsageDescription` | Камера нужна, чтобы сканировать QR-код магазина и подключить его бонусную карту. / Дүкеннің QR кодын сканерлеп, бонус картасын қосу үшін камера керек. |
 | iOS `NSPhotoLibraryUsageDescription` | Доступ к фото нужен, чтобы выбрать фотографию профиля. / Профиль суретін таңдау үшін фотоларға рұқсат керек. |
 | Android `CAMERA` | Жүйенің өз терезесі, мәтін керек емес; камерасыз құрылғыда да орнатылады (`required=false`). |
-| Хабарламалар (push қосылғанда) | iOS-та мәтін берілмейді — жүйе өзі сұрайды. Android 13+: `POST_NOTIFICATIONS`. Сұрамас бұрын қосымшада: «Сообщим, когда начислятся бонусы и начнутся акции ваших магазинов. / Бонус есептелгенде және дүкендеріңізде акция басталғанда хабарлаймыз.» |
+| Хабарламалар (push) | iOS-та мәтін берілмейді — жүйе өзі сұрайды. Android 13+: `POST_NOTIFICATIONS` (манифестте бар). Сұрамас бұрын қосымшада (`PushPrompt`, кірген соң бір рет; «Не сейчас» басылса — 14 күннен кейін қайта): «Сообщим, когда начислятся бонусы и начнутся акции ваших магазинов. / Бонус есептелгенде және дүкендеріңізде акция басталғанда хабарлаймыз.» |
 
 ---
 
@@ -315,3 +338,61 @@ SalemBonus — серіктес дүкендердің бонус картала
 
 Тек веб-код өзгерсе де дүкендегі нұсқа өздігінен жаңармайды — бет қосымшаның ішінде тұр. API өзгерістері ескі нұсқалармен
 үйлесімді болуы керек: пайдаланушылар жаңартуды бірден орнатпайды.
+
+---
+
+## 7. Push-хабарламалар — кілттер
+
+Код жағы дайын: қосымша токенді `POST /api/me/devices`-ке тіркейді (шыққанда `DELETE`), сервер жаңа хабарлама жасалғанда
+(бонус есептелді / шегерілді, туған күн, акция, деңгей, жану) фонда жібереді: Android-қа — **FCM HTTP v1**, iPhone-ға —
+**APNs-ке тікелей**. Профильді өзгерту мен дүкенді өзі қосу push-сыз (клиенттің өз әрекеті). Төменде тек иесі жасайтыны.
+Кілттер — құпия: git-ке, чатқа, скриншотқа түспесін.
+
+### 7.1. Firebase (Android)
+
+1. https://console.firebase.google.com → **Add project** → аты `SalemBonus` → Google Analytics **өшір** (керек емес,
+   Data safety-ге артық дерек қосады).
+2. Жоба ішінде **Add app → Android**: package name `kz.salembonus.app`, nickname `SalemBonus Android`. SHA-1 керек емес.
+3. **google-services.json** жүкте → `frontend/android/app/google-services.json` етіп сал (git-ке кірмейді). Қалған
+   қадамдарды (Gradle плагині, SDK) өткізіп жібер — жобада бар.
+4. **Project settings → Service accounts → Generate new private key** → JSON файлы жүктеледі. Бұл — сервердің кілті:
+   серверге `/opt/salembonus/secrets/firebase-service-account.json` етіп көшір (`chmod 600`), басқа жерде қалдырма.
+5. **Project settings → Cloud Messaging**: «Firebase Cloud Messaging API (V1)» — **Enabled** болуы керек (жаңа жобада
+   әдетте қосулы). Legacy API керек емес.
+
+iOS үшін Firebase-ке iOS қосымшасын қосудың да, `.p8`-ті Firebase-ке жүктеудің де қажеті жоқ — iPhone-ға сервер APNs-ке
+өзі жібереді (7.2).
+
+### 7.2. APNs кілті (iOS)
+
+1. https://developer.apple.com/account/resources/authkeys → **Keys → +** → аты `SalemBonus Push` → **Apple Push
+   Notifications service (APNs)** ✓ → Configure: Environment **Sandbox & Production**, Key Restriction **Team Scoped
+   (All Topics)** → Continue → Register.
+2. **Download** — `.p8` файлы **тек бір рет** жүктеледі. Жоғалса — кілтті Revoke жасап, жаңасын жаса.
+3. Сол беттегі **Key ID** (10 таңба) мен жоғарғы оң жақтағы **Team ID**-ді жазып ал.
+4. `.p8`-ті серверге `/opt/salembonus/secrets/AuthKey_<KeyID>.p8` етіп көшір (`chmod 600`).
+5. 3.2-дегі App ID-де Push Notifications қосулы екенін тексер.
+
+### 7.3. Серверде қосу
+
+`/opt/salembonus/.env` ішіне (`.env.prod.example`-да үлгі бар):
+
+```
+PUSH_FCM_FILE=/app/secrets/firebase-service-account.json
+APNS_KEY_ID=<Key ID>
+APNS_TEAM_ID=<Team ID>
+APNS_KEY_FILE=/app/secrets/AuthKey_<KeyID>.p8
+```
+
+`docker-compose.prod.yml` `./secrets` папкасын контейнерге `/app/secrets` етіп (тек оқуға) қосады. Сосын:
+`docker compose -f docker-compose.prod.yml up -d api`. Миграция (`PushDevices` кестесі) API көтерілгенде өзі жүреді.
+
+Біреуін ғана қоссаң, тек сол платформаға жіберіледі; ешқайсысы болмаса, push мүлде жіберілмейді.
+
+**Тексеру.** Телефонға қосымшаны орнат (Android — 2.3, iPhone — TestFlight), кір, хабарламаға рұқсат бер. SalemPos-та
+сол клиентке сатылым жаса — 1–2 секундта «Бонус начислен!» келуі керек, басқанда сол дүкеннің хабарламалары ашылады.
+Келмесе: `docker compose -f docker-compose.prod.yml logs api | grep -i push`.
+
+- Xcode-тан ▶ арқылы орнатылған iPhone билді **sandbox** токенін береді — продакшн сервер оны жарамсыз деп өшіреді.
+  Мұндай билдпен тексеру үшін уақытша `APNS_SANDBOX=true` (сосын міндетті түрде қайта алып таста) не TestFlight қолдан.
+- FCM/APNs «токен жарамсыз» десе (қосымша өшірілген), сервер құрылғыны өзі өшіреді.
