@@ -92,7 +92,7 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved, onDelet
   }
 
   return (
-    <Modal title={title} onClose={onClose} width={node ? 820 : 560}>
+    <Modal title={title} onClose={onClose} width={node ? 820 : 680}>
       <form onSubmit={submit} noValidate>
         <div className={node ? 'grid gap-6 md:grid-cols-[1fr_260px]' : ''}>
           <div className="flex flex-col gap-4">

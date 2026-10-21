@@ -45,7 +45,7 @@ export function BonusCardTile({
       </div>
 
       <div className="relative flex items-start justify-between gap-3">
-        <div className="min-w-0 truncate pt-0.5 text-[17px] font-semibold tracking-[0.02em]" style={{ color: theme.text }}>
+        <div className="min-w-0 break-words pt-0.5 text-[17px] font-semibold leading-tight tracking-[0.02em]" style={{ color: theme.text }}>
           {card.storeName}
         </div>
         <div

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 import { expectNothingClipped } from './audit'
-import { posLogin, useLanguage } from './pos'
+import { ensureDemoProducts, posLogin, useLanguage } from './pos'
 
 /** SalemPos-тың барлық бөлімі мен ішкі беттері (URL арқылы ашылатындары), жаңа құжат формаларымен бірге. */
 const PAGES = [
@@ -168,7 +168,7 @@ for (const lang of ['ru', 'kk'] as const) {
   test(`pos ${lang}: every page, section and form is readable`, async ({ page }) => {
     test.setTimeout(20 * 60_000)
     await useLanguage(page, lang)
-    await posLogin(page)
+    await ensureDemoProducts(page, await posLogin(page))
     await expect(page.locator('html')).toHaveAttribute('lang', lang)
     await test.step('pages', async () => {
       for (const path of PAGES) {
