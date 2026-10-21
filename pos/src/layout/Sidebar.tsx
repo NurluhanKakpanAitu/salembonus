@@ -41,7 +41,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-2">
+        <nav className="scroll-dark flex-1 overflow-y-auto px-3 py-2">
           <ul className="flex flex-col gap-1">
             {items.map((item) => {
               const base = `flex h-11 items-center gap-3 rounded-xl px-3 text-[15px] font-medium transition-colors ${

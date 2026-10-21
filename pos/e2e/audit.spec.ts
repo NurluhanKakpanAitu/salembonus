@@ -12,6 +12,7 @@ test('audit catches squeezed select, clipped placeholder and button, passes a so
         <input style="width:60px" placeholder="Имя, телефон, город">
         <button style="width:50px;overflow:hidden;white-space:nowrap">Сохранить изменения</button>
         <div style="width:80px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Бонусы на день рождения</div>
+        <div style="height:40px;width:120px;overflow-y:auto"><div style="height:200px">длинное меню</div></div>
       </div>
       <div id="good" style="display:flex;gap:8px">
         <input style="width:96px" value="12">
@@ -23,5 +24,6 @@ test('audit catches squeezed select, clipped placeholder and button, passes a so
   expect(bad.some((p) => p.includes('подсказка «Имя, телефон, город» обрезана'))).toBe(true)
   expect(bad.some((p) => p.includes('надпись «Сохранить изменения» обрезана'))).toBe(true)
   expect(bad.some((p) => p.includes('текст «Бонусы на день рождения» обрезан многоточием'))).toBe(true)
+  expect(bad.some((p) => p.includes('полоса прокрутки слишком толстая'))).toBe(true)
   expect(await findClipped(page, '#good')).toEqual([])
 })

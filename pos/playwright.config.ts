@@ -9,17 +9,21 @@ const CI = !!process.env.CI
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 120_000,
-  expect: { timeout: 10_000 },
+  // CI машинасы баяу, Vite беттерді алғаш ашқанда жинайды — уақыт шегі кеңірек.
+  timeout: CI ? 600_000 : 120_000,
+  expect: { timeout: CI ? 20_000 : 10_000 },
   fullyParallel: false,
   workers: 1,
   retries: CI ? 1 : 0,
-  reporter: CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // github — әр қате run бетінде annotation болып шығады (журналды ашпай-ақ көрінеді).
+  reporter: CI ? [['list'], ['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: 'http://localhost:5174',
     channel: process.env.E2E_CHANNEL ?? (process.platform === 'win32' ? 'msedge' : 'chrome'),
     locale: 'ru-RU',
     timezoneId: 'Asia/Almaty',
+    // Headless браузер айналдыру жолағын жасырады — пайдаланушыдағыдай көрсетеміз (ені өлшенеді, орын алады).
+    launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },

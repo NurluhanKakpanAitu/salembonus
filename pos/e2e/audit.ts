@@ -119,6 +119,16 @@ export async function findClipped(page: Page, scope = 'body'): Promise<string[]>
       if (text) problems.push(`текст «${text.slice(0, 80)}»${where()} обрезан многоточием — нужно ${el.scrollWidth}px, есть ${el.clientWidth}px`)
     }
 
+    // Айналдыру жолағы жіңішке болуы керек (≤ 10px): қалың жүйелік жолақ мәзір мен беттің орнын жейді.
+    for (const el of [document.documentElement, ...root.querySelectorAll<HTMLElement>('*')]) {
+      const s = getComputedStyle(el)
+      const isRoot = el === document.documentElement
+      if (!isRoot && !['auto', 'scroll'].includes(s.overflowY)) continue
+      if (el.scrollHeight <= el.clientHeight + 1 || (!isRoot && !visible(el))) continue
+      const bar = isRoot ? window.innerWidth - el.clientWidth : (el as HTMLElement).offsetWidth - el.clientWidth - px(s.borderLeftWidth) - px(s.borderRightWidth)
+      if (bar > 10) problems.push(`полоса прокрутки слишком толстая (${bar}px)${isRoot ? ' у страницы' : ` у ${el.tagName.toLowerCase()}.${String(el.className).split(' ').slice(0, 3).join('.')}`}${where()}`)
+    }
+
     const doc = document.documentElement
     if (scopeSelector === 'body' && doc.scrollWidth > window.innerWidth + 1) problems.push(`страница шире экрана: ${doc.scrollWidth}px при ${window.innerWidth}px`)
     for (const d of root.querySelectorAll<HTMLElement>('[role=dialog]')) {

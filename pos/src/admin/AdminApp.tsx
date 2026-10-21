@@ -60,7 +60,7 @@ function Shell() {
           <span className="rounded-md bg-nav-2 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-nav-ink">admin</span>
           <button type="button" className="ml-auto text-nav-ink lg:hidden" onClick={() => setOpen(false)} aria-label="Закрыть меню"><X size={20} /></button>
         </div>
-        <nav className="flex-1 px-3 py-2">
+        <nav className="scroll-dark min-h-0 flex-1 overflow-y-auto px-3 py-2">
           <ul className="flex flex-col gap-1">
             {NAV.map((n) => (
               <li key={n.to}><NavLink to={n.to} end={n.end} className={link} onClick={() => setOpen(false)}><n.icon size={19} />{n.label}</NavLink></li>
