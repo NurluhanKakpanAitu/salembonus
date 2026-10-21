@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import { NavLink, Navigate, Outlet, Route, Routes } from 'react-router-dom'
-import { Building2, CreditCard, KeyRound, LayoutDashboard, Loader2, LogOut, Menu, ShieldCheck, Tags, X } from 'lucide-react'
+import { Building2, CreditCard, Inbox, KeyRound, LayoutDashboard, Loader2, LogOut, Menu, ShieldCheck, Tags, X } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { Field, Input } from '../components/ui/Field'
 import { Modal } from '../components/ui/Modal'
@@ -13,11 +13,13 @@ const BusinessesPage = lazy(() => import('./pages/BusinessesPage').then((m) => (
 const BusinessPage = lazy(() => import('./pages/BusinessPage').then((m) => ({ default: m.BusinessPage })))
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage').then((m) => ({ default: m.PaymentsPage })))
 const PlansPage = lazy(() => import('./pages/PlansPage').then((m) => ({ default: m.PlansPage })))
+const LeadsPage = lazy(() => import('./pages/LeadsPage').then((m) => ({ default: m.LeadsPage })))
 const AdminsPage = lazy(() => import('./pages/AdminsPage').then((m) => ({ default: m.AdminsPage })))
 
 const NAV = [
   { to: '/', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/businesses', label: 'Бизнесы', icon: Building2 },
+  { to: '/leads', label: 'Заявки', icon: Inbox },
   { to: '/payments', label: 'Оплаты', icon: CreditCard },
   { to: '/plans', label: 'Тарифы', icon: Tags },
   { to: '/admins', label: 'Администраторы', icon: ShieldCheck },
@@ -34,6 +36,7 @@ export function AdminApp() {
         <Route path="businesses" element={<BusinessesPage />} />
         <Route path="businesses/:id" element={<BusinessPage />} />
         <Route path="payments" element={<PaymentsPage />} />
+        <Route path="leads" element={<LeadsPage />} />
         <Route path="plans" element={<PlansPage />} />
         <Route path="admins" element={<AdminsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

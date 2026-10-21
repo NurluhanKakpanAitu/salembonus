@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlarmClock, Ban, Building2, CalendarClock, CircleDollarSign, FlaskConical, TrendingUp, Wallet } from 'lucide-react'
+import { AlarmClock, Ban, Building2, CalendarClock, CircleDollarSign, FlaskConical, Inbox, TrendingUp, Wallet } from 'lucide-react'
 import { ComboChart } from '../../components/stats/ComboChart'
 import { BlockError, Skeleton } from '../../components/stats/statsUi'
 import { num, tenge } from '../../lib/money'
@@ -18,6 +18,11 @@ export function DashboardPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Обзор" subtitle="Бизнесы на SalemPos, оплаты и подключённые модули" />
+      {d && d.newLeads > 0 && (
+        <Link to="/leads" className="flex items-center gap-3 rounded-2xl border border-brand/30 bg-brand-soft px-4 py-3 text-[14px] text-brand hover:border-brand">
+          <Inbox size={18} /><span className="font-semibold">Новых заявок с сайта: {d.newLeads}</span><span className="ml-auto font-semibold">Открыть →</span>
+        </Link>
+      )}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Бизнесов" value={d ? num(d.businesses) : '…'} hint={d ? `+${d.newThisMonth} в этом месяце` : undefined} icon={<Building2 size={18} />} onClick={() => nav('/businesses')} />
         <Tile label="MRR" value={d ? tenge(d.mrr) : '…'} hint="ежемесячно от платящих" icon={<TrendingUp size={18} />} tone="green" />

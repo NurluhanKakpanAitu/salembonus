@@ -76,6 +76,10 @@ builder.Services.AddRateLimiter(o =>
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1) }));
     // PIN: әр аккаунтқа 5 қате шегі сервисте; IP бойынша — касса тұрған дүкеннің жалпы шегі.
+    // Лендинг өтінімі (кіру жоқ): бір IP-ден минутына 5.
+    o.AddPolicy(SalemBonus.Api.Controllers.PublicController.FormRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1) }));
     o.AddPolicy(StaffAuth.PinRateLimit, http => RateLimitPartition.GetFixedWindowLimiter(
         http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1) }));

@@ -18,7 +18,7 @@ public static class AdminAuth
 [ApiController]
 [Route("api/admin/v1")]
 [Authorize(Policy = AdminAuth.Policy)]
-public class AdminController(PlatformAuthService auth, PlatformBusinessService businesses, PlatformBillingService billing) : ControllerBase
+public class AdminController(PlatformAuthService auth, PlatformBusinessService businesses, PlatformBillingService billing, PlatformLeadsService leads) : ControllerBase
 {
     // ---------- Кіру ----------
 
@@ -98,6 +98,16 @@ public class AdminController(PlatformAuthService auth, PlatformBusinessService b
 
     [HttpPost("payments/{id:guid}/void")]
     public async Task<ActionResult<PaymentDto>> VoidPayment(Guid id, [FromBody] ReasonRequest r, CancellationToken ct) => Ok(await billing.VoidPaymentAsync(id, r, ct));
+
+    // ---------- Лендинг өтінімдері ----------
+
+    [HttpGet("leads")]
+    public async Task<ActionResult<LeadsPageDto>> Leads([FromQuery] string? status, [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 50,
+        CancellationToken ct = default) =>
+        Ok(await leads.ListAsync(status, search, page, pageSize, ct));
+
+    [HttpPut("leads/{id:guid}")]
+    public async Task<ActionResult<LeadDto>> UpdateLead(Guid id, [FromBody] UpdateLeadRequest r, CancellationToken ct) => Ok(await leads.UpdateAsync(id, r, ct));
 
     // ---------- Тарифтер ----------
 

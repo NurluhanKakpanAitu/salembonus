@@ -55,7 +55,8 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
             rows.Where(r => r.Status is "dueSoon" || (r.Status == "trial" && r.TrialUntil is { } t && t <= today.AddDays(7)))
                 .OrderBy(r => r.PaidUntil ?? r.TrialUntil).Take(10).ToList(),
             await DtosAsync(recent, ct),
-            PlatformModules.All.Select(m => new ModuleUsageDto(m, rows.Count(r => r.Status != "suspended" && r.Modules.Contains(m)))).ToList());
+            PlatformModules.All.Select(m => new ModuleUsageDto(m, rows.Count(r => r.Status != "suspended" && r.Modules.Contains(m)))).ToList(),
+            (await repo.LeadCountsAsync(ct)).GetValueOrDefault("new"));
     }
 
     // ---------- Төлемдер ----------

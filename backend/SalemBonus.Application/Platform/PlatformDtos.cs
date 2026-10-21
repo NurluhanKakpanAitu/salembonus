@@ -68,4 +68,4 @@ public record ModuleUsageDto(string Module, int Businesses);
 
 public record PlatformOverviewDto(int Businesses, IReadOnlyDictionary<string, int> ByStatus, decimal Mrr, decimal PaidThisMonth, int PaymentsThisMonth,
     decimal PaidLastMonth, int NewThisMonth, IReadOnlyList<MonthAmountDto> Revenue, IReadOnlyList<BusinessRowDto> Overdue, IReadOnlyList<BusinessRowDto> Renewals,
-    IReadOnlyList<PaymentDto> RecentPayments, IReadOnlyList<ModuleUsageDto> Modules);
+    IReadOnlyList<PaymentDto> RecentPayments, IReadOnlyList<ModuleUsageDto> Modules, int NewLeads);

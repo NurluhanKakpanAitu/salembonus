@@ -750,5 +750,8 @@ public static class Messages
     public static string PlatformPaymentPeriodInvalid(AppLanguage l) => Pick(l, "Кезең: 1–36 ай, соңы басынан кейін", "Период: 1–36 месяцев, окончание после начала");
     public static string PlatformPaymentMethodInvalid(AppLanguage l) => Pick(l, "Төлем тәсілі белгісіз", "Неизвестный способ оплаты");
     public static string PlatformPaymentNotFound(AppLanguage l) => Pick(l, "Төлем табылмады", "Платёж не найден");
+    public static string LeadNameRequired(AppLanguage l) => Pick(l, "Атыңызды көрсетіңіз", "Укажите ваше имя");
+    public static string LeadNotFound(AppLanguage l) => Pick(l, "Өтінім табылмады", "Заявка не найдена");
+    public static string LeadStatusInvalid(AppLanguage l) => Pick(l, "Өтінім күйі белгісіз", "Неизвестный статус заявки");
     public static string PlatformPaymentAlreadyVoided(AppLanguage l) => Pick(l, "Төлем бұрын жойылған", "Платёж уже аннулирован");
 }

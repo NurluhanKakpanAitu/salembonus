@@ -87,6 +87,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PlatformPlan> PlatformPlans => Set<PlatformPlan>();
     public DbSet<PlatformPayment> PlatformPayments => Set<PlatformPayment>();
     public DbSet<PlatformAuditEntry> PlatformAudit => Set<PlatformAuditEntry>();
+    public DbSet<PlatformLead> PlatformLeads => Set<PlatformLead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

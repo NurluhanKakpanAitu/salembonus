@@ -54,6 +54,12 @@ public interface IPlatformRepository
     Task<IReadOnlyList<(DateOnly PaidOn, decimal Amount)>> PaymentsSinceAsync(DateOnly from, CancellationToken ct = default);
     void AddPayment(PlatformPayment payment);
 
+    Task<(IReadOnlyList<PlatformLead> Rows, int Total)> LeadsAsync(string? status, string? search, int skip, int take, CancellationToken ct = default);
+    Task<Dictionary<string, int>> LeadCountsAsync(CancellationToken ct = default);
+    Task<PlatformLead?> LeadAsync(Guid id, CancellationToken ct = default);
+    Task<bool> RecentLeadExistsAsync(string phone, DateTime sinceUtc, CancellationToken ct = default);
+    void AddLead(PlatformLead lead);
+
     Task<Dictionary<Guid, string>> AdminNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default);
     void AddAudit(PlatformAuditEntry entry);
     Task<IReadOnlyList<PlatformAuditEntry>> AuditAsync(Guid? orgId, int take, CancellationToken ct = default);

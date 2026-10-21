@@ -93,6 +93,13 @@ export interface Plan { id: string; name: string; monthlyPrice: number; modules:
 export interface Overview {
   businesses: number; byStatus: Record<string, number>; mrr: number; paidThisMonth: number; paymentsThisMonth: number; paidLastMonth: number; newThisMonth: number
   revenue: { month: string; amount: number; count: number }[]; overdue: BusinessRow[]; renewals: BusinessRow[]; recentPayments: Payment[]; modules: { module: ModuleKey; businesses: number }[]
+  newLeads: number
+}
+
+export type LeadStatus = 'new' | 'contacted' | 'won' | 'lost'
+export interface Lead {
+  id: string; name: string; phone: string; businessName: string | null; city: string | null; businessType: string | null; interest: 'pos' | 'bonus' | 'both'
+  comment: string | null; language: 'ru' | 'kk'; status: LeadStatus; adminComment: string | null; organizationId: string | null; createdAt: string; updatedAt: string | null; updatedBy: string | null
 }
 
 export interface CreateBusiness {
@@ -138,6 +145,9 @@ export const adminApi = {
   createPayment: (r: { organizationId: string; amount: number; paidOn?: string | null; months?: number | null; periodFrom?: string | null; periodTo?: string | null; method: string; reference?: string | null; comment?: string | null }) =>
     post<Payment>('/payments', r),
   voidPayment: (id: string, reason: string) => post<Payment>(`/payments/${id}/void`, { reason }),
+
+  leads: (p: { status?: string; search?: string; page?: number; pageSize?: number }) => adminFetch<{ rows: Lead[]; total: number; counts: Record<string, number> }>(`/leads${qs(p)}`),
+  updateLead: (id: string, r: { status?: LeadStatus; adminComment?: string | null; organizationId?: string | null }) => put<Lead>(`/leads/${id}`, r),
 
   plans: () => adminFetch<Plan[]>('/plans'),
   createPlan: (r: Partial<Omit<Plan, 'id' | 'businesses'>>) => post<Plan>('/plans', r),

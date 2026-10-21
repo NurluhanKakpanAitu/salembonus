@@ -9,6 +9,8 @@ pos.salemtech.kz        -> Caddy -> pos-web  (SalemPos, nginx)
 pos.salemtech.kz/api/*  -> Caddy -> api      (сол API, cookie бір доменде болуы үшін)
 admin.salemtech.kz      -> Caddy -> pos-web  (SalemTech әкімшілігі: сол образ, nginx Host бойынша admin.html)
 admin.salemtech.kz/api/* -> Caddy -> api
+salemtech.kz            -> Caddy -> pos-web  (лендинг: сол образ, nginx Host бойынша landing.html; www → salemtech.kz)
+salemtech.kz/api/*      -> Caddy -> api      (лендингтің тарифтері мен өтінім формасы — /api/public/v1)
                                     api -> db (PostgreSQL 18, тек ішкі желі)
 Тауар суреттері         -> Cloudflare R2 (cdn.salemtech.kz)
 ```
@@ -238,6 +240,8 @@ Worker доменін алып таста: **Workers & Pages** → `salembonus` 
 |---|---|---|---|
 | A | `pos` | СЕРВЕР_IP | **DNS only** |
 | A | `admin` | СЕРВЕР_IP | **DNS only** |
+| A | `@` (salemtech.kz) | СЕРВЕР_IP | **DNS only** |
+| A | `www` | СЕРВЕР_IP | **DNS only** |
 
 Бұлт **сұр** болуы міндетті: Caddy сертификатты тікелей алады. Таралғанын тексер:
 
@@ -246,6 +250,8 @@ dig +short salembonus.kz @8.8.8.8
 dig +short api.salembonus.kz @8.8.8.8
 dig +short pos.salemtech.kz @8.8.8.8
 dig +short admin.salemtech.kz @8.8.8.8
+dig +short salemtech.kz @8.8.8.8
+dig +short www.salemtech.kz @8.8.8.8
 ```
 
 Үшеуі де СЕРВЕР_IP қайтаруы керек (5–30 минут).
@@ -296,6 +302,12 @@ docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos
 ```bash
 docker compose -f docker-compose.prod.yml exec api dotnet SalemBonus.Api.dll pos create-admin --email you@salemtech.kz --name "Аты Тегі"
 ```
+
+**Лендинг (salemtech.kz).** Сол `pos-web` образы: nginx `salemtech.kz` үшін landing.html береді, `www` — 301 басты доменге.
+Тарифтері әкімшіліктегі белсенді тарифтерден (`/api/public/v1/plans`), өтінім формасы — `/api/public/v1/leads` (IP бойынша минутына 5),
+өтінімдер әкімшіліктің «Заявки» бөлімінде. Traefik-те `salemtech.kz` пен `www.salemtech.kz` үшін де `pos.salemtech.kz` сияқты
+екі маршрут керек (`/api` → `api`, қалғаны → `pos-web`). Назар аударыңыз: `*.salemtech.kz` wildcard сертификаты апекс доменді
+(`salemtech.kz`) қамтымайды — Traefik оған бөлек сертификат алуы керек (ACME resolver маршрутта көрсетіледі).
 
 Сол команда бар әкімшінің құпиясөзін де жаңартады (ұмытылса). Сервер Traefik-пен жұмыс істесе (`docker-compose.override.yml`),
 `pos.salemtech.kz`-тің маршруттарын `admin.salemtech.kz`-ке де қайталау керек: `/api` → `api`, қалғаны → `pos-web`

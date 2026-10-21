@@ -191,4 +191,41 @@ public class AdminTests(ApiFixture api)
         Assert.Equal(HttpStatusCode.BadRequest, login.Status); // өшірілген әкімші кіре алмайды
         Assert.Contains((await pos.Get(token, $"{A}/admins")).Ok.AsArray(), a => a!["email"]!.GetValue<string>() == email);
     }
+
+    // ---------- Лендинг: ашық тарифтер мен өтінім ----------
+
+    [Fact]
+    public async Task Landing_shows_active_plans_and_requests_reach_the_admin_panel()
+    {
+        var (pos, token) = await AdminAsync();
+        var hidden = (await pos.Post(token, $"{A}/plans", new { name = "Скрытый " + Guid.NewGuid().ToString("N")[..4], monthlyPrice = 1, isActive = false })).Ok;
+        var plans = (await pos.Get("", "/api/public/v1/plans")).Ok.AsArray();
+        Assert.Contains(plans, p => p!["name"]!.GetValue<string>() == "Бизнес");
+        Assert.DoesNotContain(plans, p => p!["id"]!.GetValue<Guid>() == hidden["id"]!.GetValue<Guid>()); // архивтегі тариф лендингте жоқ
+
+        var phone = Phone();
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Send(HttpMethod.Post, "", "/api/public/v1/leads", new { name = "Асан", phone = "123" })).Status);
+        (await pos.Send(HttpMethod.Post, "", "/api/public/v1/leads", new
+        {
+            name = "Асан Нурланов", phone = phone.Replace("+7", "8"), businessName = "Дүкен " + phone[^4..], city = "Шымкент", interest = "both", comment = "Две точки", language = "kk",
+        })).EnsureOk();
+        (await pos.Send(HttpMethod.Post, "", "/api/public/v1/leads", new { name = "Асан", phone })).EnsureOk(); // 10 минут ішінде қайталау — жаңа жазба жоқ
+        (await pos.Send(HttpMethod.Post, "", "/api/public/v1/leads", new { name = "Бот", phone = Phone(), website = "http://spam" })).EnsureOk(); // тұзақ
+
+        Assert.Equal(HttpStatusCode.Unauthorized, (await pos.Get("", $"{A}/leads")).Status);
+        var list = (await pos.Get(token, $"{A}/leads?search={phone[^7..]}")).Ok;
+        var lead = Assert.Single(list["rows"]!.AsArray())!;
+        Assert.Equal(phone, lead["phone"]!.GetValue<string>());
+        Assert.Equal("new", lead["status"]!.GetValue<string>());
+        Assert.Equal("kk", lead["language"]!.GetValue<string>());
+        Assert.Equal(0, (await pos.Get(token, $"{A}/leads?search=Бот")).Ok["total"]!.GetValue<int>());
+        Assert.True((await pos.Get(token, $"{A}/overview")).Ok["newLeads"]!.GetValue<int>() >= 1);
+
+        var id = lead["id"]!.GetValue<Guid>();
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Put(token, $"{A}/leads/{id}", new { status = "maybe" })).Status);
+        var updated = (await pos.Put(token, $"{A}/leads/{id}", new { status = "contacted", adminComment = "Позвонить в понедельник" })).Ok;
+        Assert.Equal("contacted", updated["status"]!.GetValue<string>());
+        Assert.Equal("Позвонить в понедельник", updated["adminComment"]!.GetValue<string>());
+        Assert.False(string.IsNullOrEmpty(updated["updatedBy"]!.GetValue<string>()));
+    }
 }

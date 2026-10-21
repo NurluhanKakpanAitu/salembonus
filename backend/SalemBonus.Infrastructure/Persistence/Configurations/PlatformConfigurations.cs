@@ -50,6 +50,29 @@ public class PlatformPaymentConfiguration : IEntityTypeConfiguration<PlatformPay
     }
 }
 
+public class PlatformLeadConfiguration : IEntityTypeConfiguration<PlatformLead>
+{
+    public void Configure(EntityTypeBuilder<PlatformLead> b)
+    {
+        b.ToTable("leads", Schemas.Platform);
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedNever();
+        b.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        b.Property(x => x.Phone).HasMaxLength(20).IsRequired();
+        b.Property(x => x.BusinessName).HasMaxLength(200);
+        b.Property(x => x.City).HasMaxLength(100);
+        b.Property(x => x.BusinessType).HasMaxLength(100);
+        b.Property(x => x.Interest).HasMaxLength(8).IsRequired();
+        b.Property(x => x.Comment).HasMaxLength(1000);
+        b.Property(x => x.Language).HasMaxLength(2).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(16).IsRequired();
+        b.Property(x => x.AdminComment).HasMaxLength(1000);
+        b.Property(x => x.Ip).HasMaxLength(64);
+        b.HasIndex(x => new { x.Status, x.CreatedAt });
+        b.HasIndex(x => new { x.Phone, x.CreatedAt });
+    }
+}
+
 public class PlatformAuditConfiguration : IEntityTypeConfiguration<PlatformAuditEntry>
 {
     public void Configure(EntityTypeBuilder<PlatformAuditEntry> b)

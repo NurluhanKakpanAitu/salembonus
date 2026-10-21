@@ -49,3 +49,19 @@ admin.salemtech.kz {
 		reverse_proxy pos-web:80
 	}
 }
+
+# salemtech.kz — лендинг: сол pos-web образы (nginx Host бойынша landing.html), өтінім формасы — /api/public. www → salemtech.kz (nginx).
+salemtech.kz, www.salemtech.kz {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy pos-web:80
+	}
+}

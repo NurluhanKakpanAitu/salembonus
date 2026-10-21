@@ -56,6 +56,30 @@ public class PlatformPayment
     public string? VoidReason { get; set; }
 }
 
+/// <summary>
+/// Лендингтен (salemtech.kz) түскен өтінім: аты, телефон, бизнес, қала, қызығушылық (pos, bonus, both). Әкімші күйін жүргізеді:
+/// new → contacted → won (бизнес қосылды) не lost.
+/// </summary>
+public class PlatformLead
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string? BusinessName { get; set; }
+    public string? City { get; set; }
+    public string? BusinessType { get; set; }
+    public string Interest { get; set; } = "both";
+    public string? Comment { get; set; }
+    public string Language { get; set; } = "ru";
+    public string Status { get; set; } = "new";
+    public string? AdminComment { get; set; }
+    public Guid? OrganizationId { get; set; }
+    public string? Ip { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public Guid? UpdatedBy { get; set; }
+}
+
 /// <summary>Әкімші әрекеттерінің журналы: кім, қашан, қай бизнесте, не өзгерді.</summary>
 public class PlatformAuditEntry
 {

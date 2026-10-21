@@ -50,6 +50,7 @@ public static class DependencyInjection
         services.AddScoped<SalemBonus.Application.Platform.PlatformAuthService>();
         services.AddScoped<SalemBonus.Application.Platform.PlatformBusinessService>();
         services.AddScoped<SalemBonus.Application.Platform.PlatformBillingService>();
+        services.AddScoped<SalemBonus.Application.Platform.PlatformLeadsService>();
         services.AddScoped<SalemBonus.Application.Pos.Clients.ClientAccess>();
         services.AddScoped<SalemBonus.Application.Pos.Clients.ClientService>();
         services.AddScoped<SalemBonus.Application.Pos.Clients.ClientEditService>();

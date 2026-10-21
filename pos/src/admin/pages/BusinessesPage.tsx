@@ -83,13 +83,15 @@ export function BusinessesPage() {
 const TIME_ZONES = ['Asia/Almaty', 'Asia/Qostanay', 'Asia/Qyzylorda', 'Asia/Aqtobe', 'Asia/Aqtau', 'Asia/Atyrau', 'Asia/Oral']
 
 /** «Добавить бизнес»: бизнес, бірінші дүкен, иесінің аккаунты, тариф, сынақ мерзімі, модульдер. Құпиясөз — бір рет. */
-function CreateBusinessDrawer({ plans, onClose, onCreated }: { plans: Plan[]; onClose: () => void; onCreated: (id: string) => void }) {
+export interface BusinessPrefill { name?: string; city?: string; contactName?: string; contactPhone?: string; ownerPhone?: string; ownerFirst?: string; comment?: string }
+
+export function CreateBusinessDrawer({ plans, prefill, onClose, onCreated }: { plans: Plan[]; prefill?: BusinessPrefill; onClose: () => void; onCreated: (id: string) => void }) {
   const qc = useQueryClient()
   const activePlans = useMemo(() => plans.filter((p) => p.isActive), [plans])
   const [f, setF] = useState({
-    name: '', bin: '', city: '', contactName: '', contactPhone: '', contactEmail: '', comment: '',
+    name: prefill?.name ?? '', bin: '', city: prefill?.city ?? '', contactName: prefill?.contactName ?? '', contactPhone: prefill?.contactPhone ?? '', contactEmail: '', comment: prefill?.comment ?? '',
     storeName: '', category: '', address: '', storePhone: '', timeZone: 'Asia/Almaty',
-    ownerPhone: '+7', ownerFirst: '', ownerLast: '',
+    ownerPhone: prefill?.ownerPhone ?? '+7', ownerFirst: prefill?.ownerFirst ?? '', ownerLast: '',
     planId: activePlans[0]?.id ?? '', customFee: false, fee: '', trialDays: '14', modules: (activePlans[0]?.modules ?? MODULES.map((m) => m.key)) as ModuleKey[],
   })
   const [errors, setErrors] = useState<Record<string, string>>({})

@@ -155,6 +155,33 @@ public class PlatformRepository(AppDbContext db) : IPlatformRepository
 
     public void AddPayment(PlatformPayment payment) => db.PlatformPayments.Add(payment);
 
+    // ---------- Лендинг өтінімдері ----------
+
+    public async Task<(IReadOnlyList<PlatformLead> Rows, int Total)> LeadsAsync(string? status, string? search, int skip, int take, CancellationToken ct = default)
+    {
+        var q = db.PlatformLeads.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status)) q = q.Where(l => l.Status == status);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = $"%{search.Trim()}%";
+            var digits = new string(search.Where(char.IsDigit).ToArray());
+            q = q.Where(l => EF.Functions.ILike(l.Name, s) || (l.BusinessName != null && EF.Functions.ILike(l.BusinessName, s))
+                             || (l.City != null && EF.Functions.ILike(l.City, s)) || (digits.Length >= 4 && l.Phone.Contains(digits)));
+        }
+        var total = await q.CountAsync(ct);
+        return (await q.OrderByDescending(l => l.CreatedAt).Skip(skip).Take(take).ToListAsync(ct), total);
+    }
+
+    public async Task<Dictionary<string, int>> LeadCountsAsync(CancellationToken ct = default) =>
+        await db.PlatformLeads.AsNoTracking().GroupBy(l => l.Status).Select(g => new { g.Key, Count = g.Count() }).ToDictionaryAsync(x => x.Key, x => x.Count, ct);
+
+    public Task<PlatformLead?> LeadAsync(Guid id, CancellationToken ct = default) => db.PlatformLeads.FirstOrDefaultAsync(l => l.Id == id, ct);
+
+    public Task<bool> RecentLeadExistsAsync(string phone, DateTime sinceUtc, CancellationToken ct = default) =>
+        db.PlatformLeads.AnyAsync(l => l.Phone == phone && l.CreatedAt >= sinceUtc, ct);
+
+    public void AddLead(PlatformLead lead) => db.PlatformLeads.Add(lead);
+
     // ---------- Журнал ----------
 
     public async Task<Dictionary<Guid, string>> AdminNamesAsync(IReadOnlyCollection<Guid> ids, CancellationToken ct = default) =>
