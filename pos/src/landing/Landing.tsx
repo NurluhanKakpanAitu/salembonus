@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { COPY, type Lang } from './copy'
 import { Phone, PosMockup } from './Mockups'
+import { AppMark, SalemWordmark } from './Brand'
 
 const LANG_KEY = 'salemtech.lang'
 const POS_URL = 'https://pos.salemtech.kz'
@@ -42,21 +43,29 @@ function Eyebrow({ children, tone = 'blue' }: { children: ReactNode; tone?: 'blu
   return <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold ${tone === 'red' ? 'bg-[#e31e24]/10 text-[#d0161c]' : 'bg-[#1570ff]/10 text-[#1570ff]'}`}>{children}</span>
 }
 
-function SectionTitle({ eyebrow, title, subtitle, tone, center = true }: { eyebrow: string; title: string; subtitle?: string; tone?: 'blue' | 'red'; center?: boolean }) {
+function SectionTitle({ eyebrow, brand, title, subtitle, tone, center = true }: {
+  eyebrow: string; brand?: ReactNode; title: string; subtitle?: string; tone?: 'blue' | 'red'; center?: boolean
+}) {
   return (
     <Reveal className={`flex flex-col gap-3 ${center ? 'items-center text-center' : ''}`}>
-      <Eyebrow tone={tone}>{eyebrow}</Eyebrow>
+      {brand ?? <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
       <h2 className="max-w-3xl text-[30px] font-extrabold leading-[1.15] tracking-tight text-[#0b1220] sm:text-[40px]">{title}</h2>
       {subtitle && <p className="max-w-2xl text-[16px] leading-relaxed text-[#5b6576] sm:text-[18px]">{subtitle}</p>}
     </Reveal>
   )
 }
 
+/** SalemTech белгісі — SalemPos пен SalemBonus белгілерімен бір отбасы: «Salem» + көк «Tech», «Sa» астында күлкі-дуга. */
 function Logo({ dark }: { dark?: boolean }) {
+  return <SalemWordmark word="Tech" size={24} tone={dark ? 'light' : 'dark'} color={dark ? '#3b9bff' : '#1570ff'} />
+}
+
+/** Өнім белгісі: қосымша белгісі + өнім сөзі (SalemPos, SalemBonus). */
+function ProductLogo({ word, dark, id }: { word: string; dark?: boolean; id: string }) {
   return (
-    <span className="flex items-center gap-2">
-      <img src="/landing/salem-logo-128.png" alt="" className="size-8" width={32} height={32} />
-      <span className={`text-[20px] font-extrabold tracking-tight ${dark ? 'text-white' : 'text-[#0b1220]'}`}>Salem<span className="bg-gradient-to-r from-[#1570ff] to-[#e31e24] bg-clip-text text-transparent">Tech</span></span>
+    <span className="inline-flex items-center gap-2.5">
+      <AppMark size={36} id={id} />
+      <SalemWordmark word={word} size={24} tone={dark ? 'light' : 'dark'} color={dark ? '#3b9bff' : '#1570ff'} />
     </span>
   )
 }
@@ -84,8 +93,8 @@ export function Landing() {
       <header className="sticky top-0 z-40 border-b border-[#e6e9f0]/80 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
           <a href="#top" aria-label="SalemTech"><Logo /></a>
-          <nav className="hidden flex-1 items-center gap-6 lg:flex">
-            {nav.map((n) => <a key={n.href} href={n.href} className="text-[14px] font-medium text-[#5b6576] transition-colors hover:text-[#0b1220]">{n.label}</a>)}
+          <nav className="hidden flex-1 items-center gap-4 lg:flex xl:gap-6">
+            {nav.map((n) => <a key={n.href} href={n.href} className="whitespace-nowrap text-[14px] font-medium text-[#5b6576] transition-colors hover:text-[#0b1220]">{n.label}</a>)}
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <div className="flex rounded-lg bg-[#f3f5f9] p-0.5 text-[12px] font-bold" role="group" aria-label="Language">
@@ -187,7 +196,7 @@ export function Landing() {
       {/* ---------- SalemPos модульдері ---------- */}
       <section id="features" className="scroll-mt-20 bg-[#f6f8fc] py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <SectionTitle eyebrow={c.modules.eyebrow} title={c.modules.title} subtitle={c.modules.subtitle} />
+          <SectionTitle eyebrow={c.modules.eyebrow} brand={<ProductLogo word="Pos" id="mark-pos" />} title={c.modules.title} subtitle={c.modules.subtitle} />
           <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {c.modules.items.map((m, i) => (
               <Reveal key={m.key} delay={(i % 4) * 80} className="group flex flex-col rounded-3xl border border-[#e6e9f0] bg-white p-6 transition-all hover:-translate-y-1 hover:border-[#1570ff]/40 hover:shadow-[0_20px_40px_-20px_rgba(21,112,255,0.35)]">
@@ -211,7 +220,7 @@ export function Landing() {
         </div>
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
           <Reveal className="flex flex-col items-start gap-5">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[13px] font-semibold text-white"><img src="/landing/salem-logo-128.png" alt="" className="size-4" />{c.bonus.eyebrow}</span>
+            <ProductLogo word="Bonus" dark id="mark-bonus" />
             <h2 className="text-[32px] font-extrabold leading-[1.12] tracking-tight sm:text-[44px]">{c.bonus.title}</h2>
             <p className="max-w-xl text-[17px] leading-relaxed text-white/70">{c.bonus.subtitle}</p>
             <div className="flex flex-wrap gap-2">
