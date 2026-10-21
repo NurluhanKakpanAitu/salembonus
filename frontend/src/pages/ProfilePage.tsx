@@ -83,8 +83,8 @@ export function ProfilePage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[15px] font-extrabold uppercase leading-tight">{me.data.fullName}</div>
-                <div className="mt-0.5 truncate text-xs text-ink-2">
+                <div className="break-words text-[15px] font-extrabold uppercase leading-tight">{me.data.fullName}</div>
+                <div className="mt-0.5 break-words text-xs text-ink-2">
                   {qr.data ? t('profile.idLabel', { code: qr.data.code }) : '…'}
                 </div>
               </div>

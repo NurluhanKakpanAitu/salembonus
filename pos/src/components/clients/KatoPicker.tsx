@@ -14,8 +14,9 @@ export function KatoPicker({ path, onChange, levels = 3 }: { path: string[]; onC
   const regions = useQuery({ queryKey: ['kato', 'children', null], queryFn: () => children(null), staleTime: 3600_000 })
   const districts = useQuery({ queryKey: ['kato', 'children', region], queryFn: () => children(region!), enabled: !!region && levels > 1, staleTime: 3600_000 })
   const settlements = useQuery({ queryKey: ['kato', 'children', district], queryFn: () => children(district!), enabled: !!district && levels > 2, staleTime: 3600_000 })
-  const cls = `grid grid-cols-1 gap-2 ${levels === 3 ? 'sm:grid-cols-3' : levels === 2 ? 'sm:grid-cols-2' : ''}`
+  const cls = `grid grid-cols-1 gap-2 ${levels === 3 ? '@3xl:grid-cols-3' : levels === 2 ? '@xl:grid-cols-2' : ''}`
   return (
+    <div className="@container">
     <div className={cls}>
       <Select value={region ?? ''} onChange={(e) => onChange(e.target.value ? [e.target.value] : [])} aria-label={t('cli.kato.region')}>
         <option value="">{t('cli.kato.region')}</option>
@@ -33,6 +34,7 @@ export function KatoPicker({ path, onChange, levels = 3 }: { path: string[]; onC
           {(settlements.data ?? []).map((n) => <option key={n.code} value={n.code}>{n.name}</option>)}
         </Select>
       )}
+    </div>
     </div>
   )
 }

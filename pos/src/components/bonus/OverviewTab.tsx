@@ -113,7 +113,7 @@ export function OverviewTab({ filters, storeIds }: { filters: BonusFilters; stor
               {d.expiring.map((x) => (
                 <li key={x.lotId} className="flex items-center gap-3 py-2 text-[13px]">
                   <span className="w-20 shrink-0 text-ink-2">{dateOnly(x.expiresAt)}</span>
-                  <button type="button" onClick={() => setCustomer(x.customerId)} className="min-w-0 flex-1 truncate text-left hover:text-brand">{x.customerName}</button>
+                  <button type="button" onClick={() => setCustomer(x.customerId)} className="min-w-0 flex-1 break-words text-left hover:text-brand">{x.customerName}</button>
                   <Points value={x.amount} />
                   <Pill tone={x.notification === 'sent' ? 'green' : x.notification === 'scheduled' ? 'blue' : 'gray'}>{t(`bon.notify.${x.notification}` as TranslationKey)}</Pill>
                 </li>
@@ -127,7 +127,7 @@ export function OverviewTab({ filters, storeIds }: { filters: BonusFilters; stor
               {d.birthdays.map((b) => (
                 <li key={b.customerId} className="flex items-center gap-2 py-2 text-[13px]">
                   <span className="w-12 shrink-0 text-ink-2">{dateOnly(b.birthday).slice(0, 5)}</span>
-                  <button type="button" onClick={() => setCustomer(b.customerId)} className="min-w-0 flex-1 truncate text-left hover:text-brand">{b.customerName}</button>
+                  <button type="button" onClick={() => setCustomer(b.customerId)} className="min-w-0 flex-1 break-words text-left hover:text-brand">{b.customerName}</button>
                   <StatusBadge name={b.statusName} color={b.statusColor} />
                   <span className="w-16 text-right tabular-nums">{b.amount ? num(b.amount) : '—'}</span>
                   <Pill tone={BIRTHDAY_TONE[b.state] ?? 'gray'}>{t(`bon.bday.${b.state}` as TranslationKey)}</Pill>
@@ -143,8 +143,8 @@ export function OverviewTab({ filters, storeIds }: { filters: BonusFilters; stor
               {d.recent.map((o) => (
                 <li key={o.id} className="flex items-center gap-2 py-2 text-[13px]">
                   <OpTypeBadge type={o.type} amount={o.amount} />
-                  <span className="min-w-0 flex-1"><button type="button" onClick={() => setCustomer(o.customerId)} className="block max-w-full truncate text-left hover:text-brand">{o.customerName}</button>
-                    <span className="block truncate text-[11px] text-ink-3">{dateTime(o.createdAt)} · {o.basis} · {o.author}</span></span>
+                  <span className="min-w-0 flex-1"><button type="button" onClick={() => setCustomer(o.customerId)} className="block max-w-full break-words text-left hover:text-brand">{o.customerName}</button>
+                    <span className="block text-[11px] text-ink-3">{dateTime(o.createdAt)} · {o.basis} · {o.author}</span></span>
                   <Points value={o.amount} signed muted={o.status === 'reversed'} />
                 </li>
               ))}

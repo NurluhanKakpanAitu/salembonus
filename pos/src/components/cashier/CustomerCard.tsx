@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Banknote, CreditCard, Landmark, Loader2, QrCode, Receipt as ReceiptIcon, ShoppingCart, Undo2, UserRound, Wallet } from 'lucide-react'
 import { Button } from '../ui/Button'
+import { Select } from '../ui/Field'
 import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
@@ -281,10 +282,9 @@ function RepayModal({ ctx, debt, customerName, onClose, onDone }: {
           ))}
         </div>
         {method === 'Transfer' && (
-          <select value={recipient} onChange={(e) => setRecipient(e.target.value)}
-            className="h-11 rounded-xl border border-line bg-field px-3 outline-none focus:border-brand">
+          <Select value={recipient} onChange={(e) => setRecipient(e.target.value)} aria-label={t('pay.Transfer')}>
             {ctx.transferRecipients.map((r) => <option key={r.id} value={r.id}>{r.bankName} · {r.account} · {r.holderName}</option>)}
-          </select>
+          </Select>
         )}
         {error && <p className="rounded-xl bg-danger-soft px-4 py-3 text-danger">{error}</p>}
         <div className="grid grid-cols-2 gap-2">

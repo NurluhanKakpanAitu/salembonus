@@ -106,7 +106,7 @@ export function OperationForm({ accounts, categories, initial, kind, onClose, on
   }
 
   return (
-    <Modal title={initial ? `${t('fin.editDraft')} · ${initial.number}` : type === 'Income' ? t('fin.newIncome') : t('fin.newExpense')} onClose={() => void close()} width={620}>
+    <Modal title={initial ? `${t('fin.editDraft')} · ${initial.number}` : type === 'Income' ? t('fin.newIncome') : t('fin.newExpense')} onClose={() => void close()} width={720}>
       <form onSubmit={(e) => { e.preventDefault(); void submit(true) }} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label={t('fin.col.type')} required>

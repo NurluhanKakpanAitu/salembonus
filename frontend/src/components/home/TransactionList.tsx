@@ -42,9 +42,9 @@ export function TransactionList({ items, title, allHref }: {
                   {plus ? '+' : '−'}{t('common.bonusUnit')}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[15px] font-bold leading-tight">{transactionTitle(tx.type)}</div>
-                  <div className="mt-0.5 truncate text-[13px] text-ink-2">{tx.storeName}</div>
-                  <div className="truncate text-xs text-ink-3">{formatDateTime(tx.createdAt)}</div>
+                  <div className="break-words text-[15px] font-bold leading-tight">{transactionTitle(tx.type)}</div>
+                  <div className="mt-0.5 break-words text-[13px] text-ink-2">{tx.storeName}</div>
+                  <div className="text-xs text-ink-3">{formatDateTime(tx.createdAt)}</div>
                 </div>
                 <div className="shrink-0 text-right">
                   <div className={`text-[15px] font-extrabold ${plus ? 'text-green' : 'text-danger'}`}>

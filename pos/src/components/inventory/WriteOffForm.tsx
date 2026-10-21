@@ -134,7 +134,7 @@ export function WriteOffForm() {
       <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
         <div className="flex min-w-0 flex-col gap-5">
           <section className="rounded-2xl border border-line bg-surface p-5">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
               <Field label={t('inv.mov.warehouse')} required error={errors.warehouseId}>
                 <Select value={h.warehouseId} disabled={readOnly} onChange={(e) => setH({ ...h, warehouseId: e.target.value })} error={!!errors.warehouseId}>
                   <option value="">{t('product.choose')}</option>
@@ -150,7 +150,7 @@ export function WriteOffForm() {
               <Field label={t('inv.doc.date')} required>
                 <Input type="date" value={h.date} disabled={readOnly} onChange={(e) => setH({ ...h, date: e.target.value })} />
               </Field>
-              <div className="md:col-span-3">
+              <div className="md:col-span-2 2xl:col-span-3">
                 <Field label={t('node.description')} required={h.reason === 'Other'} error={errors.comment} hint={h.reason === 'Other' ? t('inv.wo.commentRequired') : undefined}>
                   <Textarea value={h.comment} disabled={readOnly} onChange={(e) => setH({ ...h, comment: e.target.value })} maxLength={1000} />
                 </Field>

@@ -146,11 +146,11 @@ export function ClientsList({ storeIds }: { storeIds?: string }) {
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3">
         <div className="flex flex-wrap items-center gap-2">
           <SearchInput value={search} onChange={setSearch} placeholder={t('cli.searchPlaceholder')} className="min-w-60 flex-1" />
-          <Select className="h-11! w-48!" value={filter.statusIds?.[0] ?? ''} onChange={(e) => set({ status: e.target.value || null })} aria-label={t('cli.col.status')}>
+          <Select className="h-11! w-auto min-w-48" value={filter.statusIds?.[0] ?? ''} onChange={(e) => set({ status: e.target.value || null })} aria-label={t('cli.col.status')}>
             <option value="">{t('cli.allStatuses')}</option>
             {(meta.data?.statuses ?? []).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </Select>
-          <Select className="h-11! w-56!" value={segmentId ?? ''} onChange={(e) => set({ segment: e.target.value || null })} aria-label={t('cli.seg.segment')}>
+          <Select className="h-11! w-auto min-w-56" value={segmentId ?? ''} onChange={(e) => set({ segment: e.target.value || null })} aria-label={t('cli.seg.segment')}>
             <option value="">{t('cli.allClients')}</option>
             {(segments.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.name} ({num(s.count)})</option>)}
           </Select>

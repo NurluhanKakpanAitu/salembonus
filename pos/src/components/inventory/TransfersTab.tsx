@@ -56,7 +56,7 @@ export function TransfersTab() {
         </Button>
         <PeriodSelect value={period} onChange={(p) => update({ period: p })} />
         {!incoming && (
-          <Select className="w-48!" value={status} onChange={(e) => update({ status: e.target.value })}>
+          <Select className="w-auto min-w-48" value={status} onChange={(e) => update({ status: e.target.value })}>
             <option value="">{t('inv.doc.allStatuses')}</option>
             {(['Draft', 'InTransit', 'Completed', 'Cancelled'] as const).map((k) => <option key={k} value={k}>{t(`inv.status.transfer.${k}`)}</option>)}
           </Select>

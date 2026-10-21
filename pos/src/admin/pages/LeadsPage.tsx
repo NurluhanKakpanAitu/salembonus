@@ -73,7 +73,7 @@ export function LeadsPage() {
                   {!l.comment && !l.adminComment && <span className="text-ink-3">—</span>}
                 </td>
                 <td className={td}>
-                  <Select className="h-9! w-36! text-[13px]" value={l.status} onChange={(e) => void setLeadStatus(l, e.target.value as LeadStatus)} aria-label="Статус">
+                  <Select className="h-9! w-auto min-w-36 text-[13px]" value={l.status} onChange={(e) => void setLeadStatus(l, e.target.value as LeadStatus)} aria-label="Статус">
                     {(Object.keys(STATUS) as LeadStatus[]).map((s) => <option key={s} value={s}>{STATUS[s].label}</option>)}
                   </Select>
                   {l.organizationId && <Link to={`/businesses/${l.organizationId}`} className="mt-1 block text-[12px] font-semibold text-brand hover:underline">Открыть бизнес</Link>}

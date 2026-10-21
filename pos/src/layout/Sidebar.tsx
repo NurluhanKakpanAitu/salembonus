@@ -50,7 +50,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
               const content = (
                 <>
                   <item.icon size={20} className="shrink-0" />
-                  <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{t(item.label)}</span>
+                  <span className={`min-w-0 break-words ${collapsed ? 'lg:hidden' : ''}`}>{t(item.label)}</span>
                 </>
               )
               return (
@@ -81,7 +81,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onClose }: {
                         <li key={s.path}>
                           <NavLink to={`${item.path}/${s.path}${location.search}`} end={s.path === ''} onClick={onClose}
                             className={`flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] ${openSection === s.path ? 'bg-nav-2 font-semibold text-white' : 'text-nav-ink/80 hover:bg-nav-2 hover:text-white'}`}>
-                            <s.icon size={15} className="shrink-0" /><span className="truncate">{t(s.label)}</span>
+                            <s.icon size={15} className="shrink-0" /><span className="min-w-0 break-words">{t(s.label)}</span>
                           </NavLink>
                         </li>
                       ))}

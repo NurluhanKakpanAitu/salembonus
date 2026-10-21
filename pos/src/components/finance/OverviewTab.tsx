@@ -51,7 +51,7 @@ export function OverviewTab({ filters, storeIds }: { filters: FinanceFilters; st
                 <li key={a.id} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2">
                   <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${ACCOUNT_TONE[a.type]}`}>{ACCOUNT_ICON[a.type]}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[14px] font-medium">{a.name}</span>
+                    <span className="block break-words text-[14px] font-medium">{a.name}</span>
                     <span className="block text-[12px] text-ink-3">{t(`fin.accountType.${a.type}` as TranslationKey)}{d.accounts.some((x) => x.storeId !== a.storeId) ? ` · ${a.storeName}` : ''}</span>
                   </span>
                   <span className={`text-[15px] font-bold tabular-nums ${a.balance < 0 ? 'text-danger' : ''}`}>{tenge(a.balance)}</span>
@@ -77,7 +77,7 @@ export function OverviewTab({ filters, storeIds }: { filters: FinanceFilters; st
               {d.recent.map((o) => (
                 <li key={o.id} className="flex items-center gap-3 py-2">
                   <TypeBadge type={o.type} />
-                  <Link to={`/finance/transactions${search}&op=${o.id}`} className="min-w-0 flex-1 truncate text-[13px] hover:text-brand">{o.description}<span className="block text-[11px] text-ink-3">{dateOnly(o.date)} · {o.counterpartyName ?? o.number}</span></Link>
+                  <Link to={`/finance/transactions${search}&op=${o.id}`} className="min-w-0 flex-1 break-words text-[13px] hover:text-brand">{o.description}<span className="block text-[11px] text-ink-3">{dateOnly(o.date)} · {o.counterpartyName ?? o.number}</span></Link>
                   <Amount value={o.amount} type={o.type} entries={o.entries} muted={o.status === 'Reversed'} />
                   {o.status !== 'Posted' && <OpStatusBadge status={o.status} />}
                 </li>
@@ -94,7 +94,7 @@ export function OverviewTab({ filters, storeIds }: { filters: FinanceFilters; st
                     <span className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${u.status === 'Overdue' ? 'bg-danger-soft text-danger' : u.status === 'DueSoon' ? 'bg-amber-50 text-amber-700' : 'bg-brand-soft text-brand'}`}>
                       {u.dueDate ? dateOnly(u.dueDate) : '—'}
                     </span>
-                    <Link to={u.kind === 'customer' ? `/finance/customer-debts${search}&customer=${u.id}` : `/finance/supplier-debts${search}&supplier=${u.id}`} className="min-w-0 flex-1 truncate hover:text-brand">
+                    <Link to={u.kind === 'customer' ? `/finance/customer-debts${search}&customer=${u.id}` : `/finance/supplier-debts${search}&supplier=${u.id}`} className="min-w-0 flex-1 break-words hover:text-brand">
                       {u.counterparty}{' '}<span className="ml-1 text-[11px] text-ink-3">{t(u.kind === 'customer' ? 'fin.upcomingCustomer' : 'fin.upcomingSupplier')}{u.daysLeft !== null ? ` · ${t('fin.daysLeft', { n: u.daysLeft })}` : ''}</span>
                     </Link>
                     <span className="font-semibold tabular-nums">{tenge(u.amount)}</span>

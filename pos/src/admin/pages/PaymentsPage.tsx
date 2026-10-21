@@ -40,14 +40,14 @@ export function PaymentsPage() {
       <PageHeader title="Оплаты" subtitle={q.data ? `Найдено ${q.data.total} · сумма ${tenge(q.data.sum)}` : 'Абонентская плата бизнесов'}
         actions={<Button icon={<Plus size={17} />} onClick={() => setAdding(true)}>Принять оплату</Button>} />
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-3">
-        <Select className="h-11! w-64!" value={organizationId} onChange={(e) => { setOrganizationId(e.target.value); setPage(1) }} aria-label="Бизнес">
+        <Select className="h-11! w-auto min-w-64" value={organizationId} onChange={(e) => { setOrganizationId(e.target.value); setPage(1) }} aria-label="Бизнес">
           <option value="">Все бизнесы</option>
           {(businesses.data?.rows ?? []).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </Select>
         <Input type="date" className="w-40!" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} aria-label="С" />
         <span className="text-ink-3">—</span>
         <Input type="date" className="w-40!" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} aria-label="По" />
-        <Select className="h-11! w-48!" value={method} onChange={(e) => { setMethod(e.target.value); setPage(1) }} aria-label="Способ">
+        <Select className="h-11! w-auto min-w-48" value={method} onChange={(e) => { setMethod(e.target.value); setPage(1) }} aria-label="Способ">
           <option value="">Все способы</option>
           {Object.entries(METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>

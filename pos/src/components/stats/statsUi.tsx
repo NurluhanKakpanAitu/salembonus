@@ -92,7 +92,7 @@ export function KpiCard({ k, label, icon, tone, kind = 'money', amountKind = 'mo
       <span className={`flex shrink-0 items-center justify-center rounded-xl ${small ? 'size-10' : 'size-12'} ${KPI_TONES[tone]}`}>{icon}</span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1 text-[12px] font-medium text-ink-2">
-          <span className="truncate">{label}</span>{info && <InfoTip text={info} />}
+          <span className="min-w-0 break-words">{label}</span>{info && <InfoTip text={info} />}
         </div>
         {!k ? <div className="mt-1 h-6 w-24 animate-pulse rounded bg-field" />
           : !k.available || k.value === null ? (

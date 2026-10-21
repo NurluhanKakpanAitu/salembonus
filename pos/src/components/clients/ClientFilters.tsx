@@ -118,7 +118,7 @@ export function FiltersDrawer({ value, statuses, onApply, onClose }: {
   const t = useT()
   const [draft, setDraft] = useState<ClientFilter>(value)
   return (
-    <Drawer title={t('cli.filters')} onClose={onClose} width={480}
+    <Drawer title={t('cli.filters')} onClose={onClose} width={560}
       footer={<>
         <Button variant="ghost" icon={<RotateCcw size={16} />} onClick={() => setDraft({})}>{t('cli.f.reset')}</Button>
         <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>

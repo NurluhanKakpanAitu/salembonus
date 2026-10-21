@@ -1,4 +1,11 @@
 import { Search, X } from 'lucide-react'
+import { cn } from '../../lib/cn'
+
+/**
+ * Placeholder толық көрінуі үшін өрістің ең аз ені: 14px Inter-де кириллица әрпі орта есеппен 7.9px-тен аспайды,
+ * оған белгі, аралық, тазалау батырмасы мен шеттер (≈ 64px) қосылады.
+ */
+const minWidthFor = (placeholder: string) => Math.ceil(placeholder.length * 7.9 + 64)
 
 export function SearchInput({ value, onChange, placeholder, className = '' }: {
   value: string
@@ -7,7 +14,8 @@ export function SearchInput({ value, onChange, placeholder, className = '' }: {
   className?: string
 }) {
   return (
-    <label className={`flex h-11 items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 focus-within:border-brand ${className}`}>
+    <label className={cn('flex h-11 items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 focus-within:border-brand', className)}
+      style={{ minWidth: `min(100%, ${minWidthFor(placeholder)}px)` }}>
       <Search size={18} className="shrink-0 text-ink-3" />
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-ink-3" />

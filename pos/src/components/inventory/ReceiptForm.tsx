@@ -191,7 +191,7 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
       <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
         <div className="flex min-w-0 flex-col gap-5">
           <section className="rounded-2xl border border-line bg-surface p-5">
-            <div className={`grid gap-4 ${isQuick ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+            <div className={`grid gap-4 ${isQuick ? 'md:grid-cols-2' : 'md:grid-cols-2 2xl:grid-cols-3'}`}>
               <Field label={t('inv.mov.warehouse')} required error={errors.warehouseId}>
                 <Select value={h.warehouseId} disabled={readOnly} onChange={(e) => set({ warehouseId: e.target.value })} error={!!errors.warehouseId}>
                   <option value="">{t('product.choose')}</option>

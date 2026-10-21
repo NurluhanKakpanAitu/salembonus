@@ -57,7 +57,7 @@ export function TransferModal({ accounts, from, collection: initialCollection, o
   const AccountOption = ({ a }: { a: FinanceAccount }) => <option value={a.id}>{a.name} · {tenge(a.balance)}</option>
 
   return (
-    <Modal title={collection ? t('fin.collection') : t('fin.transfer')} onClose={onClose} width={560}>
+    <Modal title={collection ? t('fin.collection') : t('fin.transfer')} onClose={onClose} width={680}>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Toggle checked={collection} onChange={(v) => { setCollection(v); const transit = active.find((a) => a.type === 'InTransit'); if (v && transit) setToId(transit.id) }} label={t('fin.collectionToggle')} />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">

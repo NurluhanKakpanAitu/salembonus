@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
+import { cn } from '../../lib/cn'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
@@ -21,7 +22,7 @@ export function Button({ variant = 'primary', loading = false, icon, iconRight, 
     <button
       {...rest}
       disabled={disabled || loading}
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl px-5 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={cn('inline-flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-5 text-[15px] font-semibold transition-colors disabled:cursor-not-allowed', variants[variant], className)}
     >
       {loading ? <Loader2 size={18} className="animate-spin" /> : icon}
       {children}

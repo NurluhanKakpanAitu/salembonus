@@ -107,7 +107,7 @@ export function periodRange(p: Period): { from?: string; to?: string } {
 export function PeriodSelect({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
   const t = useT()
   return (
-    <Select className="w-40!" value={value} onChange={(e) => onChange(e.target.value as Period)}>
+    <Select className="w-auto min-w-40" value={value} onChange={(e) => onChange(e.target.value as Period)}>
       {PERIODS.map((p) => <option key={p} value={p}>{t(`inv.period.${p}` as TranslationKey)}</option>)}
     </Select>
   )

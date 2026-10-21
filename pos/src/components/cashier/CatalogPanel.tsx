@@ -53,7 +53,7 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
         className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${
           active ? 'bg-brand text-white' : 'text-ink hover:bg-field'}`}>
         {id === null ? <LayoutGrid size={18} /> : <CatalogIcon name={icon} size={18} />}
-        <span className="truncate">{label}</span>
+        <span className="min-w-0 break-words">{label}</span>
       </button>
     )
   }

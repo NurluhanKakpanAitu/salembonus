@@ -156,7 +156,7 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
           <Monitor size={18} className="text-brand" />
           <div className="leading-tight">
             <div className="text-[14px] font-semibold">{ctx.registerName}</div>
-            <div className="max-w-52 truncate text-[12px] text-ink-3">{ctx.storeName}{ctx.storeAddress ? `, ${ctx.storeAddress}` : ''}</div>
+            <div className="max-w-72 text-[12px] text-ink-3">{ctx.storeName}{ctx.storeAddress ? `, ${ctx.storeAddress}` : ''}</div>
           </div>
           <RowMenu items={[{ label: t('settings.title'), icon: <Settings size={16} />, onClick: () => setSettingsOpen(true) }, ...menu]} />
         </div>

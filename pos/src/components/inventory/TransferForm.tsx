@@ -168,7 +168,7 @@ export function TransferForm() {
       <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
         <div className="flex min-w-0 flex-col gap-5">
           <section className="rounded-2xl border border-line bg-surface p-5">
-            <div className="grid items-end gap-4 md:grid-cols-[1fr_auto_1fr_1fr]">
+            <div className="grid items-end gap-4 md:grid-cols-2 2xl:grid-cols-[1fr_auto_1fr_1fr]">
               <Field label={t('inv.tr.sourceWarehouse')} required error={errors.sourceWarehouseId}>
                 <Select value={h.sourceWarehouseId} disabled={readOnly || !isSource} onChange={(e) => setH({ ...h, sourceWarehouseId: e.target.value })} error={!!errors.sourceWarehouseId}>
                   {tr && !isSource ? <option value={tr.sourceWarehouseId}>{tr.sourceStoreName} / {tr.sourceWarehouseName}</option> : <>
@@ -177,7 +177,7 @@ export function TransferForm() {
                   </>}
                 </Select>
               </Field>
-              <ArrowRight size={22} className="mb-3 hidden text-ink-3 md:block" />
+              <ArrowRight size={22} className="mb-3 hidden text-ink-3 2xl:block" />
               <Field label={t('inv.tr.destStore')} required>
                 <Select value={h.destinationStoreId} disabled={readOnly} onChange={(e) => setH({ ...h, destinationStoreId: e.target.value, destinationWarehouseId: '' })}>
                   {tr && readOnly ? <option value={tr.destinationStoreId}>{tr.destinationStoreName}</option> : targets.map((x) => <option key={x.storeId} value={x.storeId}>{x.storeName}</option>)}
@@ -191,7 +191,7 @@ export function TransferForm() {
                   </>}
                 </Select>
               </Field>
-              <div className="md:col-span-4">
+              <div className="md:col-span-2 2xl:col-span-4">
                 <Field label={t('node.description')}>
                   <Input value={h.comment} disabled={readOnly} onChange={(e) => setH({ ...h, comment: e.target.value })} maxLength={1000} placeholder={t('inv.doc.optional')} />
                 </Field>

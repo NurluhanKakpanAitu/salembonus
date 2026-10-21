@@ -72,7 +72,7 @@ export function ReceiptSheet({ receiptId, onClose }: { receiptId: string | null;
             <X size={17} />
           </button>
           <div className="text-[13px] opacity-80">{t('receipt.title')}</div>
-          <div className="mt-0.5 truncate pr-10 text-[19px] font-extrabold">{r?.storeName ?? '…'}</div>
+          <div className="mt-0.5 break-words pr-10 text-[19px] font-extrabold">{r?.storeName ?? '…'}</div>
           {r && (
             <div className="mt-1 text-[12px] opacity-80">
               {formatDateTime(r.createdAt)} · {t('receipt.number', { number: r.number })}

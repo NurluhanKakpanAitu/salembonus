@@ -63,15 +63,15 @@ export function ReceiptsTab() {
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <PeriodSelect value={period} onChange={(p) => update({ period: p })} />
-        <Select className="w-44!" value={status} onChange={(e) => update({ status: e.target.value })}>
+        <Select className="w-auto min-w-44" value={status} onChange={(e) => update({ status: e.target.value })}>
           <option value="">{t('inv.doc.allStatuses')}</option>
           {(['Draft', 'Posted', 'Reversed', 'Cancelled'] as const).map((k) => <option key={k} value={k}>{t(`inv.status.doc.${k}`)}</option>)}
         </Select>
-        <Select className="w-52!" value={supplierId} onChange={(e) => update({ supplierId: e.target.value })}>
+        <Select className="w-auto min-w-52" value={supplierId} onChange={(e) => update({ supplierId: e.target.value })}>
           <option value="">{t('inv.receipts.allSuppliers')}</option>
           {suppliers.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
         </Select>
-        <Select className="w-48!" value={warehouseId} onChange={(e) => update({ warehouseId: e.target.value })}>
+        <Select className="w-auto min-w-48" value={warehouseId} onChange={(e) => update({ warehouseId: e.target.value })}>
           <option value="">{t('inv.stock.allWarehouses')}</option>
           {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
         </Select>

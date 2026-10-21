@@ -57,11 +57,11 @@ export function MovementsTab() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <SearchInput className="w-full sm:w-72" value={document} onChange={setDocument} placeholder={t('inv.mov.searchDoc')} />
         <PeriodSelect value={period} onChange={(p) => update({ period: p })} />
-        <Select className="w-52!" value={warehouseId} onChange={(e) => update({ warehouseId: e.target.value })}>
+        <Select className="w-auto min-w-52" value={warehouseId} onChange={(e) => update({ warehouseId: e.target.value })}>
           <option value="">{t('inv.stock.allWarehouses')}</option>
           {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}{w.isActive ? '' : ` (${t('status.Archived.m')})`}</option>)}
         </Select>
-        <Select className="w-52!" value={type} onChange={(e) => update({ type: e.target.value })}>
+        <Select className="w-auto min-w-52" value={type} onChange={(e) => update({ type: e.target.value })}>
           <option value="">{t('inv.mov.allTypes')}</option>
           {TYPES.map((k) => <option key={k} value={k}>{t(`inv.mov.type.${k}` as TranslationKey)}</option>)}
         </Select>

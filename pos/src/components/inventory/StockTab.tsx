@@ -58,25 +58,25 @@ export function StockTab() {
     <div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <SearchInput className="w-full sm:w-80" value={search} onChange={setSearch} placeholder={t('inv.stock.search')} />
-        <Select className="w-52!" value={warehouseId} onChange={(e) => update({ warehouseId: e.target.value })}>
+        <Select className="w-auto min-w-52" value={warehouseId} onChange={(e) => update({ warehouseId: e.target.value })}>
           <option value="">{t('inv.stock.allWarehouses')}</option>
           {activeWarehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
         </Select>
-        <Select className="w-52!" value={nodeId} onChange={(e) => update({ nodeId: e.target.value })}>
+        <Select className="w-auto min-w-52" value={nodeId} onChange={(e) => update({ nodeId: e.target.value })}>
           <option value="">{t('product.filter.allCategories')}</option>
           {treeOrder(nodes).map((n) => <option key={n.id} value={n.id}>{' '.repeat(n.depth)}{n.name}</option>)}
         </Select>
-        <Select className="w-44!" value={brandId} onChange={(e) => update({ brandId: e.target.value })}>
+        <Select className="w-auto min-w-44" value={brandId} onChange={(e) => update({ brandId: e.target.value })}>
           <option value="">{t('product.filter.allBrands')}</option>
           {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </Select>
-        <Select className="w-48!" value={availability} onChange={(e) => update({ availability: e.target.value })}>
+        <Select className="w-auto min-w-48" value={availability} onChange={(e) => update({ availability: e.target.value })}>
           <option value="">{t('inv.stock.anyAvailability')}</option>
           <option value="in">{t('inv.stock.inStock')}</option>
           <option value="out">{t('inv.stock.outOfStock')}</option>
           <option value="belowMin">{t('inv.stock.belowMin')}</option>
         </Select>
-        <Select className="w-40!" value={status} onChange={(e) => update({ status: e.target.value })}>
+        <Select className="w-auto min-w-40" value={status} onChange={(e) => update({ status: e.target.value })}>
           <option value="">{t('product.filter.active')}</option>
           <option value="Archived">{t('product.filter.archived')}</option>
           <option value="all">{t('product.filter.allStatuses')}</option>

@@ -36,10 +36,61 @@ jobs:
         run: npm run build
         working-directory: pos
 
+  # Көріну тесттері (pos/e2e): SalemPos, әкімшілік, лендинг және SalemBonus қосымшасының әр беті мен формасы шын браузерде
+  # (Chrome) ашылып, мәтін кесілмегені өлшенеді. API Development режимінде демо деректермен (StaffSeeder, AdminSeeder, DbSeeder).
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: salembonus
+          POSTGRES_PASSWORD: salembonus
+          POSTGRES_DB: salembonus
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U salembonus"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            pos/package-lock.json
+            frontend/package-lock.json
+      - run: npm ci
+        working-directory: pos
+      - run: npm ci
+        working-directory: frontend
+      - name: Build API
+        run: dotnet build backend/SalemBonus.Api
+      - name: Visibility tests
+        working-directory: pos
+        env:
+          CI: 'true'
+          E2E_CHANNEL: chrome
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            pos/playwright-report
+            pos/test-results
+          retention-days: 7
+
   # Образдар → Docker Hub (жеке репозиторий, vars.DOCKERHUB_IMAGE).
   # Серверге кіру керек емес: сервердегі /opt/infra/autodeploy минут сайын жаңа образды тексеріп, өзі жаңартады.
   publish:
-    needs: [backend, pos]
+    needs: [backend, pos, e2e]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DOCKERHUB_IMAGE != ''
     runs-on: ubuntu-latest
     timeout-minutes: 30

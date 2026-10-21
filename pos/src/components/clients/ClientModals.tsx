@@ -218,7 +218,7 @@ export function SegmentModal({ segment, initialFilter, onClose, onSaved }: {
     } catch (err) { setError(errText(err, t('cli.failed'))) } finally { setBusy(false) }
   }
   return (
-    <Drawer title={segment ? t('cli.seg.edit') : t('cli.seg.new')} onClose={onClose} width={520}
+    <Drawer title={segment ? t('cli.seg.edit') : t('cli.seg.new')} onClose={onClose} width={560}
       footer={<>
         <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
         <Button loading={busy} onClick={() => void submit()}>{t('cli.form.save')}</Button>

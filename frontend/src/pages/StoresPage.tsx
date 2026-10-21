@@ -107,8 +107,8 @@ function StoreRow({ store, t }: { store: StoreListItem; t: Translator }) {
         <Icon size={22} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[15px] font-bold leading-tight">{store.name}</div>
-        <div className="truncate text-xs text-ink-2">
+        <div className="break-words text-[15px] font-bold leading-tight">{store.name}</div>
+        <div className="break-words text-xs text-ink-2">
           {storeCategory(store.category)} · {cashbackLabel(store, t)}
         </div>
         {store.hasCard ? (
@@ -116,7 +116,7 @@ function StoreRow({ store, t }: { store: StoreListItem; t: Translator }) {
             <Check size={12} strokeWidth={3} /> {t('stores.joined')}
           </div>
         ) : (
-          <div className="mt-0.5 truncate text-xs text-ink-3">{store.description}</div>
+          <div className="mt-0.5 break-words text-xs text-ink-3">{store.description}</div>
         )}
       </div>
       <ChevronRight size={18} className="shrink-0 text-ink-3" />

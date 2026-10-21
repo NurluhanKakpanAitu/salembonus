@@ -112,7 +112,7 @@ export function SalesPage() {
             <p className="text-[14px] text-ink-2">{t('sales.subtitle')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Select className="w-44!" value={period} onChange={(e) => update({ period: e.target.value })}>
+            <Select className="w-auto min-w-44" value={period} onChange={(e) => update({ period: e.target.value })}>
               {PERIODS.map((p) => <option key={p} value={p}>{t(`sales.period.${p}` as TranslationKey)}</option>)}
             </Select>
             {period === 'custom' && (
@@ -166,23 +166,23 @@ export function SalesPage() {
         </div>
         {filtersOpen && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-3">
-            <Select className="w-44!" value={get('registerId')} onChange={(e) => update({ registerId: e.target.value })}>
+            <Select className="w-auto min-w-44" value={get('registerId')} onChange={(e) => update({ registerId: e.target.value })}>
               <option value="">{t('sales.filter.allRegisters')}</option>
               {filters.data?.registers.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </Select>
-            <Select className="w-48!" value={get('staffUserId')} onChange={(e) => update({ staffUserId: e.target.value })}>
+            <Select className="w-auto min-w-48" value={get('staffUserId')} onChange={(e) => update({ staffUserId: e.target.value })}>
               <option value="">{t('sales.filter.allCashiers')}</option>
               {filters.data?.cashiers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
-            <Select className="w-48!" value={get('method')} onChange={(e) => update({ method: e.target.value })}>
+            <Select className="w-auto min-w-48" value={get('method')} onChange={(e) => update({ method: e.target.value })}>
               <option value="">{t('sales.filter.allMethods')}</option>
               {METHODS.map((m) => <option key={m} value={m}>{t(`pay.${m}`)}</option>)}
             </Select>
-            <Select className="w-44!" value={get('status')} onChange={(e) => update({ status: e.target.value })}>
+            <Select className="w-auto min-w-44" value={get('status')} onChange={(e) => update({ status: e.target.value })}>
               <option value="">{t('sales.filter.allStatuses')}</option>
               {STATUSES.map((x) => <option key={x} value={x}>{t(`sales.status.${x}`)}</option>)}
             </Select>
-            <Select className="w-44!" value={get('hasReturn')} onChange={(e) => update({ hasReturn: e.target.value })}>
+            <Select className="w-auto min-w-44" value={get('hasReturn')} onChange={(e) => update({ hasReturn: e.target.value })}>
               <option value="">{t('sales.filter.anyReturn')}</option>
               <option value="yes">{t('sales.filter.withReturn')}</option>
               <option value="no">{t('sales.filter.withoutReturn')}</option>
@@ -290,7 +290,7 @@ function CustomerFilter({ customerId, noCustomer, onChange }: {
   }
   return (
     <div className="relative flex items-center gap-2">
-      <Select className="w-40!" value={noCustomer ? 'none' : ''} onChange={(e) => onChange({ customerId: '', noCustomer: e.target.value === 'none' })}>
+      <Select className="w-auto min-w-40" value={noCustomer ? 'none' : ''} onChange={(e) => onChange({ customerId: '', noCustomer: e.target.value === 'none' })}>
         <option value="">{t('sales.filter.allCustomers')}</option>
         <option value="none">{t('sales.filter.noCustomer')}</option>
       </Select>

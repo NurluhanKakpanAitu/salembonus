@@ -5,6 +5,7 @@ import {
   ArrowRight, Banknote, Boxes, ChartColumn, ChartPie, Coins, CreditCard, Gift, HandCoins, Package, ReceiptText, Repeat, ShoppingCart,
   TrendingUp, Truck, Undo2, UserCheck, Users, Wallet, Warehouse,
 } from 'lucide-react'
+import { Select } from '../ui/Field'
 import { activeStore, useAuth } from '../../lib/auth'
 import { analyticsApi } from '../../lib/analyticsApi'
 import type { ActivityCustomer, AnalyticsFilters, Kpi, Overview, TopProduct } from '../../lib/analyticsTypes'
@@ -299,10 +300,10 @@ function ActivityCard({ o, inactiveDays, onInactiveDays, onMore }: { o: Overview
           { key: 'new', label: t('stats.act.new') }, { key: 'regular', label: t('stats.act.regular') }, { key: 'inactive', label: t('stats.act.inactive') },
         ]} />
         {tab === 'inactive' && (
-          <select value={inactiveDays} onChange={(e) => onInactiveDays(Number(e.target.value))} aria-label={t('stats.act.inactive')}
-            className="h-8 rounded-lg border border-line bg-surface px-2 text-[12px]">
+          <Select value={inactiveDays} onChange={(e) => onInactiveDays(Number(e.target.value))} aria-label={t('stats.act.inactive')}
+            className="h-8 w-auto rounded-lg bg-surface pl-2.5 text-[12px]">
             {[30, 60, 90].map((d) => <option key={d} value={d}>{t('stats.daysN', { n: d })}</option>)}
-          </select>
+          </Select>
         )}
       </div>
       {tab === 'regular' && c && <p className="mt-1.5 text-[11px] text-ink-3">{t('stats.regularRule', { n: c.regularThreshold })}</p>}

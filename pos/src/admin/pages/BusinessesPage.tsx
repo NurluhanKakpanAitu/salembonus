@@ -43,7 +43,7 @@ export function BusinessesPage() {
       </div>
       <div className="flex flex-wrap gap-2">
         <SearchInput value={search} onChange={setSearch} placeholder="Название, БИН, владелец, телефон" className="min-w-64 flex-1" />
-        <Select className="h-11! w-56!" value={planId} onChange={(e) => set('plan', e.target.value || null)} aria-label="Тариф">
+        <Select className="h-11! w-auto min-w-56" value={planId} onChange={(e) => set('plan', e.target.value || null)} aria-label="Тариф">
           <option value="">Все тарифы</option>
           {(plans.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </Select>

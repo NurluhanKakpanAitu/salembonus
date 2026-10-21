@@ -19,6 +19,9 @@ node_modules/
 frontend/dist/
 frontend/dev-dist/
 pos/dist/
+pos/test-results/
+pos/playwright-report/
+pos/e2e/.auth/
 *.local
 .env
 .env.*

@@ -139,22 +139,22 @@ export function ProductListTab() {
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:flex xl:items-center">
-        <Select className="xl:w-44" value={statusParam} onChange={(e) => update({ status: e.target.value === 'Active' ? '' : e.target.value })}>
+        <Select className="xl:w-auto xl:min-w-44" value={statusParam} onChange={(e) => update({ status: e.target.value === 'Active' ? '' : e.target.value })}>
           <option value="Active">{t('product.filter.active')}</option>
           <option value="Archived">{t('product.filter.archived')}</option>
           <option value="all">{t('product.filter.allStatuses')}</option>
         </Select>
-        <Select className="xl:w-64" value={nodeId} onChange={(e) => update({ nodeId: e.target.value })}>
+        <Select className="xl:w-auto xl:min-w-64" value={nodeId} onChange={(e) => update({ nodeId: e.target.value })}>
           <option value="">{t('product.filter.allCategories')}</option>
           {nodeOptions.map((n) => (
             <option key={n.id} value={n.id}>{' '.repeat(n.depth)}{n.name}</option>
           ))}
         </Select>
-        <Select className="xl:w-44" value={brandId} onChange={(e) => update({ brandId: e.target.value })}>
+        <Select className="xl:w-auto xl:min-w-44" value={brandId} onChange={(e) => update({ brandId: e.target.value })}>
           <option value="">{t('product.filter.allBrands')}</option>
           {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </Select>
-        <Select className="xl:w-44" value={unitId} onChange={(e) => update({ unitId: e.target.value })}>
+        <Select className="xl:w-auto xl:min-w-44" value={unitId} onChange={(e) => update({ unitId: e.target.value })}>
           <option value="">{t('product.filter.allUnits')}</option>
           {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
         </Select>

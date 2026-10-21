@@ -83,12 +83,12 @@ export function PaymentModal({ organizationId, onClose, onDone }: { organization
             {suggest.data ? <>Период: <b>{date(suggest.data.periodFrom)} — {date(suggest.data.periodTo)}</b> · тариф {tenge(suggest.data.monthlyFee)}/мес</> : orgId ? 'Расчёт периода…' : 'Выберите бизнес'}
           </p>
         )}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Сумма, ₸" required><Input inputMode="decimal" value={amount} onChange={(e) => { setAmount(e.target.value); setAmountTouched(true) }} /></Field>
           <Field label="Дата оплаты"><Input type="date" value={paidOn} onChange={(e) => setPaidOn(e.target.value)} /></Field>
           <Field label="Способ"><Select value={method} onChange={(e) => setMethod(e.target.value)}>{Object.entries(METHODS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</Select></Field>
+          <Field label="Номер документа / чека Kaspi"><Input value={reference} maxLength={120} onChange={(e) => setReference(e.target.value)} /></Field>
         </div>
-        <Field label="Номер документа / чека Kaspi"><Input value={reference} maxLength={120} onChange={(e) => setReference(e.target.value)} /></Field>
         <Field label="Комментарий"><Textarea value={comment} maxLength={500} onChange={(e) => setComment(e.target.value)} className="min-h-16" /></Field>
         {error && <p className="text-[13px] text-danger">{error}</p>}
         <div className="flex justify-end gap-2">

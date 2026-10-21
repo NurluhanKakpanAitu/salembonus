@@ -337,7 +337,7 @@ function LocalFilters({ tab, params, search, onSearch, update }: {
   const warehouses = useQuery({ queryKey: inventoryKeys.warehouses, queryFn: () => inventoryApi.warehouses(), enabled: tab === 'inventory' })
   const suppliers = useQuery({ queryKey: inventoryKeys.suppliers, queryFn: inventoryApi.suppliers, enabled: tab === 'suppliers' && can(store, Permission.InventorySuppliers) })
   const get = (k: string) => params.get(k) ?? ''
-  const sel = (k: string, placeholder: string, options: { id: string; name: string }[], width = 'w-48!') => (
+  const sel = (k: string, placeholder: string, options: { id: string; name: string }[], width = 'w-auto min-w-48') => (
     <Select className={width} value={get(k)} onChange={(e) => update({ [k]: e.target.value || null })} aria-label={placeholder}>
       <option value="">{placeholder}</option>
       {options.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -352,18 +352,18 @@ function LocalFilters({ tab, params, search, onSearch, update }: {
   if (needSalesFilters) controls.push(<span key="m">{sel('method', t('sales.filter.allMethods'), methods)}</span>)
   if (tab === 'products') {
     controls.push(<span key="n">{sel('nodeId', t('product.filter.allCategories'), nodes.filter((n) => n.parentId === null).map((n) => ({ id: n.id, name: n.name })))}</span>)
-    controls.push(<span key="b">{sel('brandId', t('product.filter.allBrands'), brands.map((b) => ({ id: b.id, name: b.name })), 'w-44!')}</span>)
-    controls.push(<span key="h">{sel('hasReturns', t('sales.filter.anyReturn'), [{ id: 'true', name: t('sales.filter.withReturn') }, { id: 'false', name: t('sales.filter.withoutReturn') }], 'w-44!')}</span>)
+    controls.push(<span key="b">{sel('brandId', t('product.filter.allBrands'), brands.map((b) => ({ id: b.id, name: b.name })), 'w-auto min-w-44')}</span>)
+    controls.push(<span key="h">{sel('hasReturns', t('sales.filter.anyReturn'), [{ id: 'true', name: t('sales.filter.withReturn') }, { id: 'false', name: t('sales.filter.withoutReturn') }], 'w-auto min-w-44')}</span>)
   }
   if (tab === 'inventory') {
     controls.push(<span key="w">{sel('warehouseId', t('inv.stock.allWarehouses'), (warehouses.data ?? []).filter((w) => w.isActive).map((w) => ({ id: w.id, name: w.name })))}</span>)
     controls.push(<span key="g">{sel('segment', t('inv.stock.anyAvailability'), [
       { id: 'in', name: t('inv.stock.inStock') }, { id: 'out', name: t('inv.stock.outOfStock') }, { id: 'belowMin', name: t('inv.stock.belowMin') }])}</span>)
   }
-  if (tab === 'suppliers' && suppliers.data) controls.push(<span key="sp">{sel('supplierId', t('inv.receipts.allSuppliers'), suppliers.data.map((s) => ({ id: s.id, name: s.name })), 'w-56!')}</span>)
+  if (tab === 'suppliers' && suppliers.data) controls.push(<span key="sp">{sel('supplierId', t('inv.receipts.allSuppliers'), suppliers.data.map((s) => ({ id: s.id, name: s.name })), 'w-auto min-w-56')}</span>)
   if (tab === 'customers') {
     controls.push(<span key="seg">{sel('segment', t('stats.seg.buyers'), (['new', 'repeat', 'regular', 'inactive'] as const).map((s) => ({ id: s, name: t(`stats.seg.${s}`) })))}</span>)
-    controls.push(<span key="d">{sel('inactiveDays', t('stats.daysN', { n: 30 }), [60, 90].map((d) => ({ id: String(d), name: t('stats.daysN', { n: d }) })), 'w-36!')}</span>)
+    controls.push(<span key="d">{sel('inactiveDays', t('stats.daysN', { n: 30 }), [60, 90].map((d) => ({ id: String(d), name: t('stats.daysN', { n: d }) })), 'w-auto min-w-36')}</span>)
   }
   if (controls.length === 0) return null
   return (
