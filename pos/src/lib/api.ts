@@ -51,8 +51,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 /** Файлды жүктеп алу (мысалы, Excel экспорт): аты сервердің Content-Disposition-ынан. */
-export async function download(path: string, fallbackName: string) {
-  const res = await send(path, {}, true)
+export async function download(path: string, fallbackName: string, init: RequestInit = {}) {
+  const res = await send(path, init, true)
   const disposition = res.headers.get('Content-Disposition') ?? ''
   const name = /filename\*=UTF-8''([^;]+)/.exec(disposition)?.[1] ?? /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? fallbackName
   const url = URL.createObjectURL(await res.blob())

@@ -36,10 +36,11 @@ public class SalesHistoryRepository(AppDbContext db) : ISalesHistoryRepository
             var term = f.Search.Trim();
             var digits = new string(term.Where(char.IsDigit).ToArray());
             var like = $"%{term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
-            // «1284», «№1284», «ЧК-001284» — чек нөмірі; 4+ сан — телефонның бөлігі де.
+            // «1284», «№1284», «ЧК-001284» — чек нөмірі; тек сандардан тұратын 4+ сан — телефонның бөлігі де
+            // (әріп аралас мәтіндегі сандар, мысалы артикул «ART-3917», телефонмен салыстырылмайды).
             var numeric = NumberLike.IsMatch(term.Replace(" ", ""));
             long.TryParse(digits, out var number);
-            var byPhone = digits.Length >= 4;
+            var byPhone = digits.Length >= 4 && term.All(ch => char.IsDigit(ch) || " +()-".Contains(ch));
             q = q.Where(s =>
                 (numeric && s.Number == number)
                 || db.Customers.Any(c => c.Id == s.CustomerId

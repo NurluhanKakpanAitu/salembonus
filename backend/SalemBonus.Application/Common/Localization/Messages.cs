@@ -669,4 +669,50 @@ public static class Messages
     public static string BonusTermsTooLong(AppLanguage l) => Pick(l, "Ереже мәтіні тым ұзын (100 000 таңбаға дейін)", "Текст правил слишком длинный (до 100 000 символов)");
     public static string BonusTermsNoDraft(AppLanguage l) => Pick(l, "Жариялайтын черновик жоқ", "Нет черновика для публикации");
     public static string BonusTermsNotFound(AppLanguage l) => Pick(l, "Нұсқа табылмады", "Версия не найдена");
+
+    // ---------- «Клиенты» ----------
+    public static string ClientNotFound(AppLanguage l) => Pick(l, "Клиент табылмады", "Клиент не найден");
+    public static string ClientPhoneExists(AppLanguage l, string name, long number) => Pick(l,
+        $"Бұл телефонмен клиент бар: {name}, ID {number:000000}", $"Клиент с этим телефоном уже есть: {name}, ID {number:000000}");
+    public static string ClientPhoneLocked(AppLanguage l) => Pick(l,
+        "Телефон SalemBonus қосымшасына не басқа бизнеске байланған — клиент оны өзі өзгертеді",
+        "Телефон привязан к приложению SalemBonus или к другому бизнесу — клиент меняет его сам");
+    public static string ClientPhoneTaken(AppLanguage l) => Pick(l, "Бұл телефон басқа клиентте тіркелген", "Этот телефон уже зарегистрирован у другого клиента");
+    public static string ClientFirstNameRequired(AppLanguage l) => Pick(l, "Клиенттің атын көрсетіңіз", "Укажите имя клиента");
+    public static string ClientLastNameRequired(AppLanguage l) => Pick(l, "Клиенттің тегін көрсетіңіз", "Укажите фамилию клиента");
+    public static string ClientEmailInvalid(AppLanguage l) => Pick(l, "E-mail дұрыс емес", "Некорректный e-mail");
+    public static string ClientKatoInvalid(AppLanguage l) => Pick(l, "Елді мекен табылмады", "Населённый пункт не найден");
+    public static string ClientCustomFieldInvalid(AppLanguage l, string label) => Pick(l, $"«{label}» өрісінің мәні дұрыс емес", $"Некорректное значение поля «{label}»");
+    public static string ClientReasonRequired(AppLanguage l) => Pick(l, "Себебін көрсетіңіз (кемінде 3 таңба)", "Укажите причину (не менее 3 символов)");
+    public static string ClientArchived(AppLanguage l) => Pick(l, "Клиент мұрағатта — алдымен қалпына келтіріңіз", "Клиент в архиве — сначала восстановите его");
+    public static string ClientArchiveHasDebt(AppLanguage l, decimal amount) => Pick(l,
+        $"Клиенттің өтелмеген қарызы бар ({amount:N0} ₸) — мұрағатқа жіберуге болмайды", $"У клиента есть непогашенный долг ({amount:N0} ₸) — архивировать нельзя");
+    public static string ClientArchiveHasBonus(AppLanguage l, int points) => Pick(l,
+        $"Клиентте {points} бонус бар — мұрағатқа жіберуді растаңыз", $"У клиента {points} бонусов — подтвердите архивирование");
+    public static string ClientMergedCannotRestore(AppLanguage l) => Pick(l, "Біріктірілген карточканы қалпына келтіруге болмайды", "Объединённую карточку нельзя восстановить");
+    public static string ClientMergeSame(AppLanguage l) => Pick(l, "Негізгі және телікті карточка әртүрлі болуы керек", "Основная и дублирующая карточки должны различаться");
+    public static string ClientMergeArchived(AppLanguage l) => Pick(l, "Мұрағаттағы карточканы біріктіруге болмайды", "Нельзя объединять архивную карточку");
+    public static string ClientNoteNotFound(AppLanguage l) => Pick(l, "Жазба табылмады", "Заметка не найдена");
+    public static string ClientNoteRequired(AppLanguage l) => Pick(l, "Жазба мәтінін енгізіңіз (2000 таңбаға дейін)", "Введите текст заметки (до 2000 символов)");
+    public static string ClientNoteForbidden(AppLanguage l) => Pick(l, "Жазбаны тек авторы не әкімші өзгерте алады", "Изменить заметку может только автор или администратор");
+    public static string ClientMessageRequired(AppLanguage l) => Pick(l, "Хабар мәтінін енгізіңіз (1000 таңбаға дейін)", "Введите текст сообщения (до 1000 символов)");
+    public static string ClientChannelNotConnected(AppLanguage l, string channel) => Pick(l,
+        $"{channel} арнасы қосылмаған — интеграция бапталмаған", $"Канал {channel} не подключён — интеграция не настроена");
+    public static string ClientNoConsent(AppLanguage l) => Pick(l, "Клиент бұл арна бойынша хабарға келісім бермеген", "Клиент не дал согласия на сообщения по этому каналу");
+    public static string ClientNoApp(AppLanguage l) => Pick(l, "Клиентте SalemBonus қосымшасы жоқ", "У клиента нет приложения SalemBonus");
+    public static string ClientOptedOut(AppLanguage l) => Pick(l, "Клиент дүкен хабарларынан бас тартқан", "Клиент отказался от сообщений магазина");
+    public static string ClientNotInStore(AppLanguage l) => Pick(l, "Бұл дүкенде клиенттің картасы жоқ", "У клиента нет карты в этом магазине");
+    public static string ClientSegmentNotFound(AppLanguage l) => Pick(l, "Сегмент табылмады", "Сегмент не найден");
+    public static string ClientSegmentNameRequired(AppLanguage l) => Pick(l, "Сегмент атауын көрсетіңіз (2–120 таңба)", "Укажите название сегмента (2–120 символов)");
+    public static string ClientSelectionRequired(AppLanguage l) => Pick(l, "Клиенттерді таңдаңыз", "Выберите клиентов");
+    public static string ClientImportEmpty(AppLanguage l) => Pick(l, "Файлда жолдар жоқ", "В файле нет строк");
+    public static string ClientImportFormat(AppLanguage l) => Pick(l, "Файлды оқу мүмкін емес — Excel (.xlsx) не CSV жүктеңіз", "Не удалось прочитать файл — загрузите Excel (.xlsx) или CSV");
+    public static string ClientImportTooLarge(AppLanguage l, int max) => Pick(l, $"Бір файлда {max} жолдан аспауы керек", $"В одном файле не более {max} строк");
+    public static string ClientImportNoPhone(AppLanguage l) => Pick(l, "Телефон бағанын таңдаңыз", "Укажите столбец с телефоном");
+    public static string ClientImportPhoneInvalid(AppLanguage l) => Pick(l, "Телефон дұрыс емес", "Некорректный телефон");
+    public static string ClientImportDuplicateInFile(AppLanguage l, int row) => Pick(l, $"Телефон файлда қайталанады ({row}-жол)", $"Телефон повторяется в файле (строка {row})");
+    public static string ClientImportBirthDate(AppLanguage l) => Pick(l, "Туған күні дұрыс емес", "Некорректная дата рождения");
+    public static string ClientSettingsInvalid(AppLanguage l) => Pick(l,
+        "Шектер: белсенді 1–365 күн, пассив белсендіден үлкен (730-ға дейін), жаңа 1–365, «скоро срок» 0–60",
+        "Пороги: активный 1–365 дней, пассивный больше активного (до 730), новый 1–365, «скоро срок» 0–60");
 }

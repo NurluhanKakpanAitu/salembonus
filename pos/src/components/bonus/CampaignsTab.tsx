@@ -11,6 +11,7 @@ import { confirmDialog } from '../ui/Confirm'
 import { EmptyRow, Pager, td, th, useDebounced } from '../inventory/inventoryUi'
 import { ApiError } from '../../lib/api'
 import { bonusApi, bonusKeys } from '../../lib/bonusApi'
+import { CAMPAIGN_AUDIENCE_KEY } from '../../lib/clientsApi'
 import {
   CAMPAIGN_TYPES, EMPTY_FILTER, type AudiencePreview, type Campaign, type CampaignStatus, type CampaignType, type SaveCampaign,
 } from '../../lib/bonusTypes'
@@ -42,7 +43,12 @@ export function CampaignsTab() {
   const list = useQuery({ queryKey: ['bonus', 'campaigns', search, status, page], queryFn: () => bonusApi.campaigns({ search, status, page, pageSize: 25 }), placeholderData: keepPreviousData })
   const openId = get('campaign')
   const invalidate = () => { void list.refetch(); void qc.invalidateQueries({ queryKey: bonusKeys.all }) }
-  useEffect(() => { if (get('new')) set({ new: null }, true) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // «Клиенты» бөлімінен таңдалған клиенттер — шебердің «қолмен» аудиториясы (бір рет оқылады).
+  const [preset] = useState<string[]>(() => (get('audience') === 'clients' ? readAudience() : []))
+  useEffect(() => {
+    if (get('new') || get('audience')) set({ new: null, audience: null }, true)
+    try { sessionStorage.removeItem(CAMPAIGN_AUDIENCE_KEY) } catch { /* жеке режим */ }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const act = async (c: Campaign, kind: 'duplicate' | 'cancel' | 'retry') => {
     try {
@@ -100,7 +106,7 @@ export function CampaignsTab() {
         </table>
       </div>
       {list.data && <Pager page={page} pageSize={25} total={list.data.total} onPage={(p) => set({ page: String(p) }, true)} onPageSize={() => undefined} />}
-      {editing && <CampaignWizard initial={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onDone={(id) => { setEditing(null); invalidate(); if (id) set({ campaign: id }, true) }} />}
+      {editing && <CampaignWizard initial={editing === 'new' ? null : editing} preset={editing === 'new' ? preset : []} onClose={() => setEditing(null)} onDone={(id) => { setEditing(null); invalidate(); if (id) set({ campaign: id }, true) }} />}
       {openId && <CampaignReport id={openId} onClose={() => set({ campaign: null }, true)} onChanged={invalidate} />}
     </div>
   )
@@ -115,7 +121,15 @@ const TEMPLATES: Partial<Record<CampaignType, string>> = {
 }
 
 /** Шебер (§6.2–6.6): 1 атауы мен түрі → 2 аудитория → 3 арна мен хабарлама → 4 уақыт → 5 тексеру мен іске қосу. */
-function CampaignWizard({ initial, onClose, onDone }: { initial: Campaign | null; onClose: () => void; onDone: (id?: string) => void }) {
+function readAudience(): string[] {
+  try {
+    const raw = sessionStorage.getItem(CAMPAIGN_AUDIENCE_KEY)
+    const v = raw ? (JSON.parse(raw) as unknown) : []
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+  } catch { return [] }
+}
+
+function CampaignWizard({ initial, preset, onClose, onDone }: { initial: Campaign | null; preset: string[]; onClose: () => void; onDone: (id?: string) => void }) {
   const t = useT()
   const meta = useBonusMeta()
   const [step, setStep] = useState(1)
@@ -123,7 +137,7 @@ function CampaignWizard({ initial, onClose, onDone }: { initial: Campaign | null
   const [f, setF] = useState<SaveCampaign>(initial ? {
     name: initial.name, type: initial.type, channel: 'app', audienceMode: initial.audienceMode, filter: { ...EMPTY_FILTER, ...initial.filter }, customerIds: initial.customerIds,
     message: initial.message, bonusAmount: initial.bonusAmount, bonusValidityDays: initial.bonusValidityDays,
-  } : { name: '', type: 'Gift', channel: 'app', audienceMode: 'All', filter: EMPTY_FILTER, customerIds: [], message: TEMPLATES.Gift!, bonusAmount: null, bonusValidityDays: 30 })
+  } : { name: '', type: 'Gift', channel: 'app', audienceMode: preset.length ? 'Manual' : 'All', filter: EMPTY_FILTER, customerIds: preset, message: TEMPLATES.Gift!, bonusAmount: null, bonusValidityDays: 30 })
   const [when, setWhen] = useState<'now' | 'later'>(initial?.scheduledAt ? 'later' : 'now')
   const [at, setAt] = useState(() => {
     const d = initial?.scheduledAt ? new Date(initial.scheduledAt) : new Date(Date.now() + 3600_000)

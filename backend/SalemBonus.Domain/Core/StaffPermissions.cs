@@ -65,6 +65,14 @@ public static class StaffPermissions
     public const string BonusReverse = "bonus.reverse";
     public const string BonusTerms = "bonus.terms";
 
+    // «Клиенты» (ТЗ «Клиенты» §22): тізім мен карточка; қосу/өзгерту, жазбалар, хабар; мұрағат; экспорт; біріктіру; клиент қарыздары.
+    public const string ClientsView = "clients.view";
+    public const string ClientsEdit = "clients.edit";
+    public const string ClientsArchive = "clients.archive";
+    public const string ClientsExport = "clients.export";
+    public const string ClientsMerge = "clients.merge";
+    public const string ClientsDebts = "clients.debts";
+
     public static readonly IReadOnlyList<string> All =
     [
         StatisticsView, FinanceView, StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
@@ -73,6 +81,7 @@ public static class StaffPermissions
         StaffManage, SettingsManage,
         InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
         BonusView, BonusManage, BonusCampaigns, BonusAccrue, BonusWriteOff, BonusReverse, BonusTerms,
+        ClientsView, ClientsEdit, ClientsArchive, ClientsExport, ClientsMerge, ClientsDebts,
     ];
 
     /// <summary>Рөлдің әдепкі рұқсаттары.</summary>
@@ -86,6 +95,7 @@ public static class StaffPermissions
             InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
             StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
             BonusView, BonusManage, BonusCampaigns, BonusAccrue, BonusWriteOff, BonusReverse, BonusTerms,
+            ClientsView, ClientsEdit, ClientsArchive, ClientsExport, ClientsMerge, ClientsDebts,
         ],
         // Кассир тек сатады: касса экранының каталогы өз эндпоинтімен (SalesCreate) жүреді,
         // «Товар» бөлімі мен оның API-і кассирге ашылмайды. Иесі қажет болса жеке кеңейтеді.

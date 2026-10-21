@@ -30,8 +30,14 @@ public class FinanceDebtsService(
     public async Task<CustomerDebtsDto> CustomerDebtsAsync(string? storeIds, string? segment, string? search, int page, int pageSize, CancellationToken ct = default)
     {
         var c = await operations.ContextAsync(storeIds, null, null, ct);
-        var today = c.Today;
-        var debts = await repo.DebtsAsync(c.StoreIds, segment != "paid", ct);
+        return await BuildCustomerDebtsAsync(c.StoreIds, c.Today, c.CanContacts, segment, search, page, pageSize, ct);
+    }
+
+    /// <summary>Клиент қарыздарының тізімі — «Финансы» мен «Клиенты» бөлімдеріне ортақ (құқықты шақырушы тексереді).</summary>
+    public async Task<CustomerDebtsDto> BuildCustomerDebtsAsync(IReadOnlyList<Guid> storeIds, DateOnly today, bool canContacts, string? segment, string? search,
+        int page, int pageSize, CancellationToken ct = default)
+    {
+        var debts = await repo.DebtsAsync(storeIds, segment != "paid", ct);
         var customers = await repo.CustomersAsync(debts.Select(d => d.CustomerId).Distinct().ToList(), ct);
         var rows = debts.GroupBy(d => d.CustomerId).Select(g =>
         {
@@ -39,7 +45,7 @@ public class FinanceDebtsService(
             var overdue = open.Where(d => d.DueDate < today).Sum(d => d.Remaining);
             var status = open.Count == 0 ? "Paid" : overdue > 0 ? "Overdue" : open.Any(d => d.Paid > 0) ? "Partial" : "Open";
             var (name, phone) = customers.GetValueOrDefault(g.Key);
-            return new CustomerDebtRowDto(g.Key, string.IsNullOrWhiteSpace(name) ? "—" : name, Phone(phone, c.CanContacts), open.Sum(d => d.Remaining), overdue,
+            return new CustomerDebtRowDto(g.Key, string.IsNullOrWhiteSpace(name) ? "—" : name, Phone(phone, canContacts), open.Sum(d => d.Remaining), overdue,
                 open.Count == 0 ? null : open.Min(d => d.DueDate), open.Count, status);
         }).ToList();
         var all = rows.Where(r => r.Total > 0).ToList();
@@ -68,15 +74,20 @@ public class FinanceDebtsService(
     public async Task<CustomerDebtCardDto> CustomerCardAsync(Guid customerId, string? storeIds, CancellationToken ct = default)
     {
         var c = await operations.ContextAsync(storeIds, null, null, ct);
-        var today = c.Today;
-        var debts = (await repo.DebtsAsync(c.StoreIds, false, ct)).Where(d => d.CustomerId == customerId).OrderByDescending(d => d.CreatedAt).ToList();
+        return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
+    }
+
+    /// <summary>Клиенттің қарыз карточкасы — «Финансы» мен «Клиенты» бөлімдеріне ортақ (құқықты шақырушы тексереді).</summary>
+    public async Task<CustomerDebtCardDto> BuildCustomerCardAsync(IReadOnlyList<Guid> storeIds, DateOnly today, bool canContacts, Guid customerId, CancellationToken ct = default)
+    {
+        var debts = (await repo.DebtsAsync(storeIds, false, ct)).Where(d => d.CustomerId == customerId).OrderByDescending(d => d.CreatedAt).ToList();
         var (name, phone) = (await repo.CustomersAsync([customerId], ct)).GetValueOrDefault(customerId);
         var payments = await repo.DebtPaymentsAsync(debts.Select(d => d.Id).ToList(), ct);
         var staff = await repo.StaffNamesAsync(payments.Select(p => p.StaffUserId).Distinct().ToList(), ct);
         var ops = await repo.OperationsBySourceAsync(payments.Select(p => p.Id).ToList(), ct);
         var numbers = debts.ToDictionary(d => d.Id, d => d.SaleNumber);
         var open = debts.Where(d => d.Status == DebtStatus.Open).ToList();
-        return new CustomerDebtCardDto(customerId, string.IsNullOrWhiteSpace(name) ? "—" : name, Phone(phone, c.CanContacts),
+        return new CustomerDebtCardDto(customerId, string.IsNullOrWhiteSpace(name) ? "—" : name, Phone(phone, canContacts),
             open.Sum(d => d.Remaining), open.Where(d => d.DueDate < today).Sum(d => d.Remaining), open.Count == 0 ? null : open.Min(d => d.DueDate),
             debts.Select(d => new CustomerDebtDocDto(d.Id, d.SaleId, d.SaleNumber, d.CreatedAt, d.DueDate, d.Amount, d.Paid, d.Remaining,
                 d.Status == DebtStatus.Paid ? "Paid" : d.DueDate < today ? "Overdue" : d.Paid > 0 ? "Partial" : "Open", d.Status == DebtStatus.Open && d.DueDate < today, d.Comment)).ToList(),
@@ -90,7 +101,7 @@ public class FinanceDebtsService(
     {
         var c = await operations.ContextAsync(null, null, null, ct, StaffPermissions.FinanceOperate);
         if (r.CustomerId is not { } customerId) throw new ValidationException(Messages.FinanceCounterpartyRequired(Lang), "customerId");
-        if (r.ClientRequestId is { } key && await repo.FindByClientRequestAsync(c.OrgId, key, ct) is not null) return await CustomerCardAsync(customerId, null, ct);
+        if (r.ClientRequestId is { } key && await repo.FindByClientRequestAsync(c.OrgId, key, ct) is not null) return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
         var allocations = Allocations(r.Allocations?.Select(a => (a.DebtId, a.Amount)));
         var method = ParseMethod(r.Method);
         var account = await AccountAsync(c, r.AccountId, method, ct);
@@ -126,7 +137,7 @@ public class FinanceDebtsService(
             await unitOfWork.SaveChangesAsync(ct);
             return true;
         }, ct);
-        return await CustomerCardAsync(customerId, null, ct);
+        return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
     }
 
     // ---------- Жеткізуші қарызы (§12) ----------

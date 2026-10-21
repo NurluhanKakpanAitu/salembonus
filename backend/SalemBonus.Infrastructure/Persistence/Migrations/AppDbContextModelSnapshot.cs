@@ -1642,6 +1642,378 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.ToTable("product_images", "pos");
                 });
 
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientCommunication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StaffUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("StoreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId", "CreatedAt");
+
+                    b.ToTable("client_communications", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientImport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Created")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Errors")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Report")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<int>("Rows")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Skipped")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StaffUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Updated")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "CreatedAt");
+
+                    b.ToTable("client_imports", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientMergeLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DuplicateCustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DuplicateProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PrimaryCustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PrimaryProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StaffUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId", "CreatedAt");
+
+                    b.ToTable("client_merge_log", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId", "CreatedAt");
+
+                    b.ToTable("client_notes", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ArchiveReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ArchivedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("BirthDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("ConsentApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConsentEmail")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ConsentSms")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ConsentUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("ConsentWhatsApp")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomFields")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KatoCode")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid?>("MergedIntoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MiddleName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("Number")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("OrganizationId", "CreatedAt");
+
+                    b.HasIndex("OrganizationId", "CustomerId")
+                        .IsUnique();
+
+                    b.HasIndex("OrganizationId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("client_profiles", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientSegment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Filter")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.PrimitiveCollection<List<Guid>>("IncludeIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]");
+
+                    b.Property<bool>("IsShared")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.ToTable("client_segments", "pos");
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientSettings", b =>
+                {
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ActiveDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomFields")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.PrimitiveCollection<List<string>>("DefaultColumns")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<int>("DueSoonDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NewDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PassiveDays")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequireBirthDate")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("RequireLastName")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("OrganizationId");
+
+                    b.ToTable("client_settings", "pos");
+                });
+
             modelBuilder.Entity("SalemBonus.Domain.Pos.Finance.FinanceAccount", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3327,6 +3699,24 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.HasOne("SalemBonus.Domain.Pos.Catalog.Product", null)
                         .WithMany("Images")
                         .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientNote", b =>
+                {
+                    b.HasOne("SalemBonus.Domain.Pos.Clients.ClientProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("SalemBonus.Domain.Pos.Clients.ClientProfile", b =>
+                {
+                    b.HasOne("SalemBonus.Domain.Entities.Customer", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

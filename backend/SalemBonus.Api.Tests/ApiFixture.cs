@@ -145,6 +145,17 @@ public sealed class Pos(HttpClient http)
         return (res.StatusCode, res.Content.Headers.ContentType?.MediaType, bytes.LongLength);
     }
 
+    /// <summary>POST, жауабы — файл (экспорт): күйі, түрі, мазмұны.</summary>
+    public async Task<(HttpStatusCode Status, string? ContentType, byte[] Content)> PostRaw(string token, string path, object body)
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Post, path);
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        req.Headers.AcceptLanguage.Add(new StringWithQualityHeaderValue("ru"));
+        req.Content = JsonContent.Create(body);
+        using var res = await http.SendAsync(req);
+        return (res.StatusCode, res.Content.Headers.ContentType?.MediaType, await res.Content.ReadAsByteArrayAsync());
+    }
+
     /// <summary>Файл жүктеу (multipart): тану эндпоинті үшін.</summary>
     public async Task<ApiResult> PostFile(string token, string path, byte[] content, string contentType, string fileName, params (string Name, string Value)[] fields)
     {

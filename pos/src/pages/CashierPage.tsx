@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Loader2, Monitor, Unplug } from 'lucide-react'
 import { PosScreen } from '../components/cashier/PosScreen'
 import { Button } from '../components/ui/Button'
@@ -7,6 +8,9 @@ import { ApiError } from '../lib/api'
 import { activeStore, can, useAuth } from '../lib/auth'
 import { useT } from '../lib/i18n'
 import { setRegister, useRegister } from '../lib/register'
+import { cart } from '../lib/cart'
+import { cashierApi } from '../lib/cashierApi'
+import { toast } from '../components/ui/Toast'
 import { registerApi } from '../lib/registerApi'
 import { Permission, type Register } from '../lib/types'
 
@@ -24,6 +28,15 @@ export function CashierPage() {
   const [error, setError] = useState<string | null>(null)
 
   const onThisStore = register && register.storeId === store?.id
+  const [params, setParams] = useSearchParams()
+  const preselect = params.get('customer')
+
+  // «Клиенты» → «Создать продажу»: клиент себетке бірден таңдалады (ТЗ «Клиенты» §7).
+  useEffect(() => {
+    if (!preselect || !onThisStore) return
+    cashierApi.customer(preselect).then((c) => cart.setCustomer(c)).catch((err: unknown) => toast(err instanceof ApiError ? err.message : t('login.failed'), 'error'))
+    setParams((p) => { const n = new URLSearchParams(p); n.delete('customer'); return n }, { replace: true })
+  }, [preselect, onThisStore]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!onThisStore && canManage) registerApi.list().then(setList).catch(() => setList([]))

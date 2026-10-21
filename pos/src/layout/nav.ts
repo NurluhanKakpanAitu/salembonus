@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeftRight, Banknote, Cake, Calculator, ChartColumn, Crown, FileText, Gift, HandCoins, History, Landmark, LayoutDashboard, ListOrdered, Megaphone, Package,
-  PieChart, ScrollText, Settings, ShoppingCart, Timer, TrendingUp, Truck, UserCog, Users, Wallet, Warehouse,
+  PieChart, ScrollText, Settings, ShoppingCart, Timer, TrendingUp, Truck, UserCog, Users, Wallet, Warehouse, Activity, FileUp, Layers, SlidersHorizontal,
 } from 'lucide-react'
 import type { TranslationKey } from '../lib/i18n'
 import { Permission, type StaffRole, type StaffStore } from '../lib/types'
@@ -44,10 +44,20 @@ export const BONUS_SECTIONS: SubNavItem[] = [
   { path: 'rules', label: 'bon.section.rules', icon: ScrollText },
 ]
 
-/** Мәзірде ішкі бөлімдері ашылатын бөлімдер. */
-export const SUB_SECTIONS: Record<string, SubNavItem[]> = { '/finance': FINANCE_SECTIONS, '/bonus': BONUS_SECTIONS }
+/** «Клиенты» бөлімдері (ТЗ «Клиенты» §1): «Все клиенты» — негізгі жұмыс экраны. */
+export const CLIENT_SECTIONS: SubNavItem[] = [
+  { path: '', label: 'cli.section.list', icon: Users },
+  { path: 'overview', label: 'cli.section.overview', icon: LayoutDashboard },
+  { path: 'segments', label: 'cli.section.segments', icon: Layers },
+  { path: 'debts', label: 'cli.section.debts', icon: HandCoins },
+  { path: 'activity', label: 'cli.section.activity', icon: Activity },
+  { path: 'birthdays', label: 'cli.section.birthdays', icon: Cake },
+  { path: 'exchange', label: 'cli.section.exchange', icon: FileUp },
+  { path: 'settings', label: 'cli.section.settings', icon: SlidersHorizontal },
+]
 
-const managers: StaffRole[] = ['Owner', 'Admin']
+/** Мәзірде ішкі бөлімдері ашылатын бөлімдер. */
+export const SUB_SECTIONS: Record<string, SubNavItem[]> = { '/finance': FINANCE_SECTIONS, '/bonus': BONUS_SECTIONS, '/clients': CLIENT_SECTIONS }
 
 /** Мәзір реті макет бойынша (SALEMPOS.md, бөлімдер тізімі). */
 export const NAV: NavItem[] = [
@@ -58,7 +68,7 @@ export const NAV: NavItem[] = [
   { path: '/statistics', label: 'nav.statistics', icon: ChartColumn, permission: Permission.StatisticsView },
   { path: '/finance', label: 'nav.finance', icon: Wallet, permission: Permission.FinanceView },
   { path: '/bonus', label: 'nav.bonus', icon: Gift, permission: Permission.BonusView },
-  { path: '/clients', label: 'nav.clients', icon: Users, roles: managers },
+  { path: '/clients', label: 'nav.clients', icon: Users, permission: Permission.ClientsView },
   { path: '/staff', label: 'nav.staff', icon: UserCog, permission: Permission.StaffManage },
   { path: '/settings', label: 'nav.settings', icon: Settings, permission: Permission.SettingsManage },
 ]

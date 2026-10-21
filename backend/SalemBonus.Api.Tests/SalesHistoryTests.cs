@@ -65,6 +65,24 @@ public class SalesHistoryTests(ApiFixture api)
     }
 
     [Fact]
+    public async Task Text_with_digits_does_not_match_customer_phones_but_digits_alone_do()
+    {
+        var pos = await api.NewDeviceAsync();
+        var digits = Random.Shared.Next(1000, 9999).ToString();
+        var phone = "+7707" + digits + Random.Shared.Next(100, 999);
+        var customer = (await pos.Post(pos.Owner, "/api/pos/v1/cashier/customers", new { phone, firstName = "Поиск", lastName = "Телефон", birthDate = "1990-01-01" })).Ok["id"]!.GetValue<Guid>();
+        var other = await pos.CreateProductAsync(price: 100, stock: 5);
+        var customerSale = (await pos.SellAsync(pos.Owner, [Line(other, 1)], [Cash(100)], customerId: customer)).Ok;
+        var product = await pos.CreateProductAsync(price: 100, stock: 5, article: $"ART-Q{digits}");
+        var mine = (await pos.SellAsync(pos.Owner, [Line(product, 1)], [Cash(100)])).Ok;
+
+        var byArticle = await HistoryAsync(pos, $"search=ART-Q{digits}");
+        Assert.Equal(mine["id"]!.GetValue<Guid>(), Assert.Single(byArticle)!["id"]!.GetValue<Guid>());
+        var byPhone = await HistoryAsync(pos, $"search={phone[^7..]}");
+        Assert.Contains(byPhone, s => s!["id"]!.GetValue<Guid>() == customerSale["id"]!.GetValue<Guid>());
+    }
+
+    [Fact]
     public async Task Original_total_never_changes_after_a_return_and_status_filters_work()
     {
         var pos = await api.NewDeviceAsync();

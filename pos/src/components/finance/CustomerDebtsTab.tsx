@@ -152,7 +152,7 @@ function CustomerCardModal({ customerId, storeIds, pay, onClose, onChanged }: { 
 }
 
 /** «Принять оплату» (§11.1): құжаттар, сома, шот, әдіс, бөлу (қосындысы = төлем), коммент. Қарыздан артық — тыйым. */
-function CustomerPaymentModal({ card, accounts, onClose, onDone }: { card: CustomerDebtCard; accounts: FinanceAccount[]; onClose: () => void; onDone: () => void }) {
+export function CustomerPaymentModal({ card, accounts, onClose, onDone }: { card: CustomerDebtCard; accounts: FinanceAccount[]; onClose: () => void; onDone: () => void }) {
   const t = useT()
   const open = useMemo(() => card.documents.filter((x) => x.remaining > 0), [card])
   const [alloc, setAlloc] = useState<Record<string, string>>(() => Object.fromEntries(open.map((x) => [x.debtId, ''])))
