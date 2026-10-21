@@ -15,8 +15,9 @@ public class PublicController(PlatformLeadsService leads) : ControllerBase
 {
     public const string FormRateLimit = "public-form";
 
+    /// <summary>Кэшсіз: әкімшілікте баға не тариф өзгерсе, лендинг келесі ашылғанда-ақ жаңасын көрсетеді.</summary>
     [HttpGet("plans")]
-    [ResponseCache(Duration = 300)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<ActionResult<IReadOnlyList<PublicPlanDto>>> Plans(CancellationToken ct) => Ok(await leads.PublicPlansAsync(ct));
 
     [HttpPost("leads")]

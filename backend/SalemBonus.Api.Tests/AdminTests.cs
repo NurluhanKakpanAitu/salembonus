@@ -228,4 +228,36 @@ public class AdminTests(ApiFixture api)
         Assert.Equal("Позвонить в понедельник", updated["adminComment"]!.GetValue<string>());
         Assert.False(string.IsNullOrEmpty(updated["updatedBy"]!.GetValue<string>()));
     }
+
+    [Fact]
+    public async Task Landing_prices_and_popular_plan_come_live_from_the_admin_panel()
+    {
+        var (pos, token) = await AdminAsync();
+        const string url = "/api/public/v1/plans";
+        Assert.Contains("no-store", await pos.CacheControl(url)); // баға өзгерсе — лендингте бірден жаңасы
+        async Task<JsonNode> Public(Guid id) => (await pos.Get("", url)).Ok.AsArray().Single(p => p!["id"]!.GetValue<Guid>() == id)!;
+
+        var a = (await pos.Post(token, $"{A}/plans", new { name = "Витрина А " + Guid.NewGuid().ToString("N")[..4], monthlyPrice = 12_000, sortOrder = 50, isFeatured = true })).Ok;
+        var b = (await pos.Post(token, $"{A}/plans", new { name = "Витрина Б " + Guid.NewGuid().ToString("N")[..4], monthlyPrice = 24_000, sortOrder = 51 })).Ok;
+        var aId = a["id"]!.GetValue<Guid>();
+        var bId = b["id"]!.GetValue<Guid>();
+        Assert.True(a["isFeatured"]!.GetValue<bool>());
+        var featured = (await pos.Get("", url)).Ok.AsArray().Where(p => p!["isFeatured"]!.GetValue<bool>()).ToList();
+        Assert.Equal(aId, Assert.Single(featured)!["id"]!.GetValue<Guid>()); // бір ғана «Популярный»
+
+        // Басқа тариф белгіленсе — алдыңғысынан алынады; баға мен сипаттама лендингте бірден жаңарады.
+        (await pos.Put(token, $"{A}/plans/{bId}", new { name = b["name"]!.GetValue<string>(), monthlyPrice = 27_500, description = "Для сети магазинов", isFeatured = true })).EnsureOk();
+        Assert.False((await Public(aId))["isFeatured"]!.GetValue<bool>());
+        var live = await Public(bId);
+        Assert.True(live["isFeatured"]!.GetValue<bool>());
+        Assert.Equal(27_500m, live["monthlyPrice"]!.GetValue<decimal>());
+        Assert.Equal("Для сети магазинов", live["description"]!.GetValue<string>());
+        var admin = (await pos.Get(token, $"{A}/plans")).Ok.AsArray();
+        Assert.False(admin.Single(p => p!["id"]!.GetValue<Guid>() == aId)!["isFeatured"]!.GetValue<bool>());
+
+        // Архивке жіберілген тариф лендингтен кетеді.
+        (await pos.Put(token, $"{A}/plans/{bId}", new { name = b["name"]!.GetValue<string>(), isActive = false, isFeatured = false })).EnsureOk();
+        Assert.DoesNotContain((await pos.Get("", url)).Ok.AsArray(), p => p!["id"]!.GetValue<Guid>() == bId);
+        (await pos.Put(token, $"{A}/plans/{aId}", new { name = a["name"]!.GetValue<string>(), isActive = false })).EnsureOk();
+    }
 }

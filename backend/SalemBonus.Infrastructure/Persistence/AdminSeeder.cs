@@ -31,5 +31,5 @@ public static class AdminSeeder
     }
 
     private static PlatformPlan Plan(string name, decimal price, int order, params string[] modules) =>
-        new() { Id = Guid.NewGuid(), Name = name, MonthlyPrice = price, SortOrder = order, Modules = [.. modules] };
+        new() { Id = Guid.NewGuid(), Name = name, MonthlyPrice = price, SortOrder = order, Modules = [.. modules], IsFeatured = order == 2 };
 }

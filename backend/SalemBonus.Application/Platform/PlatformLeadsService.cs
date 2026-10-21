@@ -7,7 +7,8 @@ using SalemBonus.Domain.Platform;
 
 namespace SalemBonus.Application.Platform;
 
-public record PublicPlanDto(Guid Id, string Name, decimal MonthlyPrice, IReadOnlyList<string> Modules, string? Description);
+/// <summary>Лендингтегі тариф — әкімшіліктегі белсенді тарифтен тікелей (баға, модульдер, «Популярный» белгісі).</summary>
+public record PublicPlanDto(Guid Id, string Name, decimal MonthlyPrice, IReadOnlyList<string> Modules, string? Description, bool IsFeatured);
 
 public record LeadRequest(string? Name, string? Phone, string? BusinessName, string? City, string? BusinessType, string? Interest, string? Comment,
     string? Language, string? Website);
@@ -31,7 +32,7 @@ public class PlatformLeadsService(PlatformAccess access, IPlatformRepository rep
 
     public async Task<IReadOnlyList<PublicPlanDto>> PublicPlansAsync(CancellationToken ct = default) =>
         (await repo.PlansAsync(ct)).Where(p => p.IsActive)
-            .Select(p => new PublicPlanDto(p.Id, p.Name, p.MonthlyPrice, p.Modules, p.Description)).ToList();
+            .Select(p => new PublicPlanDto(p.Id, p.Name, p.MonthlyPrice, p.Modules, p.Description, p.IsFeatured)).ToList();
 
     public async Task SubmitAsync(LeadRequest r, CancellationToken ct = default)
     {

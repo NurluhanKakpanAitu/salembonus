@@ -89,7 +89,7 @@ export interface BusinessDetail {
   business: BusinessRow; contactEmail: string | null; comment: string | null; suspendedAt: string | null; suspendReason: string | null
   stores: BusinessStore[]; staff: StaffAccount[]; payments: Payment[]; paidTotal: number; history: AuditItem[]
 }
-export interface Plan { id: string; name: string; monthlyPrice: number; modules: ModuleKey[]; description: string | null; isActive: boolean; sortOrder: number; businesses: number }
+export interface Plan { id: string; name: string; monthlyPrice: number; modules: ModuleKey[]; description: string | null; isActive: boolean; sortOrder: number; businesses: number; isFeatured: boolean }
 export interface Overview {
   businesses: number; byStatus: Record<string, number>; mrr: number; paidThisMonth: number; paymentsThisMonth: number; paidLastMonth: number; newThisMonth: number
   revenue: { month: string; amount: number; count: number }[]; overdue: BusinessRow[]; renewals: BusinessRow[]; recentPayments: Payment[]; modules: { module: ModuleKey; businesses: number }[]

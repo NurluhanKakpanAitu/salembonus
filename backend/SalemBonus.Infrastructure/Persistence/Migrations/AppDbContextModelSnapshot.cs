@@ -1118,6 +1118,9 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("boolean");
+
                     b.PrimitiveCollection<List<string>>("Modules")
                         .IsRequired()
                         .HasColumnType("text[]");

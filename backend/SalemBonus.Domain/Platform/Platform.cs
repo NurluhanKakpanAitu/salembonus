@@ -29,6 +29,8 @@ public class PlatformPlan
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
+    /// <summary>Лендингте «Популярный» деп белгіленген тариф — бір уақытта біреу ғана.</summary>
+    public bool IsFeatured { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

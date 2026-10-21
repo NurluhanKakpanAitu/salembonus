@@ -15,7 +15,7 @@ const MODULE_ICONS: Record<string, ReactNode> = {
   statistics: <BarChart3 size={20} />, finance: <Wallet size={20} />, bonus: <Gift size={20} />, clients: <Users size={20} />,
 }
 
-interface Plan { id: string; name: string; monthlyPrice: number; modules: string[]; description: string | null }
+interface Plan { id: string; name: string; monthlyPrice: number; modules: string[]; description: string | null; isFeatured: boolean }
 
 function initialLang(): Lang {
   try {
@@ -39,16 +39,16 @@ function Reveal({ children, className = '', delay = 0 }: { children: ReactNode; 
   return <div ref={ref} className={`reveal ${shown ? 'is-visible' : ''} ${className}`} style={{ transitionDelay: `${delay}ms` }}>{children}</div>
 }
 
-function Eyebrow({ children, tone = 'blue' }: { children: ReactNode; tone?: 'blue' | 'red' }) {
-  return <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold ${tone === 'red' ? 'bg-[#e31e24]/10 text-[#d0161c]' : 'bg-[#1570ff]/10 text-[#1570ff]'}`}>{children}</span>
+function Eyebrow({ children }: { children: ReactNode }) {
+  return <span className="inline-flex items-center gap-1.5 rounded-full bg-[#1570ff]/10 px-3 py-1 text-[13px] font-semibold text-[#1570ff]">{children}</span>
 }
 
-function SectionTitle({ eyebrow, brand, title, subtitle, tone, center = true }: {
-  eyebrow: string; brand?: ReactNode; title: string; subtitle?: string; tone?: 'blue' | 'red'; center?: boolean
+function SectionTitle({ eyebrow, brand, title, subtitle, center = true }: {
+  eyebrow: string; brand?: ReactNode; title: string; subtitle?: string; center?: boolean
 }) {
   return (
     <Reveal className={`flex flex-col gap-3 ${center ? 'items-center text-center' : ''}`}>
-      {brand ?? <Eyebrow tone={tone}>{eyebrow}</Eyebrow>}
+      {brand ?? <Eyebrow>{eyebrow}</Eyebrow>}
       <h2 className="max-w-3xl text-[30px] font-extrabold leading-[1.15] tracking-tight text-[#0b1220] sm:text-[40px]">{title}</h2>
       {subtitle && <p className="max-w-2xl text-[16px] leading-relaxed text-[#5b6576] sm:text-[18px]">{subtitle}</p>}
     </Reveal>
@@ -124,14 +124,14 @@ export function Landing() {
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
           <div className="absolute -left-40 -top-40 size-[520px] rounded-full bg-[#1570ff]/20 blur-[120px]" />
-          <div className="absolute -right-32 top-40 size-[460px] rounded-full bg-[#e31e24]/15 blur-[120px]" />
+          <div className="absolute -right-32 top-40 size-[460px] rounded-full bg-[#0297fd]/20 blur-[120px]" />
         </div>
         <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pb-28 lg:pt-20">
           <Reveal className="flex flex-col items-start gap-6">
             <Eyebrow><Sparkles size={14} />{c.hero.badge}</Eyebrow>
             <h1 className="text-[40px] font-extrabold leading-[1.05] tracking-tight sm:text-[56px] lg:text-[64px]">
               {c.hero.title1}<br />
-              <span className="bg-gradient-to-r from-[#1570ff] via-[#6d4cff] to-[#e31e24] bg-clip-text text-transparent">{c.hero.title2}</span>
+              <span className="bg-gradient-to-r from-[#0152fe] via-[#1570ff] to-[#0297fd] bg-clip-text text-transparent">{c.hero.title2}</span>
             </h1>
             <p className="max-w-xl text-[17px] leading-relaxed text-[#5b6576] sm:text-[19px]">{c.hero.subtitle}</p>
             <div className="flex flex-wrap gap-3">
@@ -153,9 +153,9 @@ export function Landing() {
               </div>
             </div>
             <div className="absolute -bottom-10 right-0 w-[150px] sm:w-[190px]">
-              <Phone src="/landing/app-home.jpg" alt="SalemBonus" />
-              <div className="float absolute -left-16 top-16 flex items-center gap-2.5 rounded-2xl bg-white p-2.5 pr-3.5 shadow-[0_18px_40px_-12px_rgba(227,30,36,0.45)] ring-1 ring-black/5 [animation-delay:1.5s]">
-                <span className="flex size-9 items-center justify-center rounded-xl bg-[#e31e24] text-white"><Gift size={17} /></span>
+              <Phone src={`/landing/app-home-${lang}.jpg`} alt="SalemBonus" />
+              <div className="float absolute -left-16 top-16 flex items-center gap-2.5 rounded-2xl bg-white p-2.5 pr-3.5 shadow-[0_18px_40px_-12px_rgba(2,151,253,0.45)] ring-1 ring-black/5 [animation-delay:1.5s]">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0152fe] to-[#0297fd] text-white"><Gift size={17} /></span>
                 <span><span className="block text-[15px] font-extrabold text-[#16a34a]">{c.hero.chipBonus}</span><span className="block text-[11px] text-[#5b6576]">{c.hero.chipBonusSub}</span></span>
               </div>
             </div>
@@ -178,10 +178,10 @@ export function Landing() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <SectionTitle eyebrow={c.how.eyebrow} title={c.how.title} subtitle={c.how.subtitle} />
           <div className="relative mt-14 grid gap-5 md:grid-cols-3">
-            <div className="absolute left-[16%] right-[16%] top-9 hidden h-px bg-gradient-to-r from-[#1570ff] via-[#6d4cff] to-[#e31e24] opacity-40 md:block" />
+            <div className="absolute left-[16%] right-[16%] top-9 hidden h-px bg-gradient-to-r from-[#0152fe] via-[#1570ff] to-[#0297fd] opacity-40 md:block" />
             {c.how.steps.map((s, i) => (
               <Reveal key={s.title} delay={i * 120} className="relative flex flex-col items-center rounded-3xl border border-[#e6e9f0] bg-white p-7 text-center shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-                <span className={`relative z-10 flex size-[72px] items-center justify-center rounded-2xl text-white shadow-lg ${['bg-[#1570ff]', 'bg-[#6d4cff]', 'bg-[#e31e24]'][i]}`}>
+                <span className={`relative z-10 flex size-[72px] items-center justify-center rounded-2xl text-white shadow-lg ${['bg-[#0152fe]', 'bg-[#1570ff]', 'bg-[#0297fd]'][i]}`}>
                   {[<Receipt key="r" size={30} />, <BarChart3 key="b" size={30} />, <Smartphone key="s" size={30} />][i]}
                 </span>
                 <span className="mt-5 text-[12px] font-bold uppercase tracking-wider text-[#98a1b1]">0{i + 1}</span>
@@ -200,7 +200,7 @@ export function Landing() {
           <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {c.modules.items.map((m, i) => (
               <Reveal key={m.key} delay={(i % 4) * 80} className="group flex flex-col rounded-3xl border border-[#e6e9f0] bg-white p-6 transition-all hover:-translate-y-1 hover:border-[#1570ff]/40 hover:shadow-[0_20px_40px_-20px_rgba(21,112,255,0.35)]">
-                <span className={`flex size-12 items-center justify-center rounded-2xl ${m.key === 'bonus' ? 'bg-[#e31e24]/10 text-[#e31e24]' : 'bg-[#1570ff]/10 text-[#1570ff]'} transition-transform group-hover:scale-110`}>{MODULE_ICONS[m.key]}</span>
+                <span className={`flex size-12 items-center justify-center rounded-2xl ${m.key === 'bonus' ? 'bg-gradient-to-tr from-[#0152fe] to-[#0297fd] text-white' : 'bg-[#1570ff]/10 text-[#1570ff]'} transition-transform group-hover:scale-110`}>{MODULE_ICONS[m.key]}</span>
                 <h3 className="mt-5 text-[19px] font-bold">{m.title}</h3>
                 <p className="mt-1 text-[14px] text-[#5b6576]">{m.text}</p>
                 <ul className="mt-4 flex flex-col gap-2 text-[14px] text-[#3a4456]">
@@ -215,7 +215,7 @@ export function Landing() {
       {/* ---------- SalemBonus ---------- */}
       <section id="bonus" className="scroll-mt-20 relative overflow-hidden bg-[#0b1220] py-20 text-white sm:py-28">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -right-40 top-0 size-[560px] rounded-full bg-[#e31e24]/30 blur-[140px]" />
+          <div className="absolute -right-40 top-0 size-[560px] rounded-full bg-[#0297fd]/30 blur-[140px]" />
           <div className="absolute -left-40 bottom-0 size-[480px] rounded-full bg-[#1570ff]/25 blur-[140px]" />
         </div>
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2">
@@ -236,7 +236,7 @@ export function Landing() {
                 <div key={col.title} className="rounded-3xl bg-white/[0.06] p-5 ring-1 ring-white/10">
                   <div className="mb-3 text-[13px] font-bold uppercase tracking-wider text-white/50">{col.title}</div>
                   <ul className="flex flex-col gap-3 text-[15px]">
-                    {col.items.map((t, i) => <li key={t} className="flex gap-3"><span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-[#e31e24] text-white">{col.icons[i]}</span><span className="text-white/85">{t}</span></li>)}
+                    {col.items.map((t, i) => <li key={t} className="flex gap-3"><span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#0152fe] to-[#0297fd] text-white">{col.icons[i]}</span><span className="text-white/85">{t}</span></li>)}
                   </ul>
                 </div>
               ))}
@@ -246,8 +246,8 @@ export function Landing() {
             </a>
           </Reveal>
           <Reveal delay={150} className="relative mx-auto flex w-full max-w-md justify-center gap-5 sm:gap-7">
-            <Phone src="/landing/app-cards.jpg" alt="SalemBonus" className="mt-14 w-[46%] rotate-[-4deg]" />
-            <Phone src="/landing/app-home.jpg" alt="SalemBonus" className="w-[46%] rotate-[3deg]" />
+            <Phone src={`/landing/app-cards-${lang}.jpg`} alt="SalemBonus" className="mt-14 w-[46%] rotate-[-4deg]" />
+            <Phone src={`/landing/app-home-${lang}.jpg`} alt="SalemBonus" className="w-[46%] rotate-[3deg]" />
           </Reveal>
         </div>
       </section>
@@ -298,9 +298,9 @@ export function Landing() {
 function Pricing({ c, onChoose }: { c: (typeof COPY)['ru']; onChoose: (name: string) => void }) {
   const [plans, setPlans] = useState<Plan[] | null>(null)
   useEffect(() => {
-    fetch('/api/public/v1/plans').then((r) => (r.ok ? r.json() : [])).then((p: Plan[]) => setPlans(p)).catch(() => setPlans([]))
+    // Тарифтер әкімшіліктен тікелей (кэшсіз): баға, модульдер, «Популярный» белгісі.
+    fetch('/api/public/v1/plans', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : [])).then((p: Plan[]) => setPlans(p)).catch(() => setPlans([]))
   }, [])
-  const popular = plans && plans.length >= 3 ? plans[Math.floor(plans.length / 2)].id : null
   return (
     <section id="pricing" className="scroll-mt-20 bg-[#f6f8fc] py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -317,10 +317,10 @@ function Pricing({ c, onChoose }: { c: (typeof COPY)['ru']; onChoose: (name: str
         ) : (
           <div className={`mx-auto mt-14 grid gap-5 ${plans.length === 1 ? 'max-w-md' : plans.length === 2 ? 'max-w-3xl md:grid-cols-2' : 'md:grid-cols-3'}`}>
             {plans.map((p, i) => {
-              const hot = p.id === popular
+              const hot = p.isFeatured
               return (
                 <Reveal key={p.id} delay={i * 100} className={`relative flex flex-col rounded-3xl p-7 ${hot ? 'bg-[#0b1220] text-white shadow-[0_30px_60px_-20px_rgba(11,18,32,0.5)] md:-translate-y-3' : 'bg-white ring-1 ring-[#e6e9f0]'}`}>
-                  {hot && <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-[#1570ff] to-[#e31e24] px-3 py-1 text-[12px] font-bold text-white">{c.pricing.popular}</span>}
+                  {hot && <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-[#0152fe] to-[#0297fd] px-3 py-1 text-[12px] font-bold text-white">{c.pricing.popular}</span>}
                   <h3 className="text-[20px] font-bold">{p.name}</h3>
                   {p.description && <p className={`mt-1 text-[14px] ${hot ? 'text-white/60' : 'text-[#5b6576]'}`}>{p.description}</p>}
                   <div className="mt-5 flex items-baseline gap-1.5">
@@ -411,7 +411,7 @@ function RequestForm({ c, lang, plan }: { c: (typeof COPY)['ru']; lang: Lang; pl
   }
   const input = (key: 'name' | 'phone' | 'business' | 'city', label: string, type = 'text', auto?: string) => (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[13px] font-semibold text-[#3a4456]">{label}{(key === 'name' || key === 'phone') && <span className="text-[#e31e24]"> *</span>}</span>
+      <span className="text-[13px] font-semibold text-[#3a4456]">{label}{(key === 'name' || key === 'phone') && <span className="text-[#1570ff]"> *</span>}</span>
       <input type={type} autoComplete={auto} value={f[key]} onChange={(e) => patch({ [key]: e.target.value })}
         className={`h-12 rounded-xl border bg-white px-4 text-[15px] outline-none transition-colors focus:border-[#1570ff] focus:ring-4 focus:ring-[#1570ff]/10 ${errors[key] ? 'border-[#e5484d]' : 'border-[#d9dee8]'}`} />
       {errors[key] && <span className="text-[13px] text-[#e5484d]">{errors[key]}</span>}
@@ -425,7 +425,7 @@ function RequestForm({ c, lang, plan }: { c: (typeof COPY)['ru']; lang: Lang; pl
           <h2 className="text-[32px] font-extrabold leading-[1.12] tracking-tight sm:text-[44px]">{c.form.title}</h2>
           <p className="max-w-md text-[17px] leading-relaxed text-[#5b6576]">{c.form.subtitle}</p>
           <div className="mt-4 flex items-center gap-4">
-            <Phone src="/landing/app-home.jpg" alt="SalemBonus" className="w-28 rotate-[-6deg]" />
+            <Phone src={`/landing/app-home-${lang}.jpg`} alt="SalemBonus" className="w-28 rotate-[-6deg]" />
             <div className="w-56"><PosMiniCard c={c} /></div>
           </div>
         </Reveal>
@@ -488,7 +488,7 @@ function PosMiniCard({ c }: { c: (typeof COPY)['ru'] }) {
         <div className="flex justify-between gap-2"><span className="truncate">{c.mock.products[2]}</span><span className="shrink-0">2 600 ₸</span></div>
       </div>
       <div className="mt-2 flex justify-between border-t border-dashed border-[#d9dee8] pt-2 text-[13px] font-extrabold"><span>{c.mock.total}</span><span>15 000 ₸</span></div>
-      <div className="mt-1 text-right text-[11px] font-semibold text-[#e31e24]">+300 Б SalemBonus</div>
+      <div className="mt-1 text-right text-[11px] font-semibold text-[#1570ff]">+300 Б SalemBonus</div>
     </div>
   )
 }

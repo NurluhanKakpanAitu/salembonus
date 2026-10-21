@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Tags } from 'lucide-react'
+import { Pencil, Plus, Star, Tags } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { Drawer } from '../../components/ui/Drawer'
 import { Field, Input, Textarea, Toggle } from '../../components/ui/Field'
@@ -10,14 +10,17 @@ import { tenge } from '../../lib/money'
 import { adminApi, type ModuleKey, type Plan } from '../adminApi'
 import { MODULES, ModuleChips, PageHeader, errText } from '../ui'
 
-/** «Тарифы»: айлық бағасы және әдепкі модульдері. Тарифті өзгерту бизнестердің модульдерін өзгертпейді — олар карточкада бөлек. */
+/**
+ * «Тарифы»: айлық бағасы және әдепкі модульдері. Тарифті өзгерту бизнестердің модульдерін өзгертпейді — олар карточкада бөлек.
+ * Белсенді тарифтер salemtech.kz лендингінде дәл осы бағамен көрінеді; «Популярный» белгісі — бір тарифте.
+ */
 export function PlansPage() {
   const q = useQuery({ queryKey: ['admin', 'plans'], queryFn: adminApi.plans })
   const [editing, setEditing] = useState<Plan | 'new' | null>(null)
   if (q.isError) return <BlockError message={(q.error as Error).message} onRetry={() => void q.refetch()} />
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Тарифы" subtitle="Цена в месяц и модули по умолчанию для новых бизнесов"
+      <PageHeader title="Тарифы" subtitle="Цена в месяц и модули по умолчанию. Активные тарифы показываются на salemtech.kz"
         actions={<Button icon={<Plus size={17} />} onClick={() => setEditing('new')}>Новый тариф</Button>} />
       {!q.data ? <Skeleton className="h-48" /> : q.data.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line bg-surface py-14 text-center text-[13px] text-ink-3"><Tags className="mx-auto mb-2" size={28} />Тарифов пока нет</div>
@@ -28,6 +31,7 @@ export function PlansPage() {
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="text-[17px] font-bold">{p.name}{!p.isActive && <span className="ml-2 text-[12px] font-normal text-ink-3">архив</span>}</div>
+                  {p.isFeatured && p.isActive && <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-soft px-2 py-0.5 text-[12px] font-semibold text-brand"><Star size={12} />Популярный на сайте</span>}
                   <div className="text-[22px] font-extrabold text-brand">{tenge(p.monthlyPrice)}<span className="text-[13px] font-medium text-ink-3"> / мес</span></div>
                 </div>
                 <Button variant="ghost" className="h-9! px-2.5!" icon={<Pencil size={16} />} onClick={() => setEditing(p)} aria-label="Изменить" />
@@ -50,6 +54,7 @@ function PlanDrawer({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
   const [price, setPrice] = useState(plan ? String(plan.monthlyPrice) : '')
   const [description, setDescription] = useState(plan?.description ?? '')
   const [active, setActive] = useState(plan?.isActive ?? true)
+  const [featured, setFeatured] = useState(plan?.isFeatured ?? false)
   const [modules, setModules] = useState<ModuleKey[]>(plan?.modules ?? MODULES.map((m) => m.key))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +62,7 @@ function PlanDrawer({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
     setBusy(true)
     setError(null)
     try {
-      const body = { name, monthlyPrice: Number(price.replace(',', '.')) || 0, description: description || null, isActive: active, modules }
+      const body = { name, monthlyPrice: Number(price.replace(',', '.')) || 0, description: description || null, isActive: active, isFeatured: active && featured, modules }
       if (plan) await adminApi.updatePlan(plan.id, body); else await adminApi.createPlan(body)
       toast('Тариф сохранён')
       void qc.invalidateQueries({ queryKey: ['admin'] })
@@ -71,7 +76,13 @@ function PlanDrawer({ plan, onClose, onSaved }: { plan: Plan | null; onClose: ()
         <Field label="Название" required><Input value={name} maxLength={120} autoFocus onChange={(e) => setName(e.target.value)} /></Field>
         <Field label="Цена в месяц, ₸" required><Input inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
         <Field label="Описание"><Textarea value={description} maxLength={500} onChange={(e) => setDescription(e.target.value)} className="min-h-16" /></Field>
-        <Toggle checked={active} onChange={setActive} label="Доступен для новых бизнесов" />
+        <Toggle checked={active} onChange={setActive} label="Доступен для новых бизнесов и показан на сайте" />
+        {active && (
+          <div className="flex flex-col gap-1">
+            <Toggle checked={featured} onChange={setFeatured} label="Отметить «Популярный» на сайте" />
+            <p className="text-[12px] text-ink-3">Отметка может быть только у одного тарифа — у остальных она снимется.</p>
+          </div>
+        )}
         <div className="flex flex-col gap-2">
           <div className="text-[13px] font-medium text-ink-2">Модули по умолчанию</div>
           {MODULES.map((m) => (

@@ -147,7 +147,7 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
     }
 
     private static PlanDto Plan(PlatformPlan p, int businesses) =>
-        new(p.Id, p.Name, p.MonthlyPrice, p.Modules, p.Description, p.IsActive, p.SortOrder, businesses);
+        new(p.Id, p.Name, p.MonthlyPrice, p.Modules, p.Description, p.IsActive, p.SortOrder, businesses, p.IsFeatured);
 
     private void Apply(PlatformPlan p, SavePlanRequest r)
     {
@@ -161,7 +161,19 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
         p.Description = CatalogAccess.Optional(r.Description, 500);
         p.IsActive = r.IsActive ?? p.IsActive;
         p.SortOrder = r.SortOrder ?? p.SortOrder;
+        p.IsFeatured = r.IsFeatured ?? p.IsFeatured;
         p.UpdatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>Лендингте бір ғана «Популярный» тариф: жаңасы белгіленсе, қалғандарынан алынады.</summary>
+    private async Task KeepSingleFeaturedAsync(PlatformPlan plan, CancellationToken ct)
+    {
+        if (!plan.IsFeatured) return;
+        foreach (var other in (await repo.PlansAsync(ct)).Where(x => x.Id != plan.Id && x.IsFeatured))
+        {
+            other.IsFeatured = false;
+            other.UpdatedAt = DateTime.UtcNow;
+        }
     }
 
     public async Task<PlanDto> CreatePlanAsync(SavePlanRequest r, CancellationToken ct = default)
@@ -169,8 +181,9 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
         var admin = await access.RequireAsync(ct);
         var plan = new PlatformPlan { Id = Guid.NewGuid(), CreatedAt = DateTime.UtcNow, Modules = [.. PlatformModules.All] };
         Apply(plan, r);
+        await KeepSingleFeaturedAsync(plan, ct);
         repo.AddPlan(plan);
-        access.Audit(admin, "plan.create", null, "plan", plan.Id, new { plan.Name, plan.MonthlyPrice, plan.Modules });
+        access.Audit(admin, "plan.create", null, "plan", plan.Id, new { plan.Name, plan.MonthlyPrice, plan.Modules, plan.IsFeatured });
         await unitOfWork.SaveChangesAsync(ct);
         return Plan(plan, 0);
     }
@@ -180,9 +193,10 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
     {
         var admin = await access.RequireAsync(ct);
         var plan = await repo.PlanAsync(id, ct) ?? throw new NotFoundException(Messages.PlanNotFound(Lang));
-        var before = new { plan.Name, plan.MonthlyPrice, Modules = plan.Modules.ToList(), plan.IsActive };
+        var before = new { plan.Name, plan.MonthlyPrice, Modules = plan.Modules.ToList(), plan.IsActive, plan.IsFeatured };
         Apply(plan, r);
-        access.Audit(admin, "plan.update", null, "plan", plan.Id, new { Before = before, After = new { plan.Name, plan.MonthlyPrice, plan.Modules, plan.IsActive } });
+        await KeepSingleFeaturedAsync(plan, ct);
+        access.Audit(admin, "plan.update", null, "plan", plan.Id, new { Before = before, After = new { plan.Name, plan.MonthlyPrice, plan.Modules, plan.IsActive, plan.IsFeatured } });
         await unitOfWork.SaveChangesAsync(ct);
         var orgs = await repo.OrganizationsAsync(ct);
         return Plan(plan, orgs.Count(o => o.PlanId == plan.Id));

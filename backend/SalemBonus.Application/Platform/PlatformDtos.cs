@@ -12,8 +12,8 @@ public record SetActiveRequest(bool Active);
 
 // ---------- Тарифтер ----------
 
-public record PlanDto(Guid Id, string Name, decimal MonthlyPrice, IReadOnlyList<string> Modules, string? Description, bool IsActive, int SortOrder, int Businesses);
-public record SavePlanRequest(string? Name, decimal? MonthlyPrice, IReadOnlyList<string>? Modules, string? Description, bool? IsActive, int? SortOrder);
+public record PlanDto(Guid Id, string Name, decimal MonthlyPrice, IReadOnlyList<string> Modules, string? Description, bool IsActive, int SortOrder, int Businesses, bool IsFeatured);
+public record SavePlanRequest(string? Name, decimal? MonthlyPrice, IReadOnlyList<string>? Modules, string? Description, bool? IsActive, int? SortOrder, bool? IsFeatured = null);
 
 // ---------- Бизнестер ----------
 

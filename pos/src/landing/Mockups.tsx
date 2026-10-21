@@ -72,7 +72,7 @@ export function Phone({ src, alt, className = '' }: { src: string; alt: string; 
     <div className={`rounded-[2.4rem] bg-[#0b1220] p-[7px] shadow-[0_30px_60px_-15px_rgba(11,18,32,0.45)] ring-1 ring-white/10 ${className}`}>
       <div className="relative overflow-hidden rounded-[2rem] bg-white">
         <span className="absolute left-1/2 top-2 z-10 h-[18px] w-[72px] -translate-x-1/2 rounded-full bg-[#0b1220]" />
-        <img src={src} alt={alt} className="block aspect-[560/1213] w-full object-cover object-top" decoding="async" />
+        <img src={src} alt={alt} className="block aspect-[390/844] w-full object-cover object-top" decoding="async" />
       </div>
     </div>
   )

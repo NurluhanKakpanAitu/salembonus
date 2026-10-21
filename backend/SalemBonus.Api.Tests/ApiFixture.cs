@@ -174,6 +174,13 @@ public sealed class Pos(HttpClient http)
     public Task<ApiResult> Put(string token, string path, object body) => Send(HttpMethod.Put, token, path, body);
     public Task<ApiResult> Delete(string token, string path) => Send(HttpMethod.Delete, token, path, null);
 
+    /// <summary>Ашық эндпоинттің Cache-Control тақырыбы (лендинг деректері кэштелмеуі керек).</summary>
+    public async Task<string?> CacheControl(string path)
+    {
+        using var res = await http.GetAsync(path);
+        return res.Headers.CacheControl?.ToString();
+    }
+
     /// <summary>Файл жауабы (экспорт): мәртебе, түрі, көлемі.</summary>
     public async Task<(HttpStatusCode Status, string? ContentType, long Length)> Raw(string token, string path)
     {
