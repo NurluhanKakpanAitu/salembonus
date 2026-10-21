@@ -145,7 +145,7 @@ function BirthdayForm({ s, canEdit, statuses, onSaved }: { s: BirthdaySettings; 
         <Field label={t('bon.bd.time')}><Input type="time" value={f.time} onChange={(e) => patch({ time: e.target.value })} /></Field>
       </div>
       <Field label={t('bon.bd.when')}>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={f.timing} onChange={(e) => patch({ timing: e.target.value as BirthdayTiming, timingDays: e.target.value === 'OnDay' ? 0 : f.timingDays || 3 })} className="flex-1">
             {(['OnDay', 'DaysBefore', 'DaysAfter'] as BirthdayTiming[]).map((x) => <option key={x} value={x}>{t(`bon.bd.timing.${x}` as TranslationKey)}</option>)}
           </Select>
@@ -153,7 +153,7 @@ function BirthdayForm({ s, canEdit, statuses, onSaved }: { s: BirthdaySettings; 
         </div>
       </Field>
       <Field label={t('bon.bd.validity')} error={incompatible ? t('bon.bd.incompatible') : null}>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Select value={f.validity} onChange={(e) => patch({ validity: e.target.value as BirthdayValidity })} className="flex-1" error={incompatible}>
             {(['DaysAfterAccrual', 'UntilBirthday', 'DaysAfterBirthday', 'FixedDate', 'Unlimited'] as BirthdayValidity[]).map((x) => <option key={x} value={x}>{t(`bon.bd.val.${x}` as TranslationKey)}</option>)}
           </Select>

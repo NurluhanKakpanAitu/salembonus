@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, ScanLine, Search, Trash2 } from 'lucide-react'
 import { Input } from '../ui/Field'
+import { useFitPlaceholder } from '../ui/SearchInput'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
 import { productApi } from '../../lib/productApi'
@@ -60,6 +61,7 @@ export function LinesEditor({ lines, onChange, mode, canRetail, disabled, enrich
   const [active, setActive] = useState(0)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const searchPlaceholder = useFitPlaceholder(t('inv.lines.search'), inputRef, 96)
   const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   const search = useQuery({
@@ -121,7 +123,7 @@ export function LinesEditor({ lines, onChange, mode, canRetail, disabled, enrich
         <div ref={boxRef} className="relative mb-3">
           <div className="relative">
             <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
-            <Input ref={inputRef} className="pl-11 pr-11" value={query} placeholder={t('inv.lines.search')} autoComplete="off"
+            <Input ref={inputRef} className="pl-11 pr-11" value={query} placeholder={searchPlaceholder} autoComplete="off"
               onChange={(e) => { setQuery(e.target.value); setOpen(true); setActive(0) }} onFocus={() => setOpen(true)} onKeyDown={onKey} />
             <ScanLine size={18} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
           </div>

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Ban, BellOff, Loader2, MinusCircle, PlusCircle, Search, ShieldCheck } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea, Toggle } from '../ui/Field'
+import { useFitPlaceholder } from '../ui/SearchInput'
 import { Drawer } from '../ui/Drawer'
 import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
@@ -117,6 +118,8 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
 /** Клиент іздеу (тарату, қолмен операциялар): аты-жөні, телефон, карта нөмірі. */
 export function CustomerPicker({ value, onChange }: { value: BonusCustomer | null; onChange: (c: BonusCustomer | null) => void }) {
   const t = useT()
+  const searchRef = useRef<HTMLInputElement>(null)
+  const searchPlaceholder = useFitPlaceholder(t('bon.cust.searchPlaceholder'), searchRef, 80)
   const [search, setSearch] = useState('')
   const q = useQuery({ queryKey: ['bonus', 'picker', search], queryFn: () => bonusApi.customers({ search, pageSize: 8 }), enabled: search.trim().length >= 2 && !value })
   if (value) return (
@@ -129,7 +132,7 @@ export function CustomerPicker({ value, onChange }: { value: BonusCustomer | nul
     <div className="relative">
       <label className="flex h-11 items-center gap-2.5 rounded-xl border border-line bg-surface px-3.5 focus-within:border-brand">
         <Search size={18} className="text-ink-3" />
-        <input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('bon.cust.searchPlaceholder')} className="h-full min-w-0 flex-1 bg-transparent outline-none" />
+        <input ref={searchRef} autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder={searchPlaceholder} className="h-full min-w-0 flex-1 bg-transparent outline-none" />
       </label>
       {(q.data?.items.length ?? 0) > 0 && (
         <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-lg">

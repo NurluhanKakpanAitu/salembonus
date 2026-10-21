@@ -195,8 +195,8 @@ function ProductForm({ product }: { product?: import('../../lib/catalogTypes').P
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
-        <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-2 lg:sticky lg:top-4 lg:flex-col lg:self-start">
+      <div className="grid gap-5 xl:grid-cols-[240px_1fr]">
+        <nav className="flex gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-2 xl:sticky xl:top-4 xl:flex-col xl:self-start">
           {SECTIONS.map((key) => {
             const Icon = ICONS[key]
             const active = section === key

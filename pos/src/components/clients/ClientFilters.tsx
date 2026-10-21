@@ -69,7 +69,7 @@ export function FiltersForm({ value, onChange, statuses, withQuick, withSearch }
       <Range label={t('cli.f.amount')} min={f.minAmount} max={f.maxAmount} onChange={(a, b) => patch({ minAmount: numOrNull(a), maxAmount: numOrNull(b) })} />
       <Range label={t('cli.f.average')} min={f.minAverage} max={f.maxAverage} onChange={(a, b) => patch({ minAverage: numOrNull(a), maxAverage: numOrNull(b) })} />
       <Range label={t('cli.f.bonus')} min={f.minBonus} max={f.maxBonus} onChange={(a, b) => patch({ minBonus: numOrNull(a), maxBonus: numOrNull(b) })} />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label={t('cli.f.debt')}>
           <Select value={f.hasDebt === true ? 'yes' : f.hasDebt === false ? 'no' : ''} onChange={(e) => patch({ hasDebt: e.target.value === 'yes' ? true : e.target.value === 'no' ? false : null })}>
             <option value="">{t('cli.f.any')}</option><option value="yes">{t('cli.f.yes')}</option><option value="no">{t('cli.f.no')}</option>

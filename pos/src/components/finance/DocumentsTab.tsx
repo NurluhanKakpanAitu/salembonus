@@ -55,7 +55,7 @@ export function DocumentsTab({ filters, storeIds }: { filters: FinanceFilters; s
       {view === 'documents' ? (
         <>
           {canOperate && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
               {quick.map((b) => (
                 <button key={b.key} type="button" onClick={b.onClick} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-left hover:border-brand">
                   <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${b.tone}`}>{b.icon}</span>

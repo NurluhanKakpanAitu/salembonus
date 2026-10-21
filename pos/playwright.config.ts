@@ -30,6 +30,10 @@ export default defineConfig({
   projects: [
     // Дүкендегі ең жиі ноутбук экраны — тар экранда кесілу бірінші осында көрінеді.
     { name: 'laptop', use: { viewport: { width: 1366, height: 768 } }, testIgnore: /landing|bonus-app/ },
+    // Телефон, планшет (портрет) және POS-терминал (ландшафт, аласа экран): кабинет пен касса сонда да толық жұмыс істейді.
+    { name: 'phone', use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, testMatch: /pos.spec|admin.spec/ },
+    { name: 'tablet', use: { viewport: { width: 768, height: 1024 }, hasTouch: true }, testMatch: /pos.spec|admin.spec/ },
+    { name: 'pos-terminal', use: { viewport: { width: 1024, height: 600 }, hasTouch: true }, testMatch: /pos.spec/ },
     { name: 'landing-desktop', use: { viewport: { width: 1280, height: 800 } }, testMatch: /landing/ },
     // SalemBonus клиент қосымшасы — телефон экраны.
     { name: 'bonus-app', use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }, testMatch: /bonus-app/ },

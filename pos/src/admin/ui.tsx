@@ -66,10 +66,10 @@ export function Tile({ label, value, hint, icon, tone = 'blue', onClick, active 
       className={`flex min-w-0 flex-col rounded-2xl border bg-surface p-4 text-left transition-colors disabled:cursor-default ${active ? 'border-brand ring-2 ring-brand/15' : 'border-line enabled:hover:border-brand/50'}`}>
       <span className="flex items-center gap-2.5">
         <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${TONES[tone]}`}>{icon}</span>
-        <span className="truncate text-[13px] font-medium text-ink-2">{label}</span>
+        <span className="min-w-0 break-words text-[13px] font-medium text-ink-2">{label}</span>
       </span>
-      <span className="mt-2 truncate text-[24px] font-extrabold tracking-tight text-[#0b1f44]">{value}</span>
-      {hint && <span className="truncate text-[12px] text-ink-3">{hint}</span>}
+      <span className="mt-2 break-words text-[24px] font-extrabold tracking-tight text-[#0b1f44]">{value}</span>
+      {hint && <span className="break-words text-[12px] text-ink-3">{hint}</span>}
     </button>
   )
 }
@@ -97,7 +97,7 @@ export function SecretModal({ title, lines, note, onClose }: { title: string; li
         {lines.map((l) => (
           <div key={l.label} className="flex items-center gap-3 rounded-xl border border-line px-3 py-2">
             <span className="w-28 shrink-0 text-[13px] text-ink-2">{l.label}</span>
-            <span className={`min-w-0 flex-1 truncate ${l.secret ? 'font-mono text-[16px] font-bold tracking-wider' : 'font-medium'}`}>{l.value}</span>
+            <span className={`min-w-0 flex-1 break-all ${l.secret ? 'font-mono text-[16px] font-bold tracking-wider' : 'font-medium'}`}>{l.value}</span>
             <button type="button" className="rounded-lg p-1.5 text-ink-3 hover:bg-field hover:text-ink" aria-label="Скопировать" onClick={() => copy(l.value)}><Copy size={16} /></button>
           </div>
         ))}

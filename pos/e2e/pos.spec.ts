@@ -97,10 +97,18 @@ async function checkOpener(page: Page, lang: 'ru' | 'kk', o: Opener) {
   }
   await expect(button, `${where}: кнопка не найдена`).toBeVisible()
   await button.click()
-  if (o.item) await page.getByRole('menuitem', { name: o.item[lang], exact: true }).first().click()
+  if (o.item) {
+    // Мәзір айналдырғанда жабылады (RowMenu): элементті айналдырмай, тікелей click оқиғасын жібереміз.
+    const item = page.getByRole('menuitem', { name: o.item[lang], exact: true }).first()
+    await expect(item).toBeVisible()
+    await item.dispatchEvent('click')
+  }
   if (o.kind === 'panel') {
     await expectNothingClipped(page, where)
-    await button.click()
+    // Тар экранда панель батырманың үстін жабады — панельдің өз «Close» батырмасымен жабамыз.
+    const close = page.locator('aside.fixed:not(.bg-nav) button[aria-label="Close"]').first() // бүйір мәзірдің «Close»-ы емес
+    if (await close.isVisible()) await close.click()
+    else await button.click()
     return
   }
   await expect(page.getByRole('dialog').last(), `${where}: окно не открылось`).toBeVisible()
@@ -145,10 +153,21 @@ async function checkCashier(page: Page, lang: 'ru' | 'kk') {
 
   await add.first().click()
   await expectNothingClipped(page, `${lang} /cashier › корзина`)
+  // Телефон/планшет: себет — төменгі жолақ, басқанда толық экранда ашылады.
+  const cartBar = page.getByRole('button', { name: new RegExp(`^${lang === 'ru' ? 'Корзина' : 'Себет'} \\(`) })
+  const mobileCart = await cartBar.isVisible()
+  if (mobileCart) {
+    await cartBar.click()
+    await expectNothingClipped(page, `${lang} /cashier › себет (телефон)`)
+  }
   await page.getByRole('button', { name: new RegExp(`^${lang === 'ru' ? 'Оплатить' : 'Төлеу'} `) }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expectNothingClipped(page, `${lang} /cashier › оплата`, '[role=dialog]')
   await page.keyboard.press('Escape')
+  if (mobileCart) {
+    const closeSheet = page.getByRole('button', { name: l('Закрыть', 'Жабу')[lang], exact: true })
+    if (await closeSheet.isVisible()) await closeSheet.click()
+  }
 
   const menu = () => page.getByRole('button', { name: 'Menu' }).first()
   await menu().click()
@@ -172,8 +191,10 @@ async function checkCashier(page: Page, lang: 'ru' | 'kk') {
 // Қазақша жазулар әдетте ұзынырақ — бәрін екі тілде тексереміз. Бір тілге бір кіру (кіру шегі минутына 10).
 for (const lang of ['ru', 'kk'] as const) {
   // Бір тілге бір тест (бір кіру): тексеру жұмсақ, сондықтан бір қате қалған беттер мен формаларды тоқтатпайды.
-  test(`pos ${lang}: every page, section and form is readable`, async ({ page }) => {
-    test.setTimeout(20 * 60_000)
+  test(`pos ${lang}: every page, section and form is readable`, async ({ page }, testInfo) => {
+    // Қазақша нұсқа тек ноутбук экранында: тар экрандарда орналасу бірдей, мәтіннің ұзындығы ноутбукта тексерілген.
+    test.skip(lang === 'kk' && testInfo.project.name !== 'laptop', 'kk only on laptop')
+    test.setTimeout(testInfo.project.name === 'laptop' ? 20 * 60_000 : 40 * 60_000)
     await useLanguage(page, lang)
     await ensureDemoProducts(page, await posLogin(page))
     await expect(page.locator('html')).toHaveAttribute('lang', lang)

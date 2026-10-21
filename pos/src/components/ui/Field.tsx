@@ -21,7 +21,7 @@ export function Field({ label, error, required, children, hint }: {
 }
 
 /** Өрістің базалық түрі. Сыртан берілген w-/h-/text- кластары базаны ауыстырады (cn) — өріс көршісін сықпайды. */
-const control = 'w-full rounded-xl border bg-field text-[15px] text-ink outline-none transition-colors focus:border-brand focus:bg-surface disabled:opacity-60'
+const control = 'salem-control w-full rounded-xl border bg-field text-ink outline-none transition-colors focus:border-brand focus:bg-surface disabled:opacity-60'
 
 export function Input({ error, className = '', ...rest }: { error?: boolean } & React.ComponentProps<'input'>) {
   return <input {...rest} className={cn(control, 'h-11 px-3.5', error ? 'border-danger' : 'border-line', className)} />

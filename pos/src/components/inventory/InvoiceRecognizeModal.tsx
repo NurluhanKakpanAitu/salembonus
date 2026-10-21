@@ -135,7 +135,7 @@ export function InvoiceRecognizeModal({ warehouseId, suppliers, onClose, onApply
             >
               {file?.type === 'application/pdf' ? <FileText size={28} className="shrink-0 text-brand" /> : <Upload size={28} className="shrink-0 text-brand" />}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-semibold">{file ? file.name : t('inv.ai.choose')}</span>
+                <span className="block break-words text-[15px] font-semibold">{file ? file.name : t('inv.ai.choose')}</span>
                 <span className="text-[13px] text-ink-3">{file ? `${(file.size / 1024).toFixed(0)} KB` : t('inv.ai.formats')}</span>
               </span>
               <button type="button" aria-label={t('inv.ai.camera')} title={t('inv.ai.camera')}

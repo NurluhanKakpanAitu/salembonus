@@ -59,7 +59,7 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
   }
 
   return (
-    <div className="flex min-h-[520px] min-w-0 flex-1 gap-3 lg:min-h-0">
+    <div className="flex min-h-0 min-w-0 flex-1 gap-3">
       <aside className="hidden w-52 shrink-0 overflow-y-auto rounded-2xl bg-surface p-2 xl:block">
         {category(null, t('pos.allProducts'))}
         {roots.map((r) => category(r.id, r.name, r.icon))}

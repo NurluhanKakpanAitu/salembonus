@@ -15,12 +15,12 @@ export function Modal({ title, onClose, children, width = 440 }: {
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onMouseDown={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-2 sm:p-4" onMouseDown={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-2xl bg-surface p-6 shadow-xl"
+        className="max-h-[calc(100dvh-1rem)] w-full overflow-y-auto rounded-2xl bg-surface p-4 shadow-xl sm:max-h-[calc(100dvh-2rem)] sm:p-6"
         style={{ maxWidth: width }}
         onMouseDown={(e) => e.stopPropagation()}
       >

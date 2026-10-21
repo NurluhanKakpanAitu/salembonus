@@ -102,6 +102,7 @@ export async function findClipped(page: Page, scope = 'body'): Promise<string[]>
         const range = document.createRange()
         range.selectNodeContents(n)
         const r = range.getBoundingClientRect()
+        if (r.width === 0 && r.height === 0) continue // display:none ішіндегі мәтін (мысалы, телефонда жасырылған аты)
         textLeft = Math.min(textLeft, r.left)
         textRight = Math.max(textRight, r.right)
       }

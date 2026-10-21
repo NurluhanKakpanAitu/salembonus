@@ -54,6 +54,8 @@ const ru = {
   'common.close': 'Закрыть',
   'common.back': 'Назад',
   'common.required': 'Заполните поле',
+  'common.search': 'Поиск',
+  'top.menu': 'Меню',
 
   'login.chooseCashier': 'Выберите сотрудника',
   'login.searchCashier': 'Поиск по имени',
@@ -3153,6 +3155,8 @@ const kk: Record<TranslationKey, string> = {
   'common.close': 'Жабу',
   'common.back': 'Артқа',
   'common.required': 'Өрісті толтырыңыз',
+  'common.search': 'Іздеу',
+  'top.menu': 'Мәзір',
 
   'login.chooseCashier': 'Қызметкерді таңдаңыз',
   'login.searchCashier': 'Аты бойынша іздеу',

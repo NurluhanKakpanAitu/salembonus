@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { BarChart3, Loader2, Monitor, ReceiptText, Settings, ShoppingCart } from 'lucide-react'
+import { BarChart3, ChevronDown, Loader2, Monitor, ReceiptText, Settings, ShoppingCart } from 'lucide-react'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
 import { cart, totals, useCart } from '../../lib/cart'
 import { cashierApi } from '../../lib/cashierApi'
 import type { CashierProduct, PaymentMethod, Receipt, SalePaymentInput } from '../../lib/cashierTypes'
-import { num } from '../../lib/money'
+import { num, tenge } from '../../lib/money'
+import { useIsDesktop } from '../../lib/useMediaQuery'
 import { useT } from '../../lib/i18n'
 import { CartPanel } from './CartPanel'
 import { CatalogPanel, type CatalogFilter } from './CatalogPanel'
@@ -41,6 +42,9 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
   const ctxQuery = useQuery({ queryKey: ['cashier', 'context'], queryFn: cashierApi.context })
   const ctx = ctxQuery.data
   const cartState = useCart()
+  // Телефон мен планшетте себет — төменгі жолақ, басқанда экранның үстінен ашылады; ноутбукта — оң жақ баған.
+  const desktop = useIsDesktop()
+  const [cartOpen, setCartOpen] = useState(false)
   const [filter, setFilter] = useState<CatalogFilter>({ nodeId: null, sort: 'popular', view: readView(), search: '' })
   const [pay, setPay] = useState<{ method: PayTab | null } | null>(null)
   const [busy, setBusy] = useState(false)
@@ -135,10 +139,12 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
     return <div className="flex h-full items-center justify-center text-ink-3"><Loader2 className="animate-spin" size={28} /></div>
 
   const total = totals(cartState, ctx.maxRedeemPercent).total
+  const cartPanel = <CartPanel ctx={ctx} onPay={(method) => { setPayError(null); setCartOpen(false); setPay({ method }) }} />
+  const registerMenu = <RowMenu items={[{ label: t('settings.title'), icon: <Settings size={16} />, onClick: () => setSettingsOpen(true) }, ...menu]} />
 
   return (
-    <div className="-m-4 flex h-[calc(100%+2rem)] flex-col gap-3 overflow-y-auto bg-bg p-3 lg:-m-6 lg:h-[calc(100%+3rem)] lg:overflow-hidden">
-      <div className="flex items-center gap-3">
+    <div className="-m-4 flex h-[calc(100%+2rem)] flex-col gap-3 overflow-hidden bg-bg p-3 lg:-m-6 lg:h-[calc(100%+3rem)]">
+      <div className="flex flex-wrap items-center gap-2 lg:gap-3">
         <SearchBox onAdd={add} onScan={scan} onShowAll={(q) => updateFilter({ search: q })} />
         {panel !== 'cart' && (
           <button type="button" onClick={() => setPanel('cart')}
@@ -147,30 +153,48 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
           </button>
         )}
         {([['receipts', ReceiptText, 'receipts.title'], ['finance', BarChart3, 'finance.title']] as const).map(([key, Icon, label]) => (
-          <button key={key} type="button" onClick={() => setPanel(panel === key ? 'cart' : key)}
+          <button key={key} type="button" onClick={() => setPanel(panel === key ? 'cart' : key)} aria-label={t(label)}
             className={`flex h-11 items-center gap-2 rounded-xl px-4 text-[14px] font-semibold ${panel === key ? 'bg-brand text-white' : 'bg-surface text-ink hover:bg-field'}`}>
             <Icon size={18} /> <span className="hidden md:inline">{t(label)}</span>
           </button>
         ))}
-        <div className="hidden items-center gap-2 rounded-xl bg-surface px-3 py-2 md:flex">
-          <Monitor size={18} className="text-brand" />
-          <div className="leading-tight">
+        <div className="flex items-center gap-2 rounded-xl bg-surface px-2 py-1 md:px-3 md:py-2">
+          <Monitor size={18} className="hidden text-brand md:block" />
+          <div className="hidden leading-tight md:block">
             <div className="text-[14px] font-semibold">{ctx.registerName}</div>
             <div className="max-w-72 text-[12px] text-ink-3">{ctx.storeName}{ctx.storeAddress ? `, ${ctx.storeAddress}` : ''}</div>
           </div>
-          <RowMenu items={[{ label: t('settings.title'), icon: <Settings size={16} />, onClick: () => setSettingsOpen(true) }, ...menu]} />
+          {registerMenu}
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 lg:flex-row">
-        <CatalogPanel filter={filter} onFilter={updateFilter} onAdd={add} />
+        {(desktop || panel === 'cart') && <CatalogPanel filter={filter} onFilter={updateFilter} onAdd={add} />}
         {panel === 'cart'
-          ? <CartPanel ctx={ctx} onPay={(method) => { setPayError(null); setPay({ method }) }} />
+          ? desktop && cartPanel
           : panel === 'receipts'
             ? <ReceiptsPanel canReturn={ctx.canReturn} onClose={() => setPanel('cart')} onOpen={setViewing}
                 onReturn={setReturning} onPrint={(id) => void print(id)} />
             : <FinancePanel onClose={() => setPanel('cart')} />}
       </div>
+
+      {/* Телефон/планшет: себет жолағы — тауар саны, сома, «Оплатить»; басқанда себет толық экранда ашылады. */}
+      {!desktop && panel === 'cart' && (
+        <button type="button" onClick={() => setCartOpen(true)}
+          className="flex h-14 shrink-0 items-center gap-3 rounded-2xl bg-ink px-4 text-left text-white shadow-lg">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-white/15"><ShoppingCart size={18} /></span>
+          <span className="min-w-0 flex-1"><span className="block text-[13px] text-white/70">{t('pos.cart', { n: cartState.lines.length })}</span><span className="block text-[17px] font-extrabold leading-tight">{tenge(total)}</span></span>
+          <span className="rounded-xl bg-brand px-4 py-2 text-[14px] font-semibold">{t('pos.backToCart')}</span>
+        </button>
+      )}
+      {!desktop && cartOpen && panel === 'cart' && (
+        <div className="fixed inset-0 z-40 flex flex-col bg-bg p-3">
+          <button type="button" onClick={() => setCartOpen(false)} className="mb-2 flex h-10 shrink-0 items-center justify-center gap-1 rounded-xl bg-surface text-[14px] font-semibold text-ink-2" aria-label={t('common.close')}>
+            <ChevronDown size={18} />{t('pos.allProducts')}
+          </button>
+          {cartPanel}
+        </div>
+      )}
 
       {pay && (
         <PaymentModal ctx={ctx} total={total} customerName={cartState.customer ? cartState.customer.fullName || cartState.customer.phone : null}

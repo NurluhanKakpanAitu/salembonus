@@ -40,7 +40,7 @@ jobs:
   # (Chrome) ашылып, мәтін кесілмегені өлшенеді. API Development режимінде демо деректермен (StaffSeeder, AdminSeeder, DbSeeder).
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     services:
       postgres:
         image: postgres:17

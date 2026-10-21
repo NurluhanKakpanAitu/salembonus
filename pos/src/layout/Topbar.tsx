@@ -107,7 +107,7 @@ export function Topbar({ title, onMenu, kiosk = false }: { title: string; onMenu
       {kiosk ? (
         <span className="hidden lg:block"><Logo size={26} tone="dark" /></span>
       ) : (
-        <button type="button" onClick={onMenu} className="text-ink-2 lg:hidden" aria-label="Menu">
+        <button type="button" onClick={onMenu} className="text-ink-2 lg:hidden" aria-label={t('top.menu')}>
           <Menu size={24} />
         </button>
       )}

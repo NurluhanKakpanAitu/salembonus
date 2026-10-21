@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 import { Clock, Folder, ImagePlus, Layers, Package, Trash2, X } from 'lucide-react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
@@ -16,6 +17,18 @@ import { useT } from '../../lib/i18n'
  * өзін не өз ұрпағын ата-ана етуге болмайды (тізімде олар көрсетілмейді, сервер де тексереді).
  * Белгіше тек санатқа (ата-анасы жоқ түйінге) міндетті; сурет — санатқа қалауынша (макет бойынша).
  */
+/** Санат жолы таңдауда: тар экранда (модаль ені аз) тек соңғы екі буын — «… → Двигатель → Свечи», толық жол — кең экранда. */
+function pathLabel(n: { depth: number; pathNames: string[] }, keep: number) {
+  const path = keep > 0 && n.pathNames.length > keep ? `… → ${n.pathNames.slice(-keep).join(' → ')}` : n.pathNames.join(' → ')
+  return `${'  '.repeat(n.depth)}${path}`
+}
+/** Қанша буын көрсетеміз: телефон — 1, планшет — 2, кең экран — бәрі (0). */
+function useCompactPaths() {
+  const phone = useMediaQuery('(max-width: 639px)')
+  const tablet = useMediaQuery('(max-width: 1023px)')
+  return phone ? 1 : tablet ? 2 : 0
+}
+
 export function NodeFormModal({ node, parentId, nodes, onClose, onSaved, onDelete }: {
   node?: CatalogNode
   /** Жаңа түйіннің ата-анасы (қай жерден «+» басылды). */
@@ -27,6 +40,7 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved, onDelet
   onDelete?: (node: CatalogNode) => void
 }) {
   const t = useT()
+  const compact = useCompactPaths()
   const perms = useCatalogPermissions()
   const [name, setName] = useState(node?.name ?? '')
   const [parent, setParent] = useState<string>(node ? (node.parentId ?? '') : (parentId ?? ''))
@@ -104,7 +118,7 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved, onDelet
               <Select value={parent} onChange={(e) => setParent(e.target.value)} error={!!errors.parentId}>
                 <option value="">{t('node.root')}</option>
                 {parentOptions.map((n) => (
-                  <option key={n.id} value={n.id}>{`${'  '.repeat(n.depth)}${n.pathNames.join(' → ')}`}</option>
+                  <option key={n.id} value={n.id}>{pathLabel(n, compact)}</option>
                 ))}
               </Select>
             </Field>
@@ -210,6 +224,7 @@ export function MoveNodeModal({ node, nodes, onClose, onMoved }: {
   onMoved: (message: string) => void
 }) {
   const t = useT()
+  const compact = useCompactPaths()
   const excluded = useMemo(() => subtreeIds(nodes, node.id), [nodes, node.id])
   const options = useMemo(
     () => treeOrder(nodes).filter((n) => !excluded.has(n.id) && n.status === 'Active' && n.id !== node.parentId),
@@ -249,7 +264,7 @@ export function MoveNodeModal({ node, nodes, onClose, onMoved }: {
         <Field label={t('node.newParent')} error={error}>
           <Select value={target} onChange={(e) => setTarget(e.target.value)}>
             {rootAllowed && <option value="">{t('node.root')}</option>}
-            {options.map((n) => <option key={n.id} value={n.id}>{`${'  '.repeat(n.depth)}${n.pathNames.join(' → ')}`}</option>)}
+            {options.map((n) => <option key={n.id} value={n.id}>{pathLabel(n, compact)}</option>)}
           </Select>
         </Field>
         <div className="grid gap-2 rounded-xl bg-field px-4 py-3 text-[14px]">
@@ -273,6 +288,7 @@ export function MoveContentModal({ node, nodes, onClose, onMoved }: {
   onMoved: (message: string) => void
 }) {
   const t = useT()
+  const compact = useCompactPaths()
   const excluded = useMemo(() => subtreeIds(nodes, node.id), [nodes, node.id])
   const options = useMemo(() => treeOrder(nodes).filter((n) => !excluded.has(n.id) && n.status === 'Active'), [nodes, excluded])
   const [target, setTarget] = useState(options[0]?.id ?? '')
@@ -299,7 +315,7 @@ export function MoveContentModal({ node, nodes, onClose, onMoved }: {
         <p className="text-[14px] leading-relaxed text-ink-2">{t('node.moveHint', { name: node.name })}</p>
         <Field label={t('node.moveTo')} error={error}>
           <Select value={target} onChange={(e) => setTarget(e.target.value)}>
-            {options.map((n) => <option key={n.id} value={n.id}>{`${'  '.repeat(n.depth)}${n.pathNames.join(' → ')}`}</option>)}
+            {options.map((n) => <option key={n.id} value={n.id}>{pathLabel(n, compact)}</option>)}
           </Select>
         </Field>
         <div className="flex justify-end gap-2">

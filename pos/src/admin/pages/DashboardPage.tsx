@@ -23,7 +23,7 @@ export function DashboardPage() {
           <Inbox size={18} /><span className="font-semibold">Новых заявок с сайта: {d.newLeads}</span><span className="ml-auto font-semibold">Открыть →</span>
         </Link>
       )}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Tile label="Бизнесов" value={d ? num(d.businesses) : '…'} hint={d ? `+${d.newThisMonth} в этом месяце` : undefined} icon={<Building2 size={18} />} onClick={() => nav('/businesses')} />
         <Tile label="MRR" value={d ? tenge(d.mrr) : '…'} hint="ежемесячно от платящих" icon={<TrendingUp size={18} />} tone="green" />
         <Tile label="Оплачено в этом месяце" value={d ? tenge(d.paidThisMonth) : '…'} tone="violet" icon={<Wallet size={18} />}

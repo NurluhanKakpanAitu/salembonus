@@ -62,7 +62,7 @@ export function CategoriesModal({ categories, onClose, onChanged }: { categories
       <ul className="divide-y divide-line rounded-xl border border-line">
         {categories.filter((c) => c.type === type).map((c) => (
           <li key={c.id} className={`flex items-center gap-3 px-3 py-2 text-[14px] ${c.isActive ? '' : 'text-ink-3'}`}>
-            <span className="min-w-0 flex-1 truncate">{c.name}{!c.isActive && <span className="ml-1 text-[11px]">({t('fin.archived')})</span>}</span>
+            <span className="min-w-0 flex-1 break-words">{c.name}{!c.isActive && <span className="ml-1 text-[11px]">({t('fin.archived')})</span>}</span>
             <span className="text-[12px] text-ink-3">{t(`fin.pnl.class.${c.pnlClass}` as TranslationKey)}</span>
             <RowMenu items={[
               { label: t('fin.editCategory'), icon: <Pencil size={16} />, onClick: () => setEditing({ type, c }) },

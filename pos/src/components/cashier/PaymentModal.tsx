@@ -127,7 +127,7 @@ export function PaymentModal({ ctx, total, customerName, initial, busy, error, o
           <div className="text-[34px] font-extrabold tracking-tight">{tenge(total)}</div>
         </div>
 
-        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(104px,1fr))] gap-2">
           {tabs.map((m) => {
             const Icon = ICON[m]
             return (

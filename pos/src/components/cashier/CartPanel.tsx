@@ -123,7 +123,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
           {t('pos.pay', { sum: tenge(sum.total) })}
         </Button>
         {quick.length > 0 && (
-          <div className="mt-2 grid gap-2" style={{ gridTemplateColumns: `repeat(${quick.length}, minmax(0, 1fr))` }}>
+          <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(118px,1fr))] gap-2">
             {quick.map((m) => {
               const Icon = QUICK_ICON[m]
               return (

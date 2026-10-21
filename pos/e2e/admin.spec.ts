@@ -16,6 +16,9 @@ test('admin sections and their forms', async ({ page }) => {
   }
   await page.goto(`${ADMIN_URL}/plans`)
   await checkDialog(page, page.getByRole('button', { name: 'Изменить' }).first(), 'admin /plans › Изменить тариф')
+  // Телефонда бүйір мәзір жабық — алдымен ашамыз.
+  const menu = page.getByRole('button', { name: 'Меню', exact: true }).first()
+  if (await menu.isVisible()) await menu.click()
   await checkDialog(page, page.getByRole('button', { name: 'Сменить пароль' }), 'admin › Сменить пароль')
 
   await page.goto(`${ADMIN_URL}/leads`)

@@ -134,7 +134,7 @@ function ExpiryForm({ s, canEdit, statuses, onSaved }: { s: ExpirySettings; canE
     <fieldset disabled={!canEdit} className="flex flex-col gap-4">
       <Toggle checked={f.enabled} onChange={(v) => patch({ enabled: v })} label={t('bon.exp.enabled')} />
       <Field label={t('bon.exp.validity')} hint={t('bon.exp.fromAccrual')}>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Input className="w-24" inputMode="numeric" value={f.value} onChange={(e) => patch({ value: Number(e.target.value.replace(/\D/g, '')) || 1 })} />
           <Select value={f.unit} onChange={(e) => patch({ unit: e.target.value as 'Days' | 'Months' })} className="flex-1">
             <option value="Months">{t('bon.exp.months')}</option>

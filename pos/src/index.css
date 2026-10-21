@@ -29,6 +29,13 @@ body,
 #root {
   height: 100%;
 }
+/* Телефон браузерінде мекенжай жолағы жиналғанда биіктік өзгереді — dvh оны ескереді. */
+@supports (height: 100dvh) {
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
 
 body {
   margin: 0;
@@ -43,6 +50,15 @@ body {
  * мәтін сыймаса — көп нүкте. Толтыру (padding) Tailwind утилиталарымен береледі (pl-3.5 pr-9).
  */
 @layer components {
+  /* Өріс қарпі: 15px, телефонда 14px (ұзын нұсқалар карточкаға сияды). Сырттан берілген text-[..] утилитасы басым. */
+  .salem-control {
+    font-size: 15px;
+  }
+  @media (max-width: 639px) {
+    .salem-control {
+      font-size: 14px;
+    }
+  }
   .salem-select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6576' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
@@ -93,4 +109,19 @@ body {
 }
 .scroll-dark::-webkit-scrollbar-thumb:hover {
   background-color: rgb(255 255 255 / 0.32);
+}
+
+/*
+ * Кестедегі әрекет бағаны («⋮» мәзірі) тар экранда да көрінеді: кесте көлденең айналғанда соңғы баған оң жақта тұрады.
+ * Телефон мен планшетте мәзірге жету үшін жолды соңына дейін айналдыру керек болмайды.
+ */
+@layer components {
+  .overflow-x-auto > table > tbody > tr > td:last-child:has(> button[aria-label="Menu"]),
+  .overflow-x-auto > table > tbody > tr > td:last-child:has(> div > button[aria-label="Menu"]),
+  .overflow-x-auto > table > thead > tr > th:last-child {
+    position: sticky;
+    right: 0;
+    background: var(--color-surface);
+    box-shadow: -8px 0 8px -8px rgb(11 18 32 / 0.12);
+  }
 }

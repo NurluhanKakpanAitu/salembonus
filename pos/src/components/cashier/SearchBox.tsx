@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Barcode, Search, X } from 'lucide-react'
+import { useFitPlaceholder } from '../ui/SearchInput'
 import { cashierApi } from '../../lib/cashierApi'
 import type { CashierProduct } from '../../lib/cashierTypes'
 import { tenge } from '../../lib/money'
@@ -37,6 +38,7 @@ export function SearchBox({ onAdd, onShowAll, onScan }: {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const ref = useRef<HTMLDivElement>(null)
+  const searchPlaceholder = useFitPlaceholder(t('pos.searchPlaceholder'), ref, 140)
   const input = useRef<HTMLInputElement>(null)
   const term = useDebounced(q.trim(), 250)
 
@@ -81,12 +83,12 @@ export function SearchBox({ onAdd, onShowAll, onScan }: {
   }
 
   return (
-    <div ref={ref} className="relative min-w-0 flex-1">
+    <div ref={ref} className="relative min-w-[220px] flex-1 basis-60">
       <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
       <input ref={input} value={q} data-pos-search
         onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(0) }}
         onFocus={() => setOpen(true)} onKeyDown={(e) => void onKeyDown(e)}
-        placeholder={t('pos.searchPlaceholder')}
+        placeholder={searchPlaceholder}
         className="h-11 w-full rounded-xl border border-line bg-surface pl-10 pr-20 text-[15px] outline-none focus:border-brand" />
       <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1 text-ink-3">
         {q && <button type="button" aria-label="Clear" onClick={reset} className="flex size-8 items-center justify-center rounded-lg hover:bg-field"><X size={16} /></button>}

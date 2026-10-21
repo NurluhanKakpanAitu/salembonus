@@ -138,7 +138,7 @@ export function ProductListTab() {
         <SearchInput className="w-full sm:w-80" value={search} onChange={setSearch} placeholder={t('product.search')} />
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4 xl:flex xl:items-center">
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:flex xl:items-center">
         <Select className="xl:w-auto xl:min-w-44" value={statusParam} onChange={(e) => update({ status: e.target.value === 'Active' ? '' : e.target.value })}>
           <option value="Active">{t('product.filter.active')}</option>
           <option value="Archived">{t('product.filter.archived')}</option>
