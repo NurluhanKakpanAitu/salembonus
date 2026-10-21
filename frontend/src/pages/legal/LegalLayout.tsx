@@ -17,7 +17,7 @@ export function LegalLayout({ title, updated, children }: {
   const t = useT()
 
   return (
-    <div className="mx-auto min-h-dvh w-full max-w-[720px] px-4 pb-12 pt-6">
+    <div className="mx-auto min-h-dvh w-full max-w-[720px] px-4 pb-[max(48px,env(safe-area-inset-bottom))] pt-[max(24px,env(safe-area-inset-top))]">
       <Link to="/" className="inline-flex items-center gap-2.5">
         <LogoMark size={34} />
         <span className="text-[17px] font-extrabold">SalemBonus</span>

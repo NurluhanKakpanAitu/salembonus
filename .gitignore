@@ -25,6 +25,7 @@ pos/dist/
 !.env.example
 !.env.prod.example
 !.env.production
+!.env.native
 
 # OS
 .DS_Store

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Coins, Globe, Info, LogOut, MessageCircleMore, Palette, Pencil, ShoppingBag, Trash2, User } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -28,6 +28,14 @@ export function ProfilePage() {
   const deleteMe = useDeleteMe()
   const navigate = useNavigate()
   const qc = useQueryClient()
+
+  // Escape (және Android-тың «артқа» батырмасы) растау терезесін жабады — өшіру жүріп жатпаса.
+  useEffect(() => {
+    if (sheet !== 'delete') return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !deleteMe.isPending && setSheet(null)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [sheet, deleteMe.isPending])
 
   const logout = async () => {
     const { refreshToken, clear } = useAuth.getState()

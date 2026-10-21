@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import jsQR from 'jsqr'
 import { Keyboard, X } from 'lucide-react'
 import { useT } from '../../lib/i18n'
+import { hapticSuccess } from '../../lib/native'
 
 type Mode = 'camera' | 'manual'
 
@@ -61,7 +62,7 @@ export function QrScanner({
       const result = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' })
       if (result?.data) {
         detectedRef.current = true
-        navigator.vibrate?.(60)
+        hapticSuccess()
         onDetect(result.data.trim())
       }
     }
@@ -100,10 +101,18 @@ export function QrScanner({
     if (error) detectedRef.current = false
   }, [error])
 
+  // Escape (және Android-тың «артқа» батырмасы) сканерді жабады.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black">
+    <div className="fixed inset-0 z-50 flex flex-col bg-black" role="dialog" aria-modal="true">
       <div className="flex items-center justify-between px-4 pt-[max(16px,env(safe-area-inset-top))] text-white">
         <div className="text-[15px] font-semibold">{t('scan.title')}</div>
         <button type="button" aria-label={t('common.close')} onClick={onClose} className="flex size-10 items-center justify-center rounded-full bg-white/15">

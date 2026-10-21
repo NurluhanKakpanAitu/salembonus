@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { useMe, useQr } from '../lib/queries'
 import { LogoMark } from './Brand'
 import { useT } from '../lib/i18n'
+import { boostBrightness } from '../lib/native'
 
 /** Кассада көрсетілетін QR коды. Төменнен шығатын парақ. */
 export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: () => void; storeName?: string }) {
@@ -21,6 +22,10 @@ export function QrSheet({ open, onClose, storeName }: { open: boolean; onClose: 
       document.body.style.overflow = ''
     }
   }, [open, onClose])
+
+  // Қосымшада экран жарықтанады: касса сканері күңгірт экранды нашар оқиды.
+  // Тек open-ға тәуелді — onClose әр рендерде жаңа болса да жарықтық жыпылықтамайды.
+  useEffect(() => (open ? boostBrightness() : undefined), [open])
 
   if (!open) return null
 

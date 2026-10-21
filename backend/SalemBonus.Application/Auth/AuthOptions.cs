@@ -12,4 +12,10 @@ public class AuthOptions
     public bool ReturnCodeInResponse { get; set; }
     /// <summary>Демо үшін тұрақты код (мысалы "1234"). Бос болса кездейсоқ код жасалады. Продакшнда бос болуы керек.</summary>
     public string? StaticOtpCode { get; set; }
+    /// <summary>
+    /// App Store мен Google Play тексерушісінің нөмірі: оған SMS жіберілмейді, кіру коды — <see cref="ReviewCode"/>.
+    /// Тексерушілер қазақстандық нөмірге SMS ала алмайды. Екеуі де толса ғана жұмыс істейді.
+    /// </summary>
+    public string? ReviewPhone { get; set; }
+    public string? ReviewCode { get; set; }
 }

@@ -16,6 +16,7 @@ const kk = {
   'common.all': 'Барлығы',
   'common.more': 'Толығырақ',
   'common.today': 'Бүгін',
+  'offline.banner': 'Интернет жоқ — деректер жаңармайды',
   'common.yesterday': 'Кеше',
 
   // Навигация
@@ -272,6 +273,7 @@ const ru: Record<TranslationKey, string> = {
   'common.all': 'Все',
   'common.more': 'Подробнее',
   'common.today': 'Сегодня',
+  'offline.banner': 'Нет интернета — данные не обновляются',
   'common.yesterday': 'Вчера',
 
   'tab.home': 'Главная',

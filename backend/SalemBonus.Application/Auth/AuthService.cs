@@ -34,7 +34,9 @@ public class AuthService(
             throw new ValidationException(Messages.CodeRetryAfter(Lang, wait));
         }
 
-        var code = string.IsNullOrWhiteSpace(_opt.StaticOtpCode) ? GenerateCode(_opt.OtpLength) : _opt.StaticOtpCode.Trim();
+        var isReview = IsReviewPhone(phone);
+        var code = isReview ? _opt.ReviewCode!.Trim()
+            : string.IsNullOrWhiteSpace(_opt.StaticOtpCode) ? GenerateCode(_opt.OtpLength) : _opt.StaticOtpCode.Trim();
         otps.Add(new OtpCode
         {
             Id = Guid.NewGuid(),
@@ -45,11 +47,16 @@ public class AuthService(
         });
         await unitOfWork.SaveChangesAsync(ct);
 
-        await sms.SendAsync(phone, $"SalemBonus: кіру коды {code}. Ешкімге айтпаңыз.", ct);
+        if (!isReview)
+            await sms.SendAsync(phone, $"SalemBonus: кіру коды {code}. Ешкімге айтпаңыз.", ct);
 
         return new RequestCodeResult(phone, _opt.OtpLifetimeSeconds, _opt.OtpResendSeconds,
-            _opt.ReturnCodeInResponse ? code : null);
+            _opt.ReturnCodeInResponse && !isReview ? code : null);
     }
+
+    private bool IsReviewPhone(string phone) =>
+        !string.IsNullOrWhiteSpace(_opt.ReviewPhone) && !string.IsNullOrWhiteSpace(_opt.ReviewCode)
+        && BonusRules.LooksLikePhone(_opt.ReviewPhone) && BonusRules.NormalizePhone(_opt.ReviewPhone) == phone;
 
     public async Task<AuthTokens> VerifyCodeAsync(VerifyCodeRequest request, CancellationToken ct = default)
     {

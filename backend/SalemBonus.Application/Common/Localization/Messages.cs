@@ -81,6 +81,10 @@ public static class Messages
         "Тұтынушы табылмады",
         "Клиент не найден");
 
+    public static string DeleteBlockedByDebt(AppLanguage l, string stores) => Pick(l,
+        $"Аккаунтты өшіру үшін алдымен қарызды өтеңіз: {stores}",
+        $"Чтобы удалить аккаунт, сначала погасите долг: {stores}");
+
     // Дүкендер
     public static string StoreNotFound(AppLanguage l) => Pick(l,
         "Дүкен табылмады",

@@ -19,8 +19,14 @@ public class CustomerService(
 
     public const string QrPrefix = "SB:";
 
-    public Task DeleteMeAsync(CancellationToken ct = default) =>
-        customers.DeleteAsync(currentUser.CustomerId, ct);
+    public async Task DeleteMeAsync(CancellationToken ct = default)
+    {
+        // Өтелмеген қарыз — дүкен алдындағы міндет: аккаунт өшсе, дүкен кімнен сұрарын білмей қалады.
+        var debtStores = await customers.GetOpenDebtStoresAsync(currentUser.CustomerId, ct);
+        if (debtStores.Count > 0)
+            throw new ValidationException(Messages.DeleteBlockedByDebt(Lang, string.Join(", ", debtStores)));
+        await customers.DeleteAsync(currentUser.CustomerId, ct);
+    }
 
     public async Task<CustomerDto?> GetMeAsync(CancellationToken ct = default)
     {

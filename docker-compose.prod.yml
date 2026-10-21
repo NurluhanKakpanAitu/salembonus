@@ -32,6 +32,9 @@ services:
       Cors__Origins__0: https://salembonus.kz
       Cors__Origins__1: https://www.salembonus.kz
       Auth__StaticOtpCode: ${STATIC_OTP_CODE:-}
+      # App Store / Google Play тексерушісі: тек осы нөмірге тұрақты код, SMS жіберілмейді.
+      Auth__ReviewPhone: ${REVIEW_PHONE:-}
+      Auth__ReviewCode: ${REVIEW_CODE:-}
       # SalemPos суреттері (Cloudflare R2). Токен тек salem-media бакетіне шектелген болсын.
       R2__AccountId: ${R2_ACCOUNT_ID:-}
       R2__Bucket: ${R2_BUCKET:-}

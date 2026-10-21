@@ -4,11 +4,14 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
     VitePWA({
+      // App Store / Google Play қосымшасында (`--mode native`) service worker керек емес: бет құрылғыдан ашылады,
+      // ал iOS-тың capacitor:// схемасы service worker-ді мүлде қолдамайды.
+      disable: mode === 'native',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/*.png'],
       manifest: {
@@ -45,4 +48,4 @@ export default defineConfig({
       '/api': { target: 'http://localhost:5113', changeOrigin: true },
     },
   },
-})
+}))

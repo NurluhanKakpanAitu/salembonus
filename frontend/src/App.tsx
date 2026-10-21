@@ -18,33 +18,37 @@ import { WelcomePage } from './pages/auth/WelcomePage'
 import { PrivacyPage } from './pages/legal/PrivacyPage'
 import { TermsPage } from './pages/legal/TermsPage'
 import { DeleteAccountPage } from './pages/legal/DeleteAccountPage'
+import { NativeShell } from './components/NativeShell'
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="login" element={<LoginPage />} />
-      <Route path="verify" element={<VerifyPage />} />
-      {/* Құқықтық беттер кіруді талап етпейді: дүкендер оларды сырттан ашады. */}
-      <Route path="privacy" element={<PrivacyPage />} />
-      <Route path="terms" element={<TermsPage />} />
-      <Route path="delete-account" element={<DeleteAccountPage />} />
-      <Route element={<RequireAuth />}>
-        <Route path="welcome" element={<WelcomePage />} />
-        <Route element={<AppShell />}>
-          <Route index element={<HomePage />} />
-          <Route path="cards" element={<CardsPage />} />
-          <Route path="cards/:storeId" element={<CardDetailPage />} />
-          <Route path="transactions" element={<TransactionsPage />} />
-          <Route path="stores" element={<StoresPage />} />
-          <Route path="stores/:storeId" element={<StorePage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="notifications/:source" element={<NotificationStorePage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="profile/edit" element={<ProfileEditPage />} />
-          <Route path="about" element={<AboutPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+    <>
+      <NativeShell />
+      <Routes>
+        <Route path="login" element={<LoginPage />} />
+        <Route path="verify" element={<VerifyPage />} />
+        {/* Құқықтық беттер кіруді талап етпейді: дүкендер оларды сырттан ашады. */}
+        <Route path="privacy" element={<PrivacyPage />} />
+        <Route path="terms" element={<TermsPage />} />
+        <Route path="delete-account" element={<DeleteAccountPage />} />
+        <Route element={<RequireAuth />}>
+          <Route path="welcome" element={<WelcomePage />} />
+          <Route element={<AppShell />}>
+            <Route index element={<HomePage />} />
+            <Route path="cards" element={<CardsPage />} />
+            <Route path="cards/:storeId" element={<CardDetailPage />} />
+            <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="stores" element={<StoresPage />} />
+            <Route path="stores/:storeId" element={<StorePage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="notifications/:source" element={<NotificationStorePage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="profile/edit" element={<ProfileEditPage />} />
+            <Route path="about" element={<AboutPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </>
   )
 }

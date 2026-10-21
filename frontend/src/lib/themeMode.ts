@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { syncSystemBars } from './native'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
@@ -29,6 +30,7 @@ function apply() {
   document.documentElement.dataset.theme = theme
   const meta = document.querySelector('meta[name="theme-color"]')
   if (meta) meta.setAttribute('content', theme === 'dark' ? '#0f1116' : '#0a84f8')
+  syncSystemBars()
 }
 
 export function setThemeMode(mode: ThemeMode) {

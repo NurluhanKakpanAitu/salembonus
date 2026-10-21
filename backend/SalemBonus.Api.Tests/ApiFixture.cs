@@ -44,6 +44,10 @@ public sealed class ApiFixture : IAsyncLifetime
         Environment.SetEnvironmentVariable("Jwt__Key", "integration-tests-signing-key-0123456789-abcdefghij");
         // Тест шығысы SQL логына толмасын: тек ескерту мен қате.
         Environment.SetEnvironmentVariable("Logging__LogLevel__Default", "Warning");
+        // SalemBonus қосымшасының кіруі: SMS коды жауапта қайтады; дүкен тексерушісінің нөмірі — тұрақты кодпен.
+        Environment.SetEnvironmentVariable("Auth__ReturnCodeInResponse", "true");
+        Environment.SetEnvironmentVariable("Auth__ReviewPhone", ReviewPhone);
+        Environment.SetEnvironmentVariable("Auth__ReviewCode", ReviewCode);
 
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
         {
@@ -94,6 +98,32 @@ public sealed class ApiFixture : IAsyncLifetime
         var res = await http.PostAsJsonAsync("/api/staff/v1/auth/login", new { phone, password });
         res.EnsureSuccessStatusCode();
         return (await res.Content.ReadFromJsonAsync<JsonObject>())!["accessToken"]!.GetValue<string>();
+    }
+
+    public const string ReviewPhone = "+77000000099";
+    public const string ReviewCode = "2468";
+
+    /// <summary>SalemBonus қосымшасы (PWA не App Store / Google Play): cookie-сіз, тек Bearer токен.</summary>
+    public HttpClient NewAppClient() =>
+        _factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), HandleCookies = false });
+
+    /// <summary>Клиент қосымшаға SMS кодымен кіреді (тесттерде код жауапта қайтады). Нәтиже — verify жауабы.</summary>
+    public static async Task<JsonObject> AppLoginAsync(HttpClient http, string phone, string? code = null)
+    {
+        var requested = await http.PostAsJsonAsync("/api/auth/request-code", new { phone });
+        requested.EnsureSuccessStatusCode();
+        code ??= (await requested.Content.ReadFromJsonAsync<JsonObject>())!["devCode"]!.GetValue<string>();
+        var verified = await http.PostAsJsonAsync("/api/auth/verify", new { phone, code, device = "tests" });
+        verified.EnsureSuccessStatusCode();
+        return (await verified.Content.ReadFromJsonAsync<JsonObject>())!;
+    }
+
+    /// <summary>Бір мәнді SQL сұрауы (бағанның аты "Value" болуы керек): API көрсетпейтін күйді тексеру үшін.</summary>
+    public async Task<T> ScalarAsync<T>(string sql)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        return await db.Database.SqlQueryRaw<T>(sql).SingleAsync();
     }
 
     /// <summary>Тестке дерек дайындау: мысалы, сатылымды «өткен айға» жылжыту (API бұған жол бермейді — дұрыс та).</summary>

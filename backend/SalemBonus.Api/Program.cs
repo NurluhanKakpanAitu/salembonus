@@ -99,9 +99,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCors, policy => policy
-        .WithOrigins(
-            builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
-            ?? ["http://localhost:5173"])
+        .WithOrigins([
+            .. builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? ["http://localhost:5173"],
+            // App Store / Google Play қосымшасы (Capacitor): iOS — capacitor://localhost, Android — https://localhost.
+            // Бөлек кілт: орта айнымалылары Cors__Origins__N-ді ауыстырғанда бұлар өшіп қалмайды.
+            .. builder.Configuration.GetSection("Cors:AppOrigins").Get<string[]>() ?? [],
+        ])
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials());
