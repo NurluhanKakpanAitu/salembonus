@@ -95,7 +95,9 @@ public record ReceiptDto(
     string Status,
     decimal ReturnedAmount,
     ReceiptDebtDto? Debt,
-    IReadOnlyList<ReceiptReturnDto> Returns);
+    IReadOnlyList<ReceiptReturnDto> Returns,
+    /// <summary>Чек үлгісі (Настройка → Оплата и чек): реквизиттер мен мәтіндер; бос болса — көрсетілмейді.</summary>
+    string? StoreAddress = null, string? StorePhone = null, string? StoreBin = null, string? Header = null, string? Footer = null);
 
 /// <summary>Чектер тізімі — тек қысқа мәлімет (ТЗ §12.2: жеңілдік/бонус/қайтарыммен толтырмау).</summary>
 public record SaleListItemDto(Guid Id, long Number, DateTime CreatedAt, string? CustomerName, decimal Total,

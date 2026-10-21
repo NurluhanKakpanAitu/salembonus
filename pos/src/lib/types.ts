@@ -22,7 +22,7 @@ export interface StaffMe {
   /** Құпиясөз бар ма. Кассирде жоқ: «сменить пароль» көрсетілмейді, PIN қазіргі PIN-мен ауысады. */
   hasPassword: boolean
   /** Кіргеннен кейінгі бет: иесі — статистика, кассир — касса. */
-  startPage: 'statistics' | 'cashier'
+  startPage: 'statistics' | 'cashier' | 'products' | 'sales' | 'warehouse' | 'finance' | 'bonus' | 'clients' | 'staff' | 'settings'
 }
 
 export interface StaffSession {
@@ -70,6 +70,13 @@ export const Permission = {
   InventoryWriteOff: 'inventory.writeoff',
   InventoryWarehouses: 'inventory.warehouses',
   InventorySuppliers: 'inventory.suppliers',
+  ProductsCreate: 'products.create',
+  CatalogStructure: 'catalog.structure',
+  CatalogLifecycle: 'catalog.lifecycle',
+  CatalogDictionaries: 'catalog.dictionaries',
+  SalesDebt: 'sales.debt',
+  SalesNegativeStock: 'sales.negative_stock',
+  DiscountApprove: 'discount.approve',
 } as const
 
 export interface PasswordPolicy {

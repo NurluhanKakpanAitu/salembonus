@@ -21,6 +21,7 @@ public class StaffAuthController(
     IStaffAuthService auth,
     IStaffPasswordResetService reset,
     IStaffCredentialsService credentials,
+    SalemBonus.Application.Pos.Staff.StaffManagementService staffManagement,
     IWebHostEnvironment env) : ControllerBase
 {
     /// <summary>Телефон + құпиясөз.</summary>
@@ -73,6 +74,29 @@ public class StaffAuthController(
     [Authorize(Policy = StaffAuth.Policy)]
     public async Task<ActionResult<StaffMeDto>> Me(CancellationToken ct) =>
         Ok(await auth.GetMeAsync(ct));
+
+    /// <summary>Өз ашық сеанстарым («Настройка → Безопасность»): құрылғысы, қашан кірген, осы сеанс па.</summary>
+    [HttpGet("me/sessions")]
+    [Authorize(Policy = StaffAuth.Policy)]
+    public async Task<ActionResult<IReadOnlyList<SalemBonus.Application.Pos.Staff.StaffSessionDto>>> MySessions(CancellationToken ct) =>
+        Ok(await staffManagement.MySessionsAsync(TerminalRefreshToken ?? Request.Cookies[StaffAuth.RefreshCookie], ct));
+
+    [HttpDelete("me/sessions/{id:guid}")]
+    [Authorize(Policy = StaffAuth.Policy)]
+    public async Task<IActionResult> RevokeMySession(Guid id, CancellationToken ct)
+    {
+        await staffManagement.RevokeMySessionAsync(id, ct);
+        return NoContent();
+    }
+
+    /// <summary>Басқа құрылғылардан шығу — осы сеанс қалады.</summary>
+    [HttpPost("me/sessions/revoke-others")]
+    [Authorize(Policy = StaffAuth.Policy)]
+    public async Task<IActionResult> RevokeOtherSessions(CancellationToken ct)
+    {
+        await staffManagement.RevokeOtherSessionsAsync(TerminalRefreshToken ?? Request.Cookies[StaffAuth.RefreshCookie], ct);
+        return NoContent();
+    }
 
     /// <summary>Интерфейс тілін сақтау — келесі кіргенде сол тілде ашылады (ТЗ §15).</summary>
     [HttpPut("me/language")]

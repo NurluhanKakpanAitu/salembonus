@@ -108,6 +108,8 @@ public class StoreCashierSettingsConfiguration : IEntityTypeConfiguration<StoreC
                 v => v.Select(Enum.Parse<PaymentMethod>).ToList(),
                 new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<PaymentMethod>>(
                     (a, c) => a!.SequenceEqual(c!), v => v.Aggregate(0, (h, m) => HashCode.Combine(h, m)), v => v.ToList()));
+        b.Property(x => x.ReceiptHeader).HasMaxLength(300);
+        b.Property(x => x.ReceiptFooter).HasMaxLength(300);
         b.HasOne<Store>().WithMany().HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Cascade);
     }
 }

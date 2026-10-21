@@ -29,7 +29,10 @@ export function receiptHtml(r: Receipt, t: Translator) {
     table { width: 100%; border-collapse: collapse } td { padding: 1px 0; vertical-align: top } .r { text-align: right; white-space: nowrap }
     hr { border: 0; border-top: 1px dashed #000; margin: 6px 0 } .total td { font-size: 16px; font-weight: 700; padding-top: 4px }
   </style></head><body>
+    ${r.header ? `<div class="c muted">${esc(r.header)}</div>` : ''}
     <h1>${esc(r.storeName)}</h1>
+    ${r.storeAddress ? `<div class="c muted">${esc(r.storeAddress)}</div>` : ''}
+    ${r.storePhone || r.storeBin ? `<div class="c muted">${[r.storePhone ? esc(r.storePhone) : '', r.storeBin ? `${t('receipt.bin')} ${esc(r.storeBin)}` : ''].filter(Boolean).join(' · ')}</div>` : ''}
     <div class="c">${t('pos.receiptNo', { n: r.number })}</div>
     <div class="c muted">${dateTime(r.createdAt)} · ${esc(r.registerName)}</div>
     <div class="c muted">${t('receipt.cashier')}: ${esc(r.cashierName)}</div>
@@ -43,7 +46,7 @@ export function receiptHtml(r: Receipt, t: Translator) {
     </table>
     ${r.customer ? `<hr><div>${t('pos.customer')}: ${esc(r.customer.fullName)}</div><div class="muted">${t('pos.accrued')}: +${num(r.bonusAccrued)} Б</div>` : ''}
     ${r.returnedAmount > 0 ? `<hr><div>${t('receipt.returned')}: ${tenge(r.returnedAmount)}</div>` : ''}
-    <hr><div class="c">${t('receipt.thanks')}</div>
+    <hr><div class="c">${r.footer ? esc(r.footer) : t('receipt.thanks')}</div>
   </body></html>`
   return html
 }

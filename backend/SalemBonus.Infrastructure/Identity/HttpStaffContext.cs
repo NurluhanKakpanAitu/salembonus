@@ -73,7 +73,8 @@ public class HttpStoreContext(
         else
         {
             var user = await staff.GetByIdAsync(staffId, ct);
-            membership = user?.Memberships
+            // Өшірілген қызметкердің access токені әлі жарамды болуы мүмкін — дүкенге жібермейміз.
+            membership = user is not { IsActive: true } ? null : user.Memberships
                 .Where(m => m.IsActive && m.Store is { IsActive: true })
                 .OrderBy(m => m.Store!.Name)
                 .FirstOrDefault();

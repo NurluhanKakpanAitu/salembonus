@@ -91,6 +91,12 @@ export interface Receipt {
   returnedAmount: number
   debt: { id: string; amount: number; paid: number; remaining: number; dueDate: string; status: DebtStatus; comment: string | null } | null
   returns: ReceiptReturn[]
+  /** Чек үлгісі (Настройка → Оплата и чек): бос болса көрсетілмейді. */
+  storeAddress?: string | null
+  storePhone?: string | null
+  storeBin?: string | null
+  header?: string | null
+  footer?: string | null
 }
 
 export type SaleStatus = 'Completed' | 'PartiallyReturned' | 'Returned'

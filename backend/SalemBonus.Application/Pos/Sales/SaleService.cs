@@ -32,6 +32,7 @@ public class SaleService(
     Finance.FinanceLedger finance,
     StoreNotifier notifier,
     CatalogAccess access,
+    IPlatformRepository platform,
     IUnitOfWork unitOfWork)
 {
     public const int MaxLines = 200;
@@ -342,6 +343,8 @@ public class SaleService(
             customerDto = new ReceiptCustomerDto(c.Id, c.FullName, c.Phone, card?.Balance);
         }
 
+        var settings = await sales.GetSettingsAsync(sale.StoreId, ct);
+        var org = store?.OrganizationId is { } orgId ? await platform.OrganizationAsync(orgId, ct) : null;
         return new ReceiptDto(
             sale.Id, sale.Number, sale.CreatedAt, store?.Name ?? string.Empty, registerName,
             cashierUser is null ? string.Empty : $"{cashierUser.FirstName} {cashierUser.LastName}".Trim(),
@@ -354,7 +357,11 @@ public class SaleService(
             sale.Status.ToString(), sale.ReturnedAmount,
             await sales.GetDebtBySaleAsync(sale.Id, ct) is { } d
                 ? new ReceiptDebtDto(d.Id, d.Amount, d.Paid, d.Remaining, d.DueDate, d.Status.ToString(), d.Comment) : null,
-            await ReturnsAsync(sale.Id, ct));
+            await ReturnsAsync(sale.Id, ct),
+            settings is null or { ReceiptShowAddress: true } ? store?.Address : null,
+            settings is null or { ReceiptShowPhone: true } ? store?.Phone : null,
+            settings is { ReceiptShowBin: true } ? org?.Bin : null,
+            settings?.ReceiptHeader, settings?.ReceiptFooter);
     }
 
     private async Task<IReadOnlyList<ReceiptReturnDto>> ReturnsAsync(Guid saleId, CancellationToken ct)

@@ -138,37 +138,18 @@ public class PlatformBusinessService(PlatformAccess access, IPlatformRepository 
         return phone;
     }
 
-    private const string CodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-    /// <summary>Жаңа дүкен: SalemBonus кілттері (терминал API кілті, клиенттің қосылу коды), әдепкі бонус баспалдағы, «Касса №1».</summary>
+    /// <summary>Жаңа дүкен (<see cref="StoreFactory"/>): SalemBonus кілттері, әдепкі бонус баспалдағы, «Касса №1».</summary>
     private async Task<Store> NewStoreAsync(Guid orgId, CreateStoreRequest? r, string fallbackName, CancellationToken ct)
     {
         var name = CatalogAccess.Optional(r?.Name, 200) ?? fallbackName;
         if (name.Length < 2) throw new ValidationException(Messages.BusinessStoreRequired(Lang), "store.name");
-        var timeZone = CatalogAccess.Optional(r?.TimeZone, 64) ?? "Asia/Almaty";
-        try { TimeZoneInfo.FindSystemTimeZoneById(timeZone); }
-        catch (TimeZoneNotFoundException) { throw new ValidationException(Messages.BusinessTimeZoneInvalid(Lang), "store.timeZone"); }
-        string code;
-        do code = new string(Enumerable.Range(0, 7).Select(_ => CodeChars[RandomNumberGenerator.GetInt32(CodeChars.Length)]).ToArray());
-        while (await repo.JoinCodeExistsAsync(code, ct));
-        var store = new Store
-        {
-            Id = Guid.NewGuid(), Name = name, Category = CatalogAccess.Optional(r?.Category, 100) ?? "Магазин", Description = string.Empty, CashbackPercent = 2,
-            Address = CatalogAccess.Optional(r?.Address, 300), Phone = CatalogAccess.Optional(r?.Phone, 30), KatoCode = CatalogAccess.Optional(r?.KatoCode, 9),
-            TimeZone = timeZone, ApiKey = "sk_live_" + Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant(), JoinCode = code,
-            OrganizationId = orgId, MaxRedeemPercent = 30, BonusLifetimeDays = 365, CreatedAt = DateTime.UtcNow,
-            Levels =
-            [
-                Level(CustomerLevel.New, 0, 2), Level(CustomerLevel.Regular, 50_000, 4), Level(CustomerLevel.Favorite, 150_000, 6), Level(CustomerLevel.Vip, 400_000, 8),
-            ],
-        };
+        var timeZone = StoreFactory.TimeZone(r?.TimeZone) ?? throw new ValidationException(Messages.BusinessTimeZoneInvalid(Lang), "store.timeZone");
+        var store = StoreFactory.New(orgId, name, CatalogAccess.Optional(r?.Category, 100), CatalogAccess.Optional(r?.Address, 300),
+            CatalogAccess.Optional(r?.Phone, 30), CatalogAccess.Optional(r?.KatoCode, 9), timeZone, await StoreFactory.NewJoinCodeAsync(repo, ct));
         repo.AddStore(store);
         await repo.EnsureStoreDefaultsAsync(orgId, store.Id, ct);
         return store;
     }
-
-    private static StoreLevel Level(CustomerLevel level, decimal from, decimal percent) =>
-        new() { Id = Guid.NewGuid(), Level = level, FromAmount = from, CashbackPercent = percent };
 
     private async Task<(StaffUser User, string Password)> NewAccountAsync(Guid orgId, CreateAccountRequest? r, IReadOnlyList<Guid> storeIds, Guid defaultStore,
         CancellationToken ct, string field = "owner")

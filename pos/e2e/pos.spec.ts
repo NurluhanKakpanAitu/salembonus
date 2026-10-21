@@ -14,6 +14,8 @@ const PAGES = [
   '/finance/customer-debts', '/finance/supplier-debts', '/finance/documents', '/finance/documents?view=reports',
   '/bonus', '/bonus/statuses', '/bonus/expiry', '/bonus/birthday', '/bonus/campaigns', '/bonus/statistics', '/bonus/history', '/bonus/rules',
   '/clients', '/clients/overview', '/clients/segments', '/clients/debts', '/clients/activity', '/clients/birthdays', '/clients/exchange', '/clients/settings',
+  '/staff', '/staff?new=1',
+  '/settings', '/settings/stores', '/settings/registers', '/settings/payments', '/settings/notifications', '/settings/security', '/settings/audit', '/settings/plan',
 ]
 
 type L = { ru: string; kk: string }
@@ -75,6 +77,11 @@ const OPENERS: Opener[] = [
   { path: '/clients', open: l('Добавить клиента', 'Клиент қосу') },
   { path: '/clients', open: l('Фильтры', 'Сүзгілер') },
   { path: '/clients/segments', open: l('Новый сегмент', 'Жаңа сегмент') },
+  { path: '/staff', open: l('Добавить сотрудника', 'Қызметкер қосу') },
+  { path: '/settings/stores', open: l('Добавить магазин', 'Дүкен қосу') },
+  { path: '/settings/registers', open: l('Добавить кассу', 'Касса қосу') },
+  { path: '/settings/payments', open: l('Добавить реквизит', 'Реквизит қосу') },
+  { path: '/settings/security', open: l('Изменить', 'Өзгерту') },
 ]
 
 /** Мәзір/батырманы басып, ашылғанын тексеріп, жабу. */

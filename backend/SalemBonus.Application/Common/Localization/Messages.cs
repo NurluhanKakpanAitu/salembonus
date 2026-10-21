@@ -759,6 +759,23 @@ public static class Messages
     public static string LeadStatusInvalid(AppLanguage l) => Pick(l, "Өтінім күйі белгісіз", "Неизвестный статус заявки");
     public static string PlatformPaymentAlreadyVoided(AppLanguage l) => Pick(l, "Төлем бұрын жойылған", "Платёж уже аннулирован");
 
+    // «Сотрудники» мен «Настройка»
+    public static string StaffRoleInvalid(AppLanguage l) => Pick(l, "Рөл: иесі, әкімші не кассир", "Роль: владелец, администратор или кассир");
+    public static string StaffOwnerOnly(AppLanguage l) => Pick(l, "Иелерді тек иесі қоса не өзгерте алады", "Добавлять и изменять владельцев может только владелец");
+    public static string StaffSelfAccess(AppLanguage l) => Pick(l,
+        "Өз рөліңізді, дүкендеріңізді не рұқсаттарыңызды өзгертуге және өзіңізді өшіруге болмайды", "Нельзя изменить собственную роль, магазины или права и отключить себя");
+    public static string StaffLastOwner(AppLanguage l) => Pick(l, "Бұл — бизнестің соңғы белсенді иесі", "Это последний активный владелец бизнеса");
+    public static string StaffStoresRequired(AppLanguage l) => Pick(l, "Кемінде бір дүкен таңдаңыз", "Выберите хотя бы один магазин");
+    public static string StaffCashierNeedsPin(AppLanguage l) => Pick(l, "Кассирге PIN-код керек — онсыз кассаға кіре алмайды", "Кассиру нужен PIN-код — без него он не сможет войти в кассу");
+    public static string StaffPermissionUnknown(AppLanguage l, string p) => Pick(l, $"Белгісіз рұқсат: {p}", $"Неизвестное право: {p}");
+    public static string StaffSessionNotFound(AppLanguage l) => Pick(l, "Сеанс табылмады не бұрын жабылған", "Сеанс не найден или уже завершён");
+    public static string StaffHasNoPassword(AppLanguage l) => Pick(l, "Кассирде құпиясөз жоқ — оған PIN-код қойыңыз", "У кассира нет пароля — задайте ему PIN-код");
+    public static string StoreOwnerOnly(AppLanguage l) => Pick(l, "Дүкендер мен бизнес деректерін тек иесі өзгертеді", "Магазины и данные бизнеса меняет только владелец");
+    public static string StoreLastActive(AppLanguage l) => Pick(l, "Соңғы белсенді дүкенді өшіруге болмайды", "Нельзя отключить последний активный магазин");
+    public static string StoreCurrent(AppLanguage l) => Pick(l, "Ашық тұрған дүкенді өшіруге болмайды — алдымен басқасына ауысыңыз", "Нельзя отключить текущий магазин — сначала переключитесь на другой");
+    public static string RegisterLastActive(AppLanguage l) => Pick(l, "Соңғы белсенді кассаны өшіруге болмайды", "Нельзя отключить последнюю активную кассу");
+    public static string ReceiptTextTooLong(AppLanguage l) => Pick(l, "Чек мәтіні 300 таңбаға дейін", "Текст на чеке — до 300 символов");
+
     // Push-хабарлама құрылғысы
     public static string PushTokenInvalid(AppLanguage l) => Pick(l, "Құрылғы токені дұрыс емес", "Неверный токен устройства");
     public static string PushPlatformInvalid(AppLanguage l) => Pick(l, "Платформа android не ios болуы керек", "Платформа должна быть android или ios");

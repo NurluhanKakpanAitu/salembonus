@@ -155,6 +155,13 @@ public class StoreCashierSettings
     /// <summary>«Мало товара»: қалдық осыдан төмен түссе. Тауардың өз шегі кейін «Склад»-та.</summary>
     public int LowStockThreshold { get; set; } = 3;
 
+    // Чек үлгісі («Настройка → Оплата и чек»): жоғарғы/төменгі мәтін, дүкен реквизиттерін көрсету.
+    public string? ReceiptHeader { get; set; }
+    public string? ReceiptFooter { get; set; }
+    public bool ReceiptShowAddress { get; set; } = true;
+    public bool ReceiptShowPhone { get; set; } = true;
+    public bool ReceiptShowBin { get; set; }
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 

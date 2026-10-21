@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeftRight, Banknote, Cake, Calculator, ChartColumn, Crown, FileText, Gift, HandCoins, History, Landmark, LayoutDashboard, ListOrdered, Megaphone, Package,
   PieChart, ScrollText, Settings, ShoppingCart, Timer, TrendingUp, Truck, UserCog, Users, Wallet, Warehouse, Activity, FileUp, Layers, SlidersHorizontal,
+  Store, Building2, Monitor, CreditCard, Bell, ShieldCheck, BadgeCheck,
 } from 'lucide-react'
 import type { TranslationKey } from '../lib/i18n'
 import { Permission, type StaffRole, type StaffStore } from '../lib/types'
@@ -56,8 +57,20 @@ export const CLIENT_SECTIONS: SubNavItem[] = [
   { path: 'settings', label: 'cli.section.settings', icon: SlidersHorizontal },
 ]
 
+/** «Настройка» бөлімдері: дүкен, дүкендер, кассалар, төлем мен чек, хабарламалар, қауіпсіздік, журнал, тариф. */
+export const SETTINGS_SECTIONS: SubNavItem[] = [
+  { path: '', label: 'set.section.store', icon: Store },
+  { path: 'stores', label: 'set.section.stores', icon: Building2 },
+  { path: 'registers', label: 'set.section.registers', icon: Monitor },
+  { path: 'payments', label: 'set.section.payments', icon: CreditCard },
+  { path: 'notifications', label: 'set.section.notifications', icon: Bell },
+  { path: 'security', label: 'set.section.security', icon: ShieldCheck },
+  { path: 'audit', label: 'set.section.audit', icon: History },
+  { path: 'plan', label: 'set.section.plan', icon: BadgeCheck },
+]
+
 /** Мәзірде ішкі бөлімдері ашылатын бөлімдер. */
-export const SUB_SECTIONS: Record<string, SubNavItem[]> = { '/finance': FINANCE_SECTIONS, '/bonus': BONUS_SECTIONS, '/clients': CLIENT_SECTIONS }
+export const SUB_SECTIONS: Record<string, SubNavItem[]> = { '/finance': FINANCE_SECTIONS, '/bonus': BONUS_SECTIONS, '/clients': CLIENT_SECTIONS, '/settings': SETTINGS_SECTIONS }
 
 /** Мәзір реті макет бойынша (SALEMPOS.md, бөлімдер тізімі). */
 export const NAV: NavItem[] = [

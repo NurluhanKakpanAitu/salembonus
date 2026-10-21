@@ -3738,6 +3738,23 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<bool>("NotifyReturn")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ReceiptFooter")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("ReceiptHeader")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("ReceiptShowAddress")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ReceiptShowBin")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("ReceiptShowPhone")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
