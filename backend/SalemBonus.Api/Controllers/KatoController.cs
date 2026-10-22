@@ -1,11 +1,17 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SalemBonus.Application.Kato;
 using SalemBonus.Application.Kato.Dtos;
 
 namespace SalemBonus.Api.Controllers;
 
-/// <summary>ҚР әкімшілік-аумақтық объектілер жіктеуіші (КАТО).</summary>
+/// <summary>
+/// ҚР әкімшілік-аумақтық объектілер жіктеуіші (КАТО). Анықтамалықты екі жақ та оқиды: SalemBonus клиенті (профиль)
+/// және SalemPos қызметкері (клиент карточкасы, сүзгі, дүкен баптауы) — сондықтан екі токен де жарайды.
+/// </summary>
 [ApiController]
+[Authorize(AuthenticationSchemes = $"{JwtBearerDefaults.AuthenticationScheme},{StaffAuth.Scheme}")]
 [Route("api/[controller]")]
 public class KatoController(IKatoService service) : ControllerBase
 {
