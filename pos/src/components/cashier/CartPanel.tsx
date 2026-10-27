@@ -67,7 +67,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start gap-2">
                       <div className="min-w-0 flex-1">
-                        <div className="line-clamp-2 text-[14px] font-semibold leading-5">{l.name}</div>
+                        <div className="break-words text-[14px] font-semibold leading-5">{l.name}</div>
                         {l.article && <div className="text-[12px] text-ink-3">{t('pos.article', { a: l.article })}</div>}
                       </div>
                       <button type="button" aria-label={t('catalog.delete')} onClick={() => cart.remove(l.productId)}
@@ -76,7 +76,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
                       </button>
                     </div>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <span className="text-[13px] text-ink-2">{tenge(l.price)}</span>
+                      <span className="whitespace-nowrap text-[13px] text-ink-2">{tenge(l.price)}</span>
                       <div className="ml-auto flex items-center rounded-lg bg-field">
                         <button type="button" aria-label="-" onClick={() => changeQty(l.productId, l.quantity - 1, l.stock)}
                           className="flex size-8 items-center justify-center text-brand"><Minus size={15} /></button>
@@ -90,7 +90,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
                           disabled={!ctx.canSellWithoutStock && l.quantity + 1 > l.stock}
                           className="flex size-8 items-center justify-center text-brand disabled:text-ink-3"><Plus size={15} /></button>
                       </div>
-                      <span className="w-24 text-right text-[14px] font-bold">{tenge(Math.round(l.price * l.quantity * 100) / 100)}</span>
+                      <span className="min-w-16 shrink-0 whitespace-nowrap text-right text-[14px] font-bold">{tenge(Math.round(l.price * l.quantity * 100) / 100)}</span>
                     </div>
                     {over && <p className="mt-1 text-[12px] text-danger">{t('pos.stockLeft', { n: num(l.stock) })}</p>}
                   </div>
@@ -168,19 +168,24 @@ function CustomerBlock({ ctx }: { ctx: CashierContext }) {
   if (customer) {
     return (
       <>
-      <div className="flex items-center gap-3 rounded-xl bg-brand-soft/60 px-3 py-2.5">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-brand"><UserRound size={20} /></span>
-        <div className="min-w-0 flex-1">
+      {/* Корзина тар (≈340px): аты толық ені бойынша (сыймаса келесі жолға), телефон мен деңгей — астында, батырмалар — оң жақта бағанмен. */}
+      <div className="flex items-start gap-3 rounded-xl bg-brand-soft/60 px-3 py-2.5">
+        <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-brand"><UserRound size={20} /></span>
+        <button type="button" onClick={() => setCard(true)} className="min-w-0 flex-1 text-left">
           <div className="text-[12px] text-brand">{t('pos.customer')}</div>
-          <div className="truncate text-[14px] font-semibold">{customer.fullName || t('pos.noName')}</div>
-          <div className="text-[12px] text-ink-2">{formatPhoneInput(customer.phone)}</div>
-          {customer.debtTotal > 0 && <div className="text-[12px] font-medium text-danger">{t('pos.customerDebt', { sum: tenge(customer.debtTotal) })}</div>}
+          <div className="break-words text-[14px] font-semibold leading-snug">{customer.fullName || t('pos.noName')}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="whitespace-nowrap text-[12px] text-ink-2">{formatPhoneInput(customer.phone)}</span>
+            <span className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase ${LEVEL_STYLE[customer.levelKey] ?? LEVEL_STYLE.New}`}>{customer.level}</span>
+          </div>
+          {customer.debtTotal > 0 && <div className="mt-0.5 whitespace-nowrap text-[12px] font-medium text-danger">{t('pos.customerDebt', { sum: tenge(customer.debtTotal) })}</div>}
+        </button>
+        <div className="flex shrink-0 flex-col">
+          <button type="button" aria-label={t('customer.title')} onClick={() => setCard(true)}
+            className="flex size-8 items-center justify-center rounded-lg text-brand hover:bg-surface"><ChevronRight size={18} /></button>
+          <button type="button" aria-label={t('pos.removeCustomer')} onClick={() => cart.setCustomer(null)}
+            className="flex size-8 items-center justify-center rounded-lg text-ink-3 hover:bg-surface hover:text-danger"><X size={16} /></button>
         </div>
-        <span className={`rounded-lg px-2 py-1 text-[11px] font-bold uppercase ${LEVEL_STYLE[customer.levelKey] ?? LEVEL_STYLE.New}`}>{customer.level}</span>
-        <button type="button" aria-label={t('pos.removeCustomer')} onClick={() => cart.setCustomer(null)}
-          className="flex size-8 items-center justify-center rounded-lg text-ink-3 hover:bg-surface hover:text-danger"><X size={16} /></button>
-        <button type="button" aria-label={t('customer.title')} onClick={() => setCard(true)}
-          className="flex size-8 items-center justify-center rounded-lg text-brand hover:bg-surface"><ChevronRight size={18} /></button>
       </div>
       {card && <CustomerCardModal ctx={ctx} customer={customer} onClose={() => setCard(false)} />}
       </>
@@ -206,10 +211,10 @@ function CustomerBlock({ ctx }: { ctx: CashierContext }) {
           {results.map((c) => (
             <button key={c.id} type="button" onClick={() => pick(c)} className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-field">
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-medium">{c.fullName || t('pos.noName')}</div>
-                <div className="text-[12px] text-ink-3">{formatPhoneInput(c.phone)}</div>
+                <div className="break-words text-[14px] font-medium leading-snug">{c.fullName || t('pos.noName')}</div>
+                <div className="whitespace-nowrap text-[12px] text-ink-3">{formatPhoneInput(c.phone)}</div>
               </div>
-              <span className="text-[12px] font-semibold text-success">{num(c.balance)} Б</span>
+              <span className="shrink-0 whitespace-nowrap text-[12px] font-semibold text-success">{num(c.balance)} Б</span>
             </button>
           ))}
           {results.length === 0 && (
@@ -307,22 +312,25 @@ function BonusBlock({ sum }: { sum: ReturnType<typeof totals> }) {
         <span className="text-ink-2">{t('pos.bonusBalance')}</span>
         <span className="font-bold text-success">{num(customer.balance)} Б</span>
       </div>
-      <div className="mt-2 flex items-center gap-2">
-        <label className="flex cursor-pointer items-center gap-2 text-[14px]">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <label className="flex cursor-pointer items-center gap-2 whitespace-nowrap text-[14px]">
           <input type="checkbox" className="size-4 accent-brand" checked={bonusOn} disabled={sum.maxBonus <= 0}
             onChange={(e) => cart.setBonus(e.target.checked, e.target.checked ? sum.maxBonus : 0)} />
           {t('pos.redeemBonus')}
         </label>
-        <input value={bonusOn ? String(bonus) : ''} disabled={!bonusOn} inputMode="numeric"
-          onChange={(e) => cart.setBonus(true, Math.min(Number(e.target.value.replace(/\D/g, '')) || 0, sum.maxBonus))}
-          className="ml-auto h-9 w-24 rounded-lg border border-line bg-field px-2 text-right text-[14px] outline-none focus:border-brand disabled:opacity-50" />
-        <span className="text-[13px] text-ink-3">Б</span>
-        <button type="button" disabled={sum.maxBonus <= 0} onClick={() => cart.setBonus(true, sum.maxBonus)}
-          className="h-9 rounded-lg border border-brand px-3 text-[13px] font-medium text-brand disabled:border-line disabled:text-ink-3">
-          {t('pos.all')}
-        </button>
+        {/* Өріс, «Б» және «Все» бірге: тар себетте бәрі келесі жолға бірге түседі. */}
+        <div className="ml-auto flex items-center gap-2">
+          <input value={bonusOn ? String(bonus) : ''} disabled={!bonusOn} inputMode="numeric"
+            onChange={(e) => cart.setBonus(true, Math.min(Number(e.target.value.replace(/\D/g, '')) || 0, sum.maxBonus))}
+            className="h-9 w-20 rounded-lg border border-line bg-field px-2 text-right text-[14px] outline-none focus:border-brand disabled:opacity-50" />
+          <span className="text-[13px] text-ink-3">Б</span>
+          <button type="button" disabled={sum.maxBonus <= 0} onClick={() => cart.setBonus(true, sum.maxBonus)}
+            className="h-9 rounded-lg border border-brand px-3 text-[13px] font-medium text-brand disabled:border-line disabled:text-ink-3">
+            {t('pos.all')}
+          </button>
+        </div>
       </div>
-      <div className="mt-2 flex justify-between text-[12px]">
+      <div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-[12px]">
         <span className="text-ink-2">{t('pos.bonusLeft')}: <b className="text-success">{num(left)} Б</b></span>
         <span className="text-ink-2">{t('pos.willAccrue')}: <b className="text-success">+{num(sum.accrual)} Б</b></span>
       </div>
@@ -339,19 +347,21 @@ function DiscountBlock({ ctx, sum }: { ctx: CashierContext; sum: ReturnType<type
   const needsApproval = !ctx.canApproveDiscount && sum.discountPercent > ctx.maxDiscountPercent + 0.0001
   return (
     <div className="rounded-xl border border-line p-3">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-violet-100 text-violet-600"><Percent size={16} /></span>
-        <span className="text-[14px] text-ink-2">{t('pos.discountOnReceipt')}</span>
-        <input value={discount.value ? String(discount.value) : ''} inputMode="decimal" placeholder="0"
-          onChange={(e) => cart.setDiscount({ ...discount, value: Number(e.target.value.replace(',', '.').replace(/[^\d.]/g, '')) || 0 })}
-          className="ml-auto h-9 w-20 rounded-lg border border-line bg-field px-2 text-right text-[14px] outline-none focus:border-brand" />
-        <div className="flex rounded-lg bg-field p-0.5">
-          {(['Percent', 'Amount'] as const).map((k) => (
-            <button key={k} type="button" onClick={() => cart.setDiscount({ ...discount, kind: k })}
-              className={`h-8 w-8 rounded-md text-[13px] font-semibold ${discount.kind === k ? 'bg-surface text-brand shadow-sm' : 'text-ink-3'}`}>
-              {k === 'Percent' ? '%' : '₸'}
-            </button>
-          ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600"><Percent size={16} /></span>
+        <span className="whitespace-nowrap text-[14px] text-ink-2">{t('pos.discountOnReceipt')}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <input value={discount.value ? String(discount.value) : ''} inputMode="decimal" placeholder="0"
+            onChange={(e) => cart.setDiscount({ ...discount, value: Number(e.target.value.replace(',', '.').replace(/[^\d.]/g, '')) || 0 })}
+            className="h-9 w-20 rounded-lg border border-line bg-field px-2 text-right text-[14px] outline-none focus:border-brand" />
+          <div className="flex rounded-lg bg-field p-0.5">
+            {(['Percent', 'Amount'] as const).map((k) => (
+              <button key={k} type="button" onClick={() => cart.setDiscount({ ...discount, kind: k })}
+                className={`h-8 w-8 rounded-md text-[13px] font-semibold ${discount.kind === k ? 'bg-surface text-brand shadow-sm' : 'text-ink-3'}`}>
+                {k === 'Percent' ? '%' : '₸'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       {sum.discount > 0 && (

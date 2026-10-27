@@ -160,6 +160,26 @@ async function checkCashier(page: Page, lang: 'ru' | 'kk') {
     await cartBar.click()
     await expectNothingClipped(page, `${lang} /cashier › себет (телефон)`)
   }
+  // Себеттегі клиент: ұзын аты, телефоны, деңгейі мен қарызы тар бағанда да толық көрінеді. Базада клиент болмауы мүмкін
+  // (CI) — іздеу жауабын ең «ауыр» клиентпен алмастырамыз; сату жасалмайды, клиент соңында алынып тасталады.
+  const customer = {
+    id: '00000000-0000-0000-0000-00000000c1e7', fullName: 'Максатбек Жумабаевич Абдрахмановский', phone: '+77071700774', birthDate: null,
+    level: lang === 'ru' ? 'Новый клиент' : 'Жаңа клиент', levelKey: 'New', balance: 900, accrualPercent: 3, hasCard: true, debtTotal: 15_000,
+  }
+  await page.route('**/api/pos/v1/cashier/customers?q=*', (route) => route.fulfill({ json: [customer] }))
+  const search = page.getByPlaceholder(l('Телефон или имя клиента', 'Клиенттің телефоны не аты')[lang])
+  await search.fill('7707')
+  const result = page.getByRole('button').filter({ hasText: '900 Б' }).first()
+  await expect(result).toBeVisible()
+  await expectNothingClipped(page, `${lang} /cashier › поиск клиента`)
+  await result.click()
+  const remove = page.getByRole('button', { name: l('Убрать клиента', 'Клиентті алып тастау')[lang] })
+  await expect(remove).toBeVisible()
+  await expect(page.getByText(customer.fullName)).toBeVisible()
+  await expect(page.getByText('+7 707 170 07 74').first()).toBeVisible()
+  await expectNothingClipped(page, `${lang} /cashier › корзина с клиентом`)
+  await remove.click()
+  await page.unroute('**/api/pos/v1/cashier/customers?q=*')
   await page.getByRole('button', { name: new RegExp(`^${lang === 'ru' ? 'Оплатить' : 'Төлеу'} `) }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expectNothingClipped(page, `${lang} /cashier › оплата`, '[role=dialog]')
