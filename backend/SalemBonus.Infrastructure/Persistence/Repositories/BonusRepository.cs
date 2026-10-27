@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Entities;
 using SalemBonus.Domain.Enums;
@@ -85,10 +86,11 @@ public class BonusRepository(AppDbContext db) : IBonusRepository
         if (!string.IsNullOrWhiteSpace(f.Search))
         {
             var s = f.Search.Trim();
-            var digits = new string(s.Where(char.IsDigit).ToArray());
+            var phone = PhoneSearch.Parse(s);
+            var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
             var like = $"%{s}%";
             q = q.Where(r => EF.Functions.ILike(r.FirstName + " " + r.LastName, like) || EF.Functions.ILike(r.QrCode, like)
-                || (digits.Length >= 3 && r.Phone.Contains(digits)));
+                || (phoneDigits != null && (r.Phone.Contains(phoneDigits) || (phonePrefix != null && r.Phone.StartsWith(phonePrefix)))));
         }
         var total = await q.CountAsync(ct);
         q = (f.Sort, f.Desc) switch
@@ -194,8 +196,10 @@ public class BonusRepository(AppDbContext db) : IBonusRepository
         if (!string.IsNullOrWhiteSpace(search))
         {
             var like = $"%{search.Trim()}%";
-            var digits = new string(search.Where(char.IsDigit).ToArray());
-            q = q.Where(r => EF.Functions.ILike(r.FirstName + " " + r.LastName, like) || (digits.Length >= 3 && r.Phone.Contains(digits)));
+            var phone = PhoneSearch.Parse(search);
+            var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
+            q = q.Where(r => EF.Functions.ILike(r.FirstName + " " + r.LastName, like)
+                || (phoneDigits != null && (r.Phone.Contains(phoneDigits) || (phonePrefix != null && r.Phone.StartsWith(phonePrefix)))));
         }
         var total = await q.CountAsync(ct);
         var sum = await q.SumAsync(r => (int?)r.Lot.Remaining, ct) ?? 0;
@@ -250,11 +254,14 @@ public class BonusRepository(AppDbContext db) : IBonusRepository
             {
                 var digits = new string(s.Where(char.IsDigit).ToArray());
                 var like = $"%{s}%";
+                var phone = PhoneSearch.Parse(s, 4);
+                var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
                 var saleIds = digits.Length is > 0 and <= 9 && long.TryParse(digits, out var number)
                     ? db.Sales.Where(x => f.StoreIds.Contains(x.StoreId) && x.Number == number).Select(x => (Guid?)x.Id)
                     : db.Sales.Where(_ => false).Select(x => (Guid?)x.Id);
                 q = q.Where(r => EF.Functions.ILike(r.FirstName + " " + r.LastName, like) || EF.Functions.ILike(r.QrCode, like)
-                    || (digits.Length >= 4 && r.Phone.Contains(digits)) || saleIds.Contains(r.Tx.ReceiptId));
+                    || (phoneDigits != null && (r.Phone.Contains(phoneDigits) || (phonePrefix != null && r.Phone.StartsWith(phonePrefix))))
+                    || saleIds.Contains(r.Tx.ReceiptId));
             }
         }
         var total = await q.CountAsync(ct);

@@ -1,3 +1,4 @@
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
@@ -205,8 +206,8 @@ public class BonusSettingsService(
         if (!string.IsNullOrWhiteSpace(search))
         {
             var q = search.Trim();
-            var digits = new string(q.Where(char.IsDigit).ToArray());
-            rows = rows.Where(r => r.Dto.CustomerName.Contains(q, StringComparison.CurrentCultureIgnoreCase) || (digits.Length >= 3 && r.RawPhone.Contains(digits))).ToList();
+            var phone = PhoneSearch.Parse(q);
+            rows = rows.Where(r => r.Dto.CustomerName.Contains(q, StringComparison.CurrentCultureIgnoreCase) || (phone?.Matches(r.RawPhone) ?? false)).ToList();
         }
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);

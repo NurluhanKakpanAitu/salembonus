@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Pos.Sales;
 
@@ -40,11 +41,13 @@ public class SalesHistoryRepository(AppDbContext db) : ISalesHistoryRepository
             // (әріп аралас мәтіндегі сандар, мысалы артикул «ART-3917», телефонмен салыстырылмайды).
             var numeric = NumberLike.IsMatch(term.Replace(" ", ""));
             long.TryParse(digits, out var number);
-            var byPhone = digits.Length >= 4 && term.All(ch => char.IsDigit(ch) || " +()-".Contains(ch));
+            var phone = PhoneSearch.Parse(term, 4);
+            var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
             q = q.Where(s =>
                 (numeric && s.Number == number)
                 || db.Customers.Any(c => c.Id == s.CustomerId
-                    && (EF.Functions.ILike(c.FirstName + " " + c.LastName, like, "\\") || (byPhone && c.Phone.Contains(digits))))
+                    && (EF.Functions.ILike(c.FirstName + " " + c.LastName, like, "\\")
+                        || (phoneDigits != null && (c.Phone.Contains(phoneDigits) || (phonePrefix != null && c.Phone.StartsWith(phonePrefix))))))
                 || db.SaleItems.Any(i => i.SaleId == s.Id
                     && (EF.Functions.ILike(i.Name, like, "\\")
                         || (i.Article != null && EF.Functions.ILike(i.Article, like, "\\"))

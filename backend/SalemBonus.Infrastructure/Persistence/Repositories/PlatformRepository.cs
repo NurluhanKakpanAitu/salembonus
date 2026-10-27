@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Core;
 using SalemBonus.Domain.Entities;
@@ -164,9 +165,11 @@ public class PlatformRepository(AppDbContext db) : IPlatformRepository
         if (!string.IsNullOrWhiteSpace(search))
         {
             var s = $"%{search.Trim()}%";
-            var digits = new string(search.Where(char.IsDigit).ToArray());
+            var phone = PhoneSearch.Parse(search, 4);
+            var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
             q = q.Where(l => EF.Functions.ILike(l.Name, s) || (l.BusinessName != null && EF.Functions.ILike(l.BusinessName, s))
-                             || (l.City != null && EF.Functions.ILike(l.City, s)) || (digits.Length >= 4 && l.Phone.Contains(digits)));
+                             || (l.City != null && EF.Functions.ILike(l.City, s))
+                             || (phoneDigits != null && (l.Phone.Contains(phoneDigits) || (phonePrefix != null && l.Phone.StartsWith(phonePrefix)))));
         }
         var total = await q.CountAsync(ct);
         return (await q.OrderByDescending(l => l.CreatedAt).Skip(skip).Take(take).ToListAsync(ct), total);

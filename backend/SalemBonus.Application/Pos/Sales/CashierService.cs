@@ -1,4 +1,5 @@
 using SalemBonus.Application.BonusCards;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
@@ -136,7 +137,8 @@ public class CashierService(
             var code = q.StartsWith(CustomerService.QrPrefix, StringComparison.OrdinalIgnoreCase) ? q[CustomerService.QrPrefix.Length..] : q;
             found = await customers.GetByQrCodeAsync(code.ToUpperInvariant(), ct) is { } c ? [c] : [];
         }
-        else found = (await sales.SearchStoreCustomersAsync(m.StoreId, q, 10, ct)).ToList();
+        // Нөмірдің бөлігі («0774», «8 707 170») — тек осы дүкен клиенттерінен: толық нөмірсіз бүкіл база ашылмайды.
+        else found = (await sales.SearchStoreCustomersAsync(m.StoreId, q, PhoneSearch.Parse(q), 10, ct)).ToList();
 
         var result = new List<CashierCustomerDto>();
         foreach (var c in found)

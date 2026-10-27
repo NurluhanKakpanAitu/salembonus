@@ -13,6 +13,7 @@ import { inventoryApi, inventoryKeys } from '../../lib/inventoryApi'
 import type { SaveSupplier, Supplier, SupplierType } from '../../lib/inventoryTypes'
 import { dateOnly, dateTime } from '../../lib/dates'
 import { tenge } from '../../lib/money'
+import { matchesPhone } from '../../lib/phone'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { DocStatus, EmptyRow, ReasonModal, StatCard, td, th, useInventoryAction, useInventoryPermissions } from './inventoryUi'
 
@@ -27,7 +28,7 @@ export function SuppliersTab() {
   const { data = [], isLoading } = useQuery({ queryKey: inventoryKeys.suppliers, queryFn: inventoryApi.suppliers })
   const [query, setQuery] = useState('')
   const [editing, setEditing] = useState<Supplier | 'new' | null>(null)
-  const list = data.filter((s) => `${s.name} ${s.taxId ?? ''} ${s.phone ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()))
+  const list = data.filter((s) => `${s.name} ${s.taxId ?? ''} ${s.phone ?? ''}`.toLowerCase().includes(query.trim().toLowerCase()) || matchesPhone(s.phone, query))
 
   return (
     <div>

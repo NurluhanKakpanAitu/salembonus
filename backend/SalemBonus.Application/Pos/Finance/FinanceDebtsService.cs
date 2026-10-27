@@ -1,3 +1,4 @@
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
@@ -59,9 +60,9 @@ public class FinanceDebtsService(
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
-            var digits = new string(term.Where(char.IsDigit).ToArray());
+            var phone = PhoneSearch.Parse(term, 4);
             filtered = filtered.Where(r => r.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase)
-                                           || (digits.Length >= 4 && customers.GetValueOrDefault(r.CustomerId).Phone?.Contains(digits) == true));
+                                           || (phone?.Matches(customers.GetValueOrDefault(r.CustomerId).Phone) ?? false));
         }
         var list = filtered.OrderByDescending(r => r.Overdue).ThenByDescending(r => r.Total).ToList();
         var size = Math.Clamp(pageSize, 1, 100);
@@ -172,8 +173,10 @@ public class FinanceDebtsService(
         if (!string.IsNullOrWhiteSpace(search))
         {
             var term = search.Trim();
+            var phone = PhoneSearch.Parse(term, 4);
             filtered = filtered.Where(r => r.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase)
                                            || (suppliers.GetValueOrDefault(r.SupplierId).TaxId?.Contains(term) ?? false)
+                                           || (phone?.Matches(suppliers.GetValueOrDefault(r.SupplierId).Phone) ?? false)
                                            || docs.Any(d => d.SupplierId == r.SupplierId && (d.Number.Contains(term, StringComparison.OrdinalIgnoreCase) || (d.SupplierInvoiceNumber?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false))));
         }
         var list = filtered.OrderByDescending(r => r.Overdue).ThenByDescending(r => r.Debt).ToList();

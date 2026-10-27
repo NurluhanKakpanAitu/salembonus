@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Domain.Core;
 using SalemBonus.Domain.Entities;
@@ -144,12 +145,13 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
             var numeric = digits.Length > 0 && digits.Length == term.Replace(" ", "").Length;
             long.TryParse(digits, out var number);
             decimal.TryParse(digits, out var amount);
-            var byPhone = digits.Length >= 4;
+            var phone = PhoneSearch.Parse(term, 4);
+            var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
             q = q.Where(s =>
                 (numeric && (s.Number == number || s.Total == amount))
                 || db.Customers.Any(c => c.Id == s.CustomerId
                     && (EF.Functions.ILike(c.FirstName + " " + c.LastName, like, "\\")
-                        || (byPhone && c.Phone.Contains(digits)))));
+                        || (phoneDigits != null && (c.Phone.Contains(phoneDigits) || (phonePrefix != null && c.Phone.StartsWith(phonePrefix)))))));
         }
         var total = await q.CountAsync(ct);
         var items = await q.OrderByDescending(s => s.Number).Skip(skip).Take(take).Include(s => s.Payments).ToListAsync(ct);
@@ -258,13 +260,15 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
         await db.TransferRecipients.AsNoTracking().Where(r => r.StoreId == storeId)
             .OrderBy(r => r.SortOrder).ThenBy(r => r.CreatedAt).ToListAsync(ct);
 
-    public async Task<IReadOnlyList<Customer>> SearchStoreCustomersAsync(Guid storeId, string term, int take, CancellationToken ct = default)
+    public async Task<IReadOnlyList<Customer>> SearchStoreCustomersAsync(Guid storeId, string term, PhoneSearch? phone, int take, CancellationToken ct = default)
     {
         var like = $"%{term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
+        var (digits, prefix) = (phone?.Digits, phone?.Prefix);
         return await db.Customers.AsNoTracking()
             .Where(c => db.BonusCards.Any(b => b.CustomerId == c.Id && b.StoreId == storeId)
                         && (EF.Functions.ILike(c.FirstName + " " + c.LastName, like, "\\")
-                            || EF.Functions.ILike(c.LastName + " " + c.FirstName, like, "\\")))
+                            || EF.Functions.ILike(c.LastName + " " + c.FirstName, like, "\\")
+                            || (digits != null && (c.Phone.Contains(digits) || (prefix != null && c.Phone.StartsWith(prefix))))))
             .OrderBy(c => c.FirstName).ThenBy(c => c.LastName)
             .Take(take).ToListAsync(ct);
     }

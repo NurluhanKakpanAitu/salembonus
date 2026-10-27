@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using SalemBonus.Application.BonusCards;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
@@ -51,12 +52,13 @@ public class PlatformBusinessService(PlatformAccess access, IPlatformRepository 
         {
             var s = search.Trim();
             var digits = new string(s.Where(char.IsDigit).ToArray());
+            var phone = PhoneSearch.Parse(s, 4);
             q = q.Where(r => r.Name.Contains(s, StringComparison.CurrentCultureIgnoreCase)
                              || (r.ContactName?.Contains(s, StringComparison.CurrentCultureIgnoreCase) ?? false)
                              || (r.OwnerName?.Contains(s, StringComparison.CurrentCultureIgnoreCase) ?? false)
                              || (r.City?.Contains(s, StringComparison.CurrentCultureIgnoreCase) ?? false)
-                             || (digits.Length >= 4 && ((r.Bin?.Contains(digits) ?? false) || (r.OwnerPhone?.Contains(digits) ?? false)
-                                                         || (r.ContactPhone?.Replace(" ", "").Contains(digits) ?? false))));
+                             || (digits.Length >= 4 && (r.Bin?.Contains(digits) ?? false))
+                             || (phone is not null && (phone.Matches(r.OwnerPhone) || phone.Matches(r.ContactPhone))));
         }
         if (!string.IsNullOrWhiteSpace(status) && status != "all") q = q.Where(r => r.Status == status);
         if (planId is { } pid) q = q.Where(r => r.PlanId == pid);

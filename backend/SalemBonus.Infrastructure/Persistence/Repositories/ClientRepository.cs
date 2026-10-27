@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Pos.Sales;
 using SalemBonus.Domain.Entities;
@@ -191,9 +192,8 @@ public class ClientRepository(AppDbContext db) : IClientRepository
         {
             var s = f.Search.Trim();
             // Телефон мен ID — тек сан түріндегі сұраныста (әріп аралас мәтіндегі сандар телефонмен салыстырылмайды).
-            var numeric = s.TrimStart('#').Replace("ID", "", StringComparison.OrdinalIgnoreCase).All(ch => char.IsDigit(ch) || " +()-:".Contains(ch));
-            var digits = numeric ? new string(s.Where(char.IsDigit).ToArray()) : string.Empty;
-            if (digits.Length == 11 && digits[0] == '8') digits = "7" + digits[1..];
+            var phone = PhoneSearch.Parse(s);
+            var (phoneDigits, phonePrefix) = (phone?.Digits, phone?.Prefix);
             var idText = s.TrimStart('#').Replace("ID", "", StringComparison.OrdinalIgnoreCase).Replace(":", "").Trim();
             long? number = idText.Length is > 0 and <= 9 && idText.All(char.IsDigit) ? long.Parse(idText) : null;
             // Базаның локалі кириллицаны кіші әріпке түсірмеуі мүмкін — жазылғандай, кіші әріппен және бас әріппен іздейміз.
@@ -206,7 +206,7 @@ public class ClientRepository(AppDbContext db) : IClientRepository
                 || EF.Functions.ILike(r.LastName + " " + r.FirstName + " " + (r.Profile.MiddleName ?? "") + " " + r.FirstName + " " + r.LastName, c)
                 || EF.Functions.ILike(r.QrCode, a)
                 || (r.Email != null && EF.Functions.ILike(r.Email, b))
-                || (digits.Length >= 3 && r.Phone.Contains(digits))
+                || (phoneDigits != null && (r.Phone.Contains(phoneDigits) || (phonePrefix != null && r.Phone.StartsWith(phonePrefix))))
                 || (number != null && r.Profile.Number == number));
         }
         if (f.StatusIds is { Count: > 0 })

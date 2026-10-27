@@ -71,8 +71,10 @@ public interface ISalesRepository
     Task<StoreCashierSettings?> GetSettingsAsync(Guid storeId, CancellationToken ct = default);
     Task<IReadOnlyList<TransferRecipient>> ListRecipientsAsync(Guid storeId, CancellationToken ct = default);
 
-    /// <summary>Аты-жөні бойынша іздеу — тек осы дүкенде картасы бар клиенттер (бөтен бизнестің клиенті көрінбейді).</summary>
-    Task<IReadOnlyList<Customer>> SearchStoreCustomersAsync(Guid storeId, string term, int take, CancellationToken ct = default);
+    /// <summary>
+    /// Аты-жөні не нөмірдің бөлігі бойынша іздеу — тек осы дүкенде картасы бар клиенттер (бөтен бизнестің клиенті көрінбейді).
+    /// </summary>
+    Task<IReadOnlyList<Customer>> SearchStoreCustomersAsync(Guid storeId, string term, PhoneSearch? phone, int take, CancellationToken ct = default);
     /// <summary>Растай алатын қызметкерлер (жеңілдік шегінен асқанда).</summary>
     Task<IReadOnlyList<(Guid Id, string Name)>> ListApproversAsync(Guid storeId, string permission, CancellationToken ct = default);
 }

@@ -20,5 +20,19 @@ export function formatPhoneInput(raw: string): string {
 
 export const phoneDigits = (value: string) => value.replace(/\D/g, '')
 
+/**
+ * Тізімдегі телефон іздеуі — сервердегі PhoneSearch-пен бірдей ереже: нөмірдің соңы «0774», ортасы «707 170», толық «+7 (707) …»
+ * не «8 707 …» (8 — ел коды) — бәрі табылады. Тек сан мен «+ ( ) - .» белгілерінен тұратын, кемінде 3 саны бар сұраныс телефон
+ * деп саналады: әріп аралас мәтіндегі сандар («Иван 7») телефонмен салыстырылмайды.
+ */
+export function matchesPhone(phone: string | null | undefined, query: string): boolean {
+  const q = query.trim()
+  if (!phone || !/^[\d\s+().-]+$/.test(q)) return false
+  const digits = phoneDigits(q)
+  if (digits.length < 3) return false
+  const stored = '+' + phoneDigits(phone)
+  return stored.includes(digits) || (digits.startsWith('8') && !q.startsWith('+') && stored.startsWith('+7' + digits.slice(1)))
+}
+
 /** Толық нөмір: 7 + 10 цифр, оператор коды 7-ден басталады. */
 export const isCompletePhone = (value: string) => /^77\d{9}$/.test(phoneDigits(value))

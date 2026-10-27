@@ -14,7 +14,7 @@ import { activeStore, can, useAuth } from '../../lib/auth'
 import { dateTime } from '../../lib/dates'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { num, tenge } from '../../lib/money'
-import { formatPhoneInput } from '../../lib/phone'
+import { formatPhoneInput, matchesPhone } from '../../lib/phone'
 import { staffAdminApi, type StaffRow } from '../../lib/staffAdminApi'
 import { Permission, type StaffRole } from '../../lib/types'
 
@@ -40,7 +40,7 @@ export function StaffPage() {
     return n
   }, { replace: true })
   const rows = useMemo(() => (list.data?.rows ?? []).filter((r) =>
-    (!q || `${r.firstName} ${r.lastName} ${r.phone}`.toLowerCase().includes(q) || r.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '') || '§'))
+    (!q || `${r.firstName} ${r.lastName} ${r.phone}`.toLowerCase().includes(q) || matchesPhone(r.phone, q))
     && (!role || r.role === role) && (status === 'all' || (status === 'active') === r.isActive) && (!store || r.storeIds.includes(store))), [list.data, q, role, status, store])
   if (!can(current, Permission.StaffManage)) return <Navigate to="/" replace />
   const all = list.data?.rows ?? []
