@@ -8,6 +8,7 @@ import { ApiError } from '../../lib/api'
 import { inventoryApi } from '../../lib/inventoryApi'
 import type { InvoiceRecognition, RecognizedLine, RecognizedProduct, Supplier } from '../../lib/inventoryTypes'
 import { productApi } from '../../lib/productApi'
+import { compressImage, DOCUMENT } from '../../lib/upload'
 import type { ProductListItem } from '../../lib/catalogTypes'
 import { num, tenge } from '../../lib/money'
 import { useT, type TranslationKey } from '../../lib/i18n'
@@ -72,7 +73,8 @@ export function InvoiceRecognizeModal({ warehouseId, suppliers, onClose, onApply
   const pick = (f: File | undefined) => {
     if (!f) return
     if (!ACCEPT.split(',').includes(f.type)) { setError(t('inv.ai.typeInvalid')); return }
-    if (f.size > MAX_BYTES) { setError(t('inv.ai.tooLarge')); return }
+    // Фото жіберер алдында кішірейтіледі (recognize) — шек тек PDF-ке.
+    if (f.type === 'application/pdf' && f.size > MAX_BYTES) { setError(t('inv.ai.tooLarge')); return }
     setFile(f)
     setResult(null)
     setRows([])
@@ -91,7 +93,8 @@ export function InvoiceRecognizeModal({ warehouseId, suppliers, onClose, onApply
     setStatus('recognizing')
     setError(null)
     try {
-      const r = await inventoryApi.recognizeInvoice(file, warehouseId)
+      // Телефон фотосы 5–10 МБ серверден өтеді — жібермес бұрын кішірейтеміз (мәтін оқылатын сапада).
+      const r = await inventoryApi.recognizeInvoice(await compressImage(file, DOCUMENT), warehouseId)
       setResult(r)
       setRows(toReview(r))
       setStatus('ready')
