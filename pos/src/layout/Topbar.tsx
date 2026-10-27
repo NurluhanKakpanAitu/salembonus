@@ -216,7 +216,8 @@ export function Topbar({ title, onMenu, kiosk = false }: { title: string; onMenu
                     {t('top.changePassword')}
                   </MenuItem>
                 )}
-                {register && (
+                {/* Бұғаттау мен кассир ауыстыру — тек касса бетінде: кабинет бұғатталмайды. */}
+                {register && kiosk && (
                   <>
                     <MenuItem icon={<Lock size={16} />} onClick={lockNow}>{t('top.lock')}</MenuItem>
                     <MenuItem icon={<UsersRound size={16} />} onClick={() => void logout()}>{t('top.switchCashier')}</MenuItem>

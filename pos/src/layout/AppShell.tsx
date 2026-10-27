@@ -2,10 +2,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { useT } from '../lib/i18n'
-import { useRegister } from '../lib/register'
-import { LockScreen } from '../components/LockScreen'
 import { Toaster } from '../components/ui/Toast'
-import { useIdleLock } from './useIdleLock'
 import { NAV } from './nav'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
@@ -20,14 +17,15 @@ function readCollapsed() {
   }
 }
 
-/** Кабинеттің қабығы: сол жақта мәзір, жоғарыда панель, ортада бөлім. */
+/**
+ * Кабинеттің қабығы: сол жақта мәзір, жоғарыда панель, ортада бөлім. Әрекетсіздік бұғаты мұнда жоқ — ол тек касса бетінде
+ * (CashierShell): касса бұғатталса да, сол құрылғыдағы кабинет (тауар, қойма, есептер) жұмыс істей береді.
+ */
 export function AppShell() {
   const t = useT()
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const locked = useRegister((s) => s.locked && !!s.register)
-  useIdleLock()
 
   const current = NAV.find((i) => location.pathname.startsWith(i.path))
 
@@ -60,8 +58,6 @@ export function AppShell() {
           </Suspense>
         </main>
       </div>
-      {/* Бұғат беттің үстінен жабады: астындағы бет (себет т.б.) сол күйінде қалады. */}
-      {locked && <LockScreen />}
       <Toaster />
     </div>
   )
