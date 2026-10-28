@@ -14,7 +14,8 @@ test('locking the cashier does not lock the cabinet', async ({ page, context }) 
   const index = registers.findIndex((r) => !r.isBound || !!process.env.CI)
   test.skip(index < 0, 'касса занята другим устройством')
   await page.getByRole('button', { name: 'Подключить', exact: true }).nth(index).click()
-  await expect(page.getByRole('button', { name: 'Добавить в корзину' }).first()).toBeVisible()
+  // CI-дағы таза базада тауар болмауы мүмкін — касса ашылғанын себет бойынша тексереміз.
+  await expect(page.getByText(/^Корзина \(\d+\)$/).first()).toBeVisible()
 
   await page.getByRole('button', { name: /Владелец/ }).click()
   await page.getByText('Заблокировать кассу').click()

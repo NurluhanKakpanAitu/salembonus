@@ -134,7 +134,7 @@ function Tile({ icon, label, value, hint }: { icon: React.ReactNode; label: stri
     <div className="rounded-xl border border-line px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-[12px] text-ink-2">{icon} {label}</div>
       <div className="mt-1 text-[17px] font-bold">{value}</div>
-      {hint && <div className="truncate text-[11px] text-ink-3">{hint}</div>}
+      {hint && <div className="text-[11px] leading-snug text-ink-3">{hint}</div>}
     </div>
   )
 }
