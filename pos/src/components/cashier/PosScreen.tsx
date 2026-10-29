@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BarChart3, ChevronDown, Loader2, Monitor, ReceiptText, Settings, ShoppingCart } from 'lucide-react'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
@@ -69,6 +69,8 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
     if (patch.view) try { localStorage.setItem(VIEW_KEY, patch.view) } catch { /* сақталмаса — келесіде тор */ }
     setFilter((f) => ({ ...f, ...patch }))
   }
+  // Іздеу таңдалған санатты сақтайды (санат + іздеу бірге сүзеді).
+  const onSearch = useCallback((search: string) => setFilter((f) => ({ ...f, search })), [])
 
   /** ТЗ §3.3: қалдық жетпесе — қате, себетке қосылмайды (минусқа сату құқығы болмаса). */
   const add = (p: CashierProduct) => {
@@ -145,7 +147,7 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
   return (
     <div className="-m-4 flex h-[calc(100%+2rem)] flex-col gap-3 overflow-hidden bg-bg p-3 lg:-m-6 lg:h-[calc(100%+3rem)]">
       <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-        <SearchBox onAdd={add} onScan={scan} onShowAll={(q) => updateFilter({ search: q })} />
+        <SearchBox value={filter.search} onSearch={onSearch} onScan={scan} />
         {panel !== 'cart' && (
           <button type="button" onClick={() => setPanel('cart')}
             className="flex h-11 items-center gap-2 rounded-xl bg-surface px-4 text-[14px] font-semibold text-ink hover:bg-field">

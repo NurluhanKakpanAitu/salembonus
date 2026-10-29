@@ -43,13 +43,13 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
   })
   const items = query.data?.pages.flatMap((p) => p.items) ?? []
   const total = query.data?.pages[0]?.total ?? 0
-  const title = filter.search ? t('pos.searchResults', { q: filter.search })
-    : filter.nodeId ? roots.find((r) => r.id === filter.nodeId)?.name ?? t('pos.allProducts') : t('pos.allProducts')
+  // Санат пен іздеу бірге сүзеді: тақырып — санат, іздеу — жанында жеке белгі (✕ — тек іздеуді алады).
+  const title = filter.nodeId ? roots.find((r) => r.id === filter.nodeId)?.name ?? t('pos.allProducts') : t('pos.allProducts')
 
   const category = (id: string | null, label: string, icon?: string | null) => {
-    const active = filter.nodeId === id && !filter.search
+    const active = filter.nodeId === id
     return (
-      <button key={id ?? 'all'} type="button" onClick={() => onFilter({ nodeId: id, search: '' })}
+      <button key={id ?? 'all'} type="button" aria-pressed={active} onClick={() => onFilter({ nodeId: id })}
         className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[14px] font-medium transition-colors ${
           active ? 'bg-brand text-white' : 'text-ink hover:bg-field'}`}>
         {id === null ? <LayoutGrid size={18} /> : <CatalogIcon name={icon} size={18} />}
@@ -69,9 +69,9 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
           <h2 className="mr-2 truncate text-[18px] font-bold">{title}</h2>
           {filter.search && (
-            <button type="button" onClick={() => onFilter({ search: '' })}
-              className="flex items-center gap-1 rounded-lg bg-field px-2 py-1 text-[12px] text-ink-2 hover:text-ink">
-              <X size={13} /> {t('pos.clearSearch')}
+            <button type="button" onClick={() => onFilter({ search: '' })} aria-label={`${t('pos.clearSearch')}: ${filter.search}`}
+              className="flex min-w-0 items-center gap-1 rounded-lg bg-brand-soft px-2.5 py-1 text-[13px] font-medium text-brand hover:bg-brand-soft/70">
+              <span className="break-all">{t('pos.searchResults', { q: filter.search })}</span> <X size={14} className="shrink-0" />
             </button>
           )}
           <span className="text-[13px] text-ink-3">{t('pos.found', { n: total })}</span>
@@ -96,8 +96,8 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
         {/* Санаттар тар экранда — жолақ түрінде. */}
         <div className="flex gap-1.5 overflow-x-auto border-b border-line px-4 py-2 xl:hidden">
           {[{ id: null as string | null, name: t('pos.allProducts') }, ...roots].map((r) => (
-            <button key={r.id ?? 'all'} type="button" onClick={() => onFilter({ nodeId: r.id, search: '' })}
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-medium ${filter.nodeId === r.id && !filter.search ? 'bg-brand text-white' : 'bg-field text-ink-2'}`}>
+            <button key={r.id ?? 'all'} type="button" aria-pressed={filter.nodeId === r.id} onClick={() => onFilter({ nodeId: r.id })}
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-medium ${filter.nodeId === r.id ? 'bg-brand text-white' : 'bg-field text-ink-2'}`}>
               {r.name}
             </button>
           ))}
