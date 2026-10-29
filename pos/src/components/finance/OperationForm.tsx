@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Paperclip, Plus } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea } from '../ui/Field'
+import { DateTimeInput } from '../ui/TimeInput'
 import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
 import { confirmDialog } from '../ui/Confirm'
@@ -116,7 +117,7 @@ export function OperationForm({ accounts, categories, initial, kind, onClose, on
             </Select>
           </Field>
           <Field label={t('fin.col.date')} required error={errors.date}>
-            <Input type="datetime-local" value={date} max={nowLocal()} onChange={(e) => mark(setDate)(e.target.value)} error={!!errors.date} />
+            <DateTimeInput value={date} max={nowLocal()} onChange={mark(setDate)} error={!!errors.date} />
           </Field>
           <Field label={t('fin.col.category')} required error={errors.categoryId}>
             <div className="flex gap-2">

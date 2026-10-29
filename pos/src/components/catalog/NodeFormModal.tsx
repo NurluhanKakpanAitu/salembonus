@@ -4,6 +4,7 @@ import { Clock, Folder, ImagePlus, Layers, Package, Trash2, X } from 'lucide-rea
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea } from '../ui/Field'
+import { dateTime } from '../../lib/dates'
 import { ApiError } from '../../lib/api'
 import { catalogApi } from '../../lib/catalogApi'
 import { subtreeIds, treeOrder, useCatalogPermissions } from '../../lib/catalogHooks'
@@ -182,7 +183,7 @@ export function NodeFormModal({ node, parentId, nodes, onClose, onSaved, onDelet
                 <Stat icon={<Package size={17} />} label={t('node.statProducts')} value={node.productCount} />
                 <Stat icon={<Folder size={17} />} label={t('node.statGroups')} value={node.childCount} />
                 <Stat icon={<Layers size={17} />} label={t('node.statSub')} value={node.descendantCount} />
-                <Stat icon={<Clock size={17} />} label={t('node.statUpdated')} value={new Date(node.updatedAt).toLocaleString()} />
+                <Stat icon={<Clock size={17} />} label={t('node.statUpdated')} value={dateTime(node.updatedAt)} />
               </div>
               <p className="rounded-xl bg-brand-soft/60 p-3 text-[12px] leading-relaxed text-ink-2">{t('node.deleteHint')}</p>
             </aside>

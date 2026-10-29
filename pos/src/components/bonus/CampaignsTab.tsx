@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { Ban, Check, Copy, Eye, FileText, Megaphone, Pencil, Plus, RotateCcw, Send } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea, Toggle } from '../ui/Field'
+import { DateTimeInput } from '../ui/TimeInput'
 import { Modal } from '../ui/Modal'
 import { RowMenu } from '../ui/RowMenu'
 import { SearchInput } from '../ui/SearchInput'
@@ -273,7 +274,7 @@ function CampaignWizard({ initial, preset, onClose, onDone }: { initial: Campaig
             <Segmented value={when} options={[{ key: 'now', label: t('bon.cmp.sendNow') }, { key: 'later', label: t('bon.cmp.schedule') }]} onChange={setWhen} />
             {when === 'later' && (
               <Field label={t('bon.cmp.dateTime')} error={past ? t('bon.cmp.pastError') : null} hint={t('bon.cmp.tzHint', { tz: meta.data?.timeZone ?? '' })}>
-                <Input type="datetime-local" value={at} onChange={(e) => setAt(e.target.value)} error={past} />
+                <DateTimeInput value={at} onChange={setAt} error={past} />
               </Field>
             )}
             <p className="text-[13px] text-ink-2">{t('bon.cmp.cancelHint')}</p>

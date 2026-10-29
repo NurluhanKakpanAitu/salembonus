@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { Cake, Download, Eye, Gift, Plus, X } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea, Toggle } from '../ui/Field'
+import { TimeInput } from '../ui/TimeInput'
 import { Modal } from '../ui/Modal'
 import { RowMenu } from '../ui/RowMenu'
 import { SearchInput } from '../ui/SearchInput'
@@ -142,7 +143,7 @@ function BirthdayForm({ s, canEdit, statuses, onSaved }: { s: BirthdaySettings; 
       <Toggle checked={f.enabled} onChange={(v) => patch({ enabled: v })} label={t('bon.bd.enabled')} />
       <div className="grid grid-cols-2 gap-3">
         <Field label={t('bon.bd.amount')} required><Input inputMode="numeric" value={f.amount || ''} onChange={(e) => patch({ amount: Number(e.target.value.replace(/\D/g, '')) || 0 })} placeholder="5000" /></Field>
-        <Field label={t('bon.bd.time')}><Input type="time" value={f.time} onChange={(e) => patch({ time: e.target.value })} /></Field>
+        <Field label={t('bon.bd.time')}><TimeInput value={f.time} onChange={(time) => patch({ time })} /></Field>
       </div>
       <Field label={t('bon.bd.when')}>
         <div className="flex flex-col gap-2 sm:flex-row">
