@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using SalemBonus.Application.Platform;
 using SalemBonus.Infrastructure.Persistence;
 
 namespace SalemBonus.Api.Tests;
@@ -36,6 +37,19 @@ public class AdminTests(ApiFixture api)
 
     private static async Task<string> StaffLoginAsync(Pos pos, string phone, string password) =>
         (await pos.Send(HttpMethod.Post, "", "/api/staff/v1/auth/login", new { phone, password })).Ok["accessToken"]!.GetValue<string>();
+
+    /// <summary>Төленген кезең ай соңында бір күн жоғалтпайды: 29.01-ден бір ай — 28.02-ге дейін (27.02 емес), кезеңдер үзіліссіз.</summary>
+    [Theory]
+    [InlineData("2027-01-29", 1, "2027-02-28")]
+    [InlineData("2027-01-31", 1, "2027-02-28")]
+    [InlineData("2027-03-01", 1, "2027-03-31")]
+    [InlineData("2026-10-29", 3, "2027-01-28")]
+    [InlineData("2026-11-30", 3, "2027-02-28")]
+    [InlineData("2026-10-31", 1, "2026-11-30")]
+    [InlineData("2028-02-29", 12, "2029-02-28")]
+    [InlineData("2026-05-15", 1, "2026-06-14")]
+    public void Paid_period_ends_one_day_before_the_same_date_next_month(string from, int months, string to) =>
+        Assert.Equal(DateOnly.Parse(to), PlatformBillingService.PeriodEnd(DateOnly.Parse(from), months));
 
     [Fact]
     public async Task Login_is_checked_and_admin_and_staff_tokens_do_not_cross()
@@ -143,13 +157,13 @@ public class AdminTests(ApiFixture api)
         Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(token, $"{A}/payments", new { organizationId = id, amount = 0, months = 1 })).Status);
         Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(token, $"{A}/payments", new { organizationId = id, amount = 100, months = 1, method = "bitcoin" })).Status);
         var first = (await pos.Post(token, $"{A}/payments", new { organizationId = id, amount = 45_000, months = 3, method = "kaspi", reference = "KP-1" })).Ok;
-        var firstTo = today.AddMonths(3).AddDays(-1);
+        var firstTo = PlatformBillingService.PeriodEnd(today, 3);
         Assert.Equal(firstTo.ToString("yyyy-MM-dd"), first["periodTo"]!.GetValue<string>());
         var second = (await pos.Post(token, $"{A}/payments", new { organizationId = id, amount = 15_000, months = 1, method = "transfer" })).Ok;
         Assert.Equal(firstTo.AddDays(1).ToString("yyyy-MM-dd"), second["periodFrom"]!.GetValue<string>()); // кезең үзіліссіз жалғасады
 
         var detail = (await pos.Get(token, $"{A}/businesses/{id}")).Ok;
-        Assert.Equal(firstTo.AddMonths(1).ToString("yyyy-MM-dd"), detail["business"]!["paidUntil"]!.GetValue<string>());
+        Assert.Equal(PlatformBillingService.PeriodEnd(firstTo.AddDays(1), 1).ToString("yyyy-MM-dd"), detail["business"]!["paidUntil"]!.GetValue<string>());
         Assert.Equal("active", detail["business"]!["status"]!.GetValue<string>());
         Assert.Equal(60_000m, detail["paidTotal"]!.GetValue<decimal>());
         Assert.Equal(new[] { "cashier", "sales" }, detail["business"]!["modules"]!.AsArray().Select(x => x!.GetValue<string>()));

@@ -611,6 +611,10 @@ public static class Messages
     public static string FinanceCategoryInvalid(AppLanguage l) => Pick(l, "Санат табылмады не түрі сәйкес емес не архивте", "Категория не найдена, не того типа или в архиве");
     public static string FinanceCounterpartyRequired(AppLanguage l) => Pick(l, "Контрагентті көрсетіңіз", "Укажите контрагента");
     public static string FinanceSameAccount(AppLanguage l) => Pick(l, "Шоттар бірдей болмауы керек", "Счёт списания и зачисления должны отличаться");
+    public static string FinanceCollectionSource(AppLanguage l) => Pick(l,
+        "Инкассация тек кассадан не сейфтен жасалады", "Инкассация проводится только из кассы или сейфа");
+    public static string FinanceCollectionTarget(AppLanguage l) => Pick(l,
+        "Инкассация ақшасы сейфке, банкке не «Жолдағы ақшаға» түседі", "Инкассация зачисляется в сейф, на банковский счёт или в «Деньги в пути»");
     public static string FinanceReasonRequired(AppLanguage l) => Pick(l, "Себебін көрсетіңіз", "Укажите причину");
     public static string FinanceSourceReverse(AppLanguage l) => Pick(l,
         "Бұл операция бастапқы модульден түскен — сторно сол жерде (чек қайтарымы, төлем сторносы)", "Эта операция пришла из исходного модуля — сторнируйте её там (возврат чека, сторно оплаты)");

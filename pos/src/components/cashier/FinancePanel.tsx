@@ -1,7 +1,12 @@
 import { useState } from 'react'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Banknote, BarChart3, CreditCard, Gift, HandCoins, Info, Landmark, Percent, QrCode, ShoppingCart, Shuffle, Undo2, Wallet, X } from 'lucide-react'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Banknote, BarChart3, CreditCard, Gift, HandCoins, Info, Landmark, Percent, QrCode, ShoppingCart, Shuffle, Truck, Undo2, Wallet, X } from 'lucide-react'
+import { Button } from '../ui/Button'
+import { TransferModal } from '../finance/TransferModal'
+import { activeStore, can, useAuth } from '../../lib/auth'
 import { cashierApi } from '../../lib/cashierApi'
+import { financeApi } from '../../lib/financeApi'
+import { Permission } from '../../lib/types'
 import type { Finance, PaymentMethod } from '../../lib/cashierTypes'
 import { addDays, dateOnly, isoDate } from '../../lib/dates'
 import { num, tenge } from '../../lib/money'
@@ -37,6 +42,12 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
     queryFn: () => cashierApi.finance(from, to),
     placeholderData: keepPreviousData,
   })
+  // Инкассация кассадан (ТЗ «Финансы» §14): касса шотынан сейфке / банкке / «Жолдағы ақшаға»; тек finance.operations құқығымен.
+  const qc = useQueryClient()
+  const store = useAuth(activeStore)
+  const canCollect = can(store, Permission.FinanceOperate)
+  const [collecting, setCollecting] = useState(false)
+  const accounts = useQuery({ queryKey: ['finance', 'accounts', 'cashier', store?.id], queryFn: () => financeApi.accounts(store?.id), enabled: collecting })
 
   return (
     <aside className="flex min-h-0 w-full shrink-0 flex-col rounded-2xl bg-surface lg:w-[520px] xl:w-[600px]">
@@ -60,13 +71,20 @@ export function FinancePanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-        {isLoading || !f ? <p className="py-10 text-center text-ink-3">{t('common.loading')}</p> : <FinanceBody f={f} />}
+        {isLoading || !f ? <p className="py-10 text-center text-ink-3">{t('common.loading')}</p>
+          : <FinanceBody f={f} canCollect={canCollect} onCollect={() => setCollecting(true)} />}
       </div>
+      {collecting && accounts.data && (
+        <TransferModal collection accounts={accounts.data.accounts.filter((a) => a.storeId === store?.id)}
+          from={accounts.data.accounts.find((a) => a.storeId === store?.id && a.isActive && a.type === 'Cash')?.id}
+          onClose={() => setCollecting(false)}
+          onDone={() => { setCollecting(false); void qc.invalidateQueries({ queryKey: ['cashier', 'finance'] }); void qc.invalidateQueries({ queryKey: ['finance'] }) }} />
+      )}
     </aside>
   )
 }
 
-function FinanceBody({ f }: { f: Finance }) {
+function FinanceBody({ f, canCollect, onCollect }: { f: Finance; canCollect: boolean; onCollect: () => void }) {
   const t = useT()
   const methods = f.methods.filter((m) => m.amount > 0 || m.method !== 'Debt')
   return (
@@ -100,10 +118,31 @@ function FinanceBody({ f }: { f: Finance }) {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Tile icon={<Wallet size={18} className="text-success" />} label={t('finance.cashInDrawer')} value={tenge(f.cashInDrawer)} hint={t('finance.cashHint')} />
+        <Tile icon={<Wallet size={18} className="text-success" />} label={t('finance.cashInDrawer')} value={tenge(f.cashInDrawer)}
+          hint={f.wholeStore ? t('finance.cashHintFull') : t('finance.cashHint')} />
         <Tile icon={<HandCoins size={18} className="text-amber-600" />} label={t('finance.debtRepaid')} value={tenge(f.debtRepaid)}
           hint={f.debtRepaidByMethod.filter((m) => m.amount > 0).map((m) => `${t(`pay.${m.method}`)} ${tenge(m.amount)}`).join(' · ') || '—'} />
       </div>
+
+      {/* Инкассация мен кассаның басқа қозғалысы — «Финансы» журналынан; кассаның қазіргі қалдығы кезеңге тәуелсіз. */}
+      {f.wholeStore && (
+        <div className="rounded-xl border border-line px-4 py-3 text-[13px]">
+          <div className="flex justify-between text-ink-2"><span>{t('finance.collections')}</span><span>{f.collections > 0 ? `− ${tenge(f.collections)}` : tenge(0)}</span></div>
+          {f.otherCashMovements !== 0 && (
+            <div className="flex justify-between text-ink-2" title={t('finance.otherCashHint')}>
+              <span>{t('finance.otherCash')}</span><span>{f.otherCashMovements > 0 ? '+ ' : '− '}{tenge(Math.abs(f.otherCashMovements))}</span>
+            </div>
+          )}
+          {f.drawerBalance != null && (
+            <div className="mt-1.5 flex items-center justify-between gap-3 border-t border-line pt-2">
+              <span className="font-semibold">{t('finance.drawerBalance')}: {tenge(f.drawerBalance)}</span>
+              {canCollect && (
+                <Button variant="secondary" className="h-9! px-3!" icon={<Truck size={16} />} onClick={onCollect}>{t('finance.doCollection')}</Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {f.refundsByMethod.some((m) => m.amount > 0) && (
         <div className="rounded-xl border border-line px-4 py-3 text-[13px]">

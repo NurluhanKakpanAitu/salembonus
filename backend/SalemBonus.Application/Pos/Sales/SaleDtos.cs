@@ -128,7 +128,9 @@ public record FinanceMethodDto(string Method, decimal Amount, int Count);
 
 /// <summary>
 /// Күн (не кезең) қорытындысы. <see cref="Revenue"/> = сатылым − қайтарым. <see cref="CashInDrawer"/> —
-/// кассадағы қолма-қол: қолма-қол сатылым + қолма-қол қарыз өтеуі − қолма-қол қайтарым.
+/// кассадағы қолма-қол: қолма-қол сатылым + қолма-қол қарыз өтеуі − қолма-қол қайтарым − инкассация ± кассадағы басқа
+/// қозғалыс (кассадан шығын, кіріс, аударым, түзету — «Финансы» журналынан). Инкассация мен басқа қозғалыс және
+/// <see cref="DrawerBalance"/> (кассаның қазіргі қалдығы) тек бүкіл дүкенді көретінге: кассирдің өз сатылымына бөлінбейді.
 /// </summary>
 public record FinanceDto(
     DateOnly From, DateOnly To, bool WholeStore,
@@ -139,7 +141,8 @@ public record FinanceDto(
     int BonusRedeemed, int BonusAccrued,
     decimal ReturnsTotal, int ReturnsCount, IReadOnlyList<FinanceMethodDto> RefundsByMethod,
     decimal DebtIssued, decimal DebtRepaid, IReadOnlyList<FinanceMethodDto> DebtRepaidByMethod,
-    decimal Revenue, decimal CashInDrawer);
+    decimal Revenue, decimal CashInDrawer,
+    decimal Collections, decimal OtherCashMovements, decimal? DrawerBalance);
 
 // ---------- Клиент карточкасы (ТЗ §5) ----------
 

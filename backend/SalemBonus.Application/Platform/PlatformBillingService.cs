@@ -70,6 +70,16 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
         return new PaymentsPageDto(await DtosAsync(rows, ct), total, sum);
     }
 
+    /// <summary>
+    /// Төленген кезеңнің соңғы күні: «from + N ай − 1 күн». Айдың соңына жақын күнде (29–31) келесі ай қысқа болса, .NET күнді
+    /// ай соңына қысады да, бір күн жоғалады (29.01 + 1 ай = 28.02, − 1 = 27.02). Ондай кезде алдыңғы күннен санаймыз: 28.01 + 1 ай = 28.02.
+    /// </summary>
+    public static DateOnly PeriodEnd(DateOnly from, int months)
+    {
+        var next = from.AddMonths(months);
+        return next.Day == from.Day ? next.AddDays(-1) : from.AddDays(-1).AddMonths(months);
+    }
+
     /// <summary>Келесі кезең: төленген күннен кейін; ешқашан төлемесе — сынақ біткен соң не бүгіннен.</summary>
     private static DateOnly NextFrom(Organization o, DateOnly today) =>
         o.PaidUntil is { } paid ? paid.AddDays(1) : o.TrialUntil is { } trial && trial >= today ? trial.AddDays(1) : today;
@@ -82,7 +92,7 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
         var m = Math.Clamp(months, 1, 36);
         var from = NextFrom(org, access.Today);
         var fee = PlatformAccess.Fee(org, plan);
-        return new PaymentSuggestionDto(from, from.AddMonths(m).AddDays(-1), fee * m, fee);
+        return new PaymentSuggestionDto(from, PeriodEnd(from, m), fee * m, fee);
     }
 
     public async Task<PaymentDto> CreatePaymentAsync(CreatePaymentRequest r, CancellationToken ct = default)
@@ -100,7 +110,7 @@ public class PlatformBillingService(PlatformAccess access, IPlatformRepository r
         {
             var months = r.Months ?? 1;
             if (months is < 1 or > 36) throw new ValidationException(Messages.PlatformPaymentPeriodInvalid(Lang), "months");
-            to = from.AddMonths(months).AddDays(-1);
+            to = PeriodEnd(from, months);
         }
         if (to < from || to > from.AddMonths(36)) throw new ValidationException(Messages.PlatformPaymentPeriodInvalid(Lang), "periodTo");
         var payment = new PlatformPayment

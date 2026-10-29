@@ -172,6 +172,10 @@ export interface Finance {
   debtRepaidByMethod: FinanceMethod[]
   revenue: number
   cashInDrawer: number
+  /** Тек бүкіл дүкенді көретінге (finance.view): кезеңдегі инкассация, кассаның басқа қозғалысы, кассаның қазіргі қалдығы. */
+  collections: number
+  otherCashMovements: number
+  drawerBalance: number | null
 }
 
 export interface CustomerCard {

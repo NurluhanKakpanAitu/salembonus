@@ -238,6 +238,51 @@ public class FinanceTests(ApiFixture api)
         Assert.Contains((await pos.Get(pos.Owner, $"{F}/accounts?all=true")).Ok["accounts"]!.AsArray(), x => x!["id"]!.GetValue<Guid>() == b);
     }
 
+    /// <summary>
+    /// Инкассация кассаның «Финансы» экранында көрінеді: «Наличные в кассе» азаяды, инкассация жеке жолмен, «Сейчас в кассе» —
+    /// касса шотының қалдығы. Сторно ақшаны кассаға қайтарады. Инкассация тек кассадан/сейфтен, Kaspi мен кассаға — жоқ.
+    /// </summary>
+    [Fact]
+    public async Task Collection_takes_cash_out_of_the_drawer_shown_at_the_register()
+    {
+        var pos = await api.NewDeviceAsync();
+        var accounts = await AccountsAsync(pos);
+        var drawer = accounts["accounts"]!.AsArray().First(a => a!["methods"]!.AsArray().Any(m => m!.GetValue<string>() == "Cash"))!["id"]!.GetValue<Guid>();
+        var transit = AccountByType(accounts, "InTransit")["id"]!.GetValue<Guid>();
+        var bank = AccountByType(accounts, "Bank")["id"]!.GetValue<Guid>();
+        var kaspi = AccountByType(accounts, "Kaspi")["id"]!.GetValue<Guid>();
+        var before = (await pos.Get(pos.Owner, "/api/pos/v1/cashier/finance")).Ok;
+
+        var product = await pos.CreateProductAsync(price: 3000, stock: 5);
+        (await pos.SellAsync(pos.Owner, [Pos.Line(product, 1)], [Pos.Cash(3000)])).EnsureOk();
+        var collection = (await pos.Post(pos.Owner, $"{F}/transfers", new { fromAccountId = drawer, toAccountId = transit, amount = 1200m, collection = true })).Ok;
+
+        var after = (await pos.Get(pos.Owner, "/api/pos/v1/cashier/finance")).Ok;
+        Assert.Equal(before["cashInDrawer"]!.GetValue<decimal>() + 3000m - 1200m, after["cashInDrawer"]!.GetValue<decimal>());
+        Assert.Equal(before["collections"]!.GetValue<decimal>() + 1200m, after["collections"]!.GetValue<decimal>());
+        // «Сейчас в кассе» — дүкеннің барлық «Касса» шоттарының (әр касса аппараты) қалдығы.
+        var drawers = (await AccountsAsync(pos))["accounts"]!.AsArray().Where(a => a!["type"]!.GetValue<string>() == "Cash").Sum(a => a!["balance"]!.GetValue<decimal>());
+        Assert.Equal(drawers, after["drawerBalance"]!.GetValue<decimal>());
+        // Кассир тек өз сатылымын көреді — инкассация оған бөлінбейді, дүкен қалдығы көрсетілмейді.
+        var cashier = (await pos.Get(pos.Cashier, "/api/pos/v1/cashier/finance")).Ok;
+        Assert.False(cashier["wholeStore"]!.GetValue<bool>());
+        Assert.Null(cashier["drawerBalance"]?.GetValue<decimal?>());
+
+        (await pos.Post(pos.Owner, $"{F}/operations/{collection["id"]}/reverse", new { reason = "Ошибочно" })).EnsureOk();
+        var reversed = (await pos.Get(pos.Owner, "/api/pos/v1/cashier/finance")).Ok;
+        Assert.Equal(before["cashInDrawer"]!.GetValue<decimal>() + 3000m, reversed["cashInDrawer"]!.GetValue<decimal>());
+
+        // Инкассация банктен не Kaspi-ге болмайды; белсенді емес шотқа аударым да жоқ.
+        var fromBank = await pos.Post(pos.Owner, $"{F}/transfers", new { fromAccountId = bank, toAccountId = transit, amount = 1m, collection = true });
+        Assert.Equal(HttpStatusCode.BadRequest, fromBank.Status);
+        Assert.Equal("fromAccountId", fromBank.Body!["field"]!.GetValue<string>());
+        var toKaspi = await pos.Post(pos.Owner, $"{F}/transfers", new { fromAccountId = drawer, toAccountId = kaspi, amount = 1m, collection = true });
+        Assert.Equal(HttpStatusCode.BadRequest, toKaspi.Status);
+        var closed = await NewAccountAsync(pos, type: "Safe");
+        Assert.Equal(HttpStatusCode.NoContent, (await pos.Post(pos.Owner, $"{F}/accounts/{closed}/deactivate", new { })).Status);
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/transfers", new { fromAccountId = drawer, toAccountId = closed, amount = 1m })).Status);
+    }
+
     // ---------- §7, §8: қолмен операция — черновик → проведение → сторно; валидация ----------
 
     [Fact]

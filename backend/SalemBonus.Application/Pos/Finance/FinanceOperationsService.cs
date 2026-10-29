@@ -436,7 +436,15 @@ public class FinanceOperationsService(
         if (r.FromAccountId == r.ToAccountId) throw new ValidationException(Messages.FinanceSameAccount(Lang), "toAccountId");
         var from = await repo.GetAccountAsync(c.OrgId, r.FromAccountId.Value, ct) ?? throw new ValidationException(Messages.FinanceAccountNotFound(Lang), "fromAccountId");
         var to = await repo.GetAccountAsync(c.OrgId, r.ToAccountId.Value, ct) ?? throw new ValidationException(Messages.FinanceAccountNotFound(Lang), "toAccountId");
+        if (!from.IsActive) throw new ValidationException(Messages.FinanceAccountInactive(Lang, from.Name), "fromAccountId");
+        if (!to.IsActive) throw new ValidationException(Messages.FinanceAccountInactive(Lang, to.Name), "toAccountId");
+        // Инкассация — қолма-қол ақшаның кассадан (не сейфтен) сейфке, банкке не «Жолдағы ақшаға» кетуі; банктен не Kaspi-ге «инкассация» болмайды.
+        if (r.Collection && from.Type is not (FinanceAccountType.Cash or FinanceAccountType.Safe))
+            throw new ValidationException(Messages.FinanceCollectionSource(Lang), "fromAccountId");
+        if (r.Collection && to.Type is (FinanceAccountType.Cash or FinanceAccountType.Kaspi))
+            throw new ValidationException(Messages.FinanceCollectionTarget(Lang), "toAccountId");
         await RequireStoreAsync(c, from.StoreId, ct);
+        await RequireStoreAsync(c, to.StoreId, ct);
         var date = r.Date is { } d ? DateTime.SpecifyKind(d, DateTimeKind.Utc) : DateTime.UtcNow;
         var type = r.Collection ? FinanceOperationType.Collection : FinanceOperationType.Transfer;
         var description = (r.Collection ? "Инкассация: " : Lang == AppLanguage.Ru ? "Перевод: " : "Аударым: ") + $"{from.Name} → {to.Name}";

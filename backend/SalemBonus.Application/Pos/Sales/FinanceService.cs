@@ -4,6 +4,7 @@ using SalemBonus.Application.Common.Localization;
 using SalemBonus.Application.Pos.Catalog;
 using SalemBonus.Application.Pos.Registers;
 using SalemBonus.Domain.Core;
+using SalemBonus.Domain.Pos.Finance;
 using SalemBonus.Domain.Pos.Sales;
 
 namespace SalemBonus.Application.Pos.Sales;
@@ -12,9 +13,12 @@ namespace SalemBonus.Application.Pos.Sales;
 /// Кассаның «Финансы» экраны (ТЗ «Касса» §14): сатылым, төлем түрлері, аралас төлемдер, жеңілдік,
 /// бонус, қайтарым, қарыз. <c>finance.view</c> құқығы барға — бүкіл дүкен, кассирге — тек өз сатылымдары.
 /// </summary>
-public class FinanceService(ISalesRepository sales, IStoreRepository stores, CatalogAccess access)
+public class FinanceService(ISalesRepository sales, IStoreRepository stores, IFinanceRepository ledger, CatalogAccess access)
 {
     private static readonly PaymentMethod[] MoneyMethods = [PaymentMethod.Cash, PaymentMethod.Card, PaymentMethod.Qr, PaymentMethod.Transfer];
+
+    /// <summary>Сатылым, қарыз өтеуі мен қайтарым кассаға чектерден есептеледі — журналдағы көшірмесі қайта қосылмайды.</summary>
+    private static readonly FinanceOperationType[] FromReceipts = [FinanceOperationType.SalePayment, FinanceOperationType.CustomerPayment, FinanceOperationType.Refund];
 
     public async Task<FinanceDto> GetAsync(DateOnly? from, DateOnly? to, CancellationToken ct = default)
     {
@@ -53,6 +57,28 @@ public class FinanceService(ISalesRepository sales, IStoreRepository stores, Cat
                    + repaid.Where(p => p.Method == PaymentMethod.Cash).Sum(p => p.Amount)
                    - returns.Where(r => r.RefundMethod == PaymentMethod.Cash).Sum(r => r.Refunded);
 
+        // Кассадағы ақшаны тек чектер өзгертпейді: инкассация, кассадан шығын, аударым, түзету — «Финансы» журналында
+        // (дүкеннің «Касса» түріндегі шоттары). Олар кассирдің өз сатылымына бөлінбейді — тек бүкіл дүкенді көретінге.
+        decimal collections = 0, otherCash = 0;
+        decimal? drawerBalance = null;
+        if (wholeStore)
+        {
+            var accounts = (await ledger.ListAccountsAsync([m.StoreId], ct)).Where(a => a.Type == FinanceAccountType.Cash).ToList();
+            var drawers = accounts.Select(a => a.Id).ToList();
+            foreach (var account in accounts)
+                foreach (var row in await ledger.StatementAsync(account.Id, fromUtc, toUtc, ct))
+                {
+                    if (FromReceipts.Contains(row.Operation.Type)) continue;
+                    // Бастапқы қалдық — кезеңдегі қозғалыс емес (ол «Қазір кассада» қалдығында бар).
+                    if (row.Operation.Type == FinanceOperationType.Adjustment && account.OpeningDate is { } od
+                        && row.Entry.Date == StoreTime.StartOfDayUtc(od, zone) && row.Entry.Amount == account.OpeningBalance) continue;
+                    if (row.Operation.Type == FinanceOperationType.Collection) collections -= row.Entry.Amount;
+                    else otherCash += row.Entry.Amount;
+                }
+            cash += otherCash - collections;
+            drawerBalance = (await ledger.SumEntriesAsync(drawers, ct)).Values.Sum();
+        }
+
         return new FinanceDto(
             start, end, wholeStore,
             salesTotal, list.Count,
@@ -63,7 +89,8 @@ public class FinanceService(ISalesRepository sales, IStoreRepository stores, Cat
             list.Sum(s => s.BonusAccrued) - returns.Sum(r => r.BonusReversed),
             returnsTotal, returns.Count, refunds,
             methods.First(x => x.Method == nameof(PaymentMethod.Debt)).Amount, repaid.Sum(p => p.Amount), repaidByMethod,
-            salesTotal - returnsTotal, cash);
+            salesTotal - returnsTotal, cash,
+            collections, otherCash, drawerBalance);
     }
 }
 

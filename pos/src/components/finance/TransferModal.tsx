@@ -6,10 +6,13 @@ import { Modal } from '../ui/Modal'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
 import { financeApi } from '../../lib/financeApi'
-import type { FinanceAccount, FinanceOperation } from '../../lib/financeTypes'
+import type { AccountType, FinanceAccount, FinanceOperation } from '../../lib/financeTypes'
 import { tenge } from '../../lib/money'
 import { useT } from '../../lib/i18n'
 import { ACCOUNT_ICON, ACCOUNT_TONE, reportError } from './financeUi'
+
+const COLLECT_FROM: AccountType[] = ['Cash', 'Safe']
+const COLLECT_TO: AccountType[] = ['Safe', 'Bank', 'InTransit', 'Other']
 
 /**
  * Шоттар арасындағы аударым / инкассация (ТЗ «Финансы» §9.1, §14): бір операция, екі проводка, жалпы қалдық өзгермейді, P&L-ге түспейді.
@@ -20,12 +23,27 @@ export function TransferModal({ accounts, from, collection: initialCollection, o
 }) {
   const t = useT()
   const active = accounts.filter((a) => a.isActive)
-  const [fromId, setFromId] = useState(from ?? active.find((a) => a.type === 'Cash')?.id ?? active[0]?.id ?? '')
+  // Инкассация — қолма-қол ақша кассадан не сейфтен сейфке, банкке не «Жолдағы ақшаға» (серверде де тексеріледі).
+  const sources = (on: boolean) => (on ? active.filter((a) => COLLECT_FROM.includes(a.type)) : active)
+  const targets = (on: boolean, src: string) => (on ? active.filter((a) => COLLECT_TO.includes(a.type)) : active).filter((a) => a.id !== src)
+  const pickFrom = (on: boolean, preferred?: string) => {
+    const list = sources(on)
+    return list.find((a) => a.id === preferred)?.id ?? list.find((a) => a.type === 'Cash')?.id ?? list[0]?.id ?? ''
+  }
+  const pickTo = (on: boolean, src: string, preferred?: string) => {
+    const list = targets(on, src)
+    return list.find((a) => a.id === preferred)?.id ?? (on ? list.find((a) => a.type === 'InTransit')?.id : undefined) ?? list[0]?.id ?? ''
+  }
   const [collection, setCollection] = useState(!!initialCollection)
-  const [toId, setToId] = useState(() => {
-    const transit = active.find((a) => a.type === 'InTransit')
-    return initialCollection && transit ? transit.id : active.find((a) => a.id !== (from ?? active[0]?.id))?.id ?? ''
-  })
+  const [fromId, setFromId] = useState(() => pickFrom(!!initialCollection, from))
+  const [toId, setToId] = useState(() => pickTo(!!initialCollection, pickFrom(!!initialCollection, from)))
+  const switchCollection = (on: boolean) => {
+    const src = pickFrom(on, fromId)
+    setCollection(on)
+    setFromId(src)
+    setToId(pickTo(on, src, on ? undefined : toId))
+    setError(null)
+  }
   const [amount, setAmount] = useState('')
   const [comment, setComment] = useState('')
   const [documentNumber, setDocumentNumber] = useState('')
@@ -59,17 +77,17 @@ export function TransferModal({ accounts, from, collection: initialCollection, o
   return (
     <Modal title={collection ? t('fin.collection') : t('fin.transfer')} onClose={onClose} width={680}>
       <form onSubmit={submit} className="flex flex-col gap-4">
-        <Toggle checked={collection} onChange={(v) => { setCollection(v); const transit = active.find((a) => a.type === 'InTransit'); if (v && transit) setToId(transit.id) }} label={t('fin.collectionToggle')} />
+        <Toggle checked={collection} onChange={switchCollection} label={t('fin.collectionToggle')} />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
-          <Field label={t('fin.fromAccount')} required>
-            <Select value={fromId} onChange={(e) => { setFromId(e.target.value); setError(null) }}>
-              {active.map((a) => <AccountOption key={a.id} a={a} />)}
+          <Field label={t('fin.fromAccount')} required error={error?.field === 'fromAccountId' ? error.message : null}>
+            <Select value={fromId} onChange={(e) => { setFromId(e.target.value); setToId(pickTo(collection, e.target.value, toId)); setError(null) }}>
+              {sources(collection).map((a) => <AccountOption key={a.id} a={a} />)}
             </Select>
           </Field>
           <ArrowRight className="hidden text-ink-3 sm:mb-3 sm:block" size={20} />
           <Field label={t('fin.toAccount')} required error={error?.field === 'toAccountId' ? error.message : same ? t('fin.err.sameAccount') : null}>
             <Select value={toId} onChange={(e) => { setToId(e.target.value); setError(null) }} error={same}>
-              {active.map((a) => <AccountOption key={a.id} a={a} />)}
+              {targets(collection, fromId).map((a) => <AccountOption key={a.id} a={a} />)}
             </Select>
           </Field>
         </div>
