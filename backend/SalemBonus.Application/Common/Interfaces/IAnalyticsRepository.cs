@@ -53,7 +53,8 @@ public interface IAnalyticsRepository
     Task<IReadOnlyList<AnalyticsProduct>> ProductsAsync(Guid orgId, IReadOnlyCollection<Guid>? ids, CancellationToken ct = default);
     /// <summary>Әр түйін → оның түбір санаты (id, атауы): «Продажи по категориям» мен санат сүзгісі үшін.</summary>
     Task<Dictionary<Guid, (Guid RootId, string RootName)>> NodeRootsAsync(Guid orgId, CancellationToken ct = default);
-    Task<IReadOnlyList<Guid>> ProductIdsByBarcodeAsync(Guid orgId, string barcode, CancellationToken ct = default);
+    /// <summary>Іздеуге сәйкес тауарлар (ProductSearch: сөздер кез келген ретпен, барлық өріс — штрихкод, бренд, санат…).</summary>
+    Task<HashSet<Guid>> ProductIdsMatchingAsync(Guid orgId, string search, CancellationToken ct = default);
     /// <summary>Кіріс бағасы дүкен бойынша: (дүкен, тауар) → баға. Белгісіз болса — жоқ.</summary>
     Task<Dictionary<(Guid StoreId, Guid ProductId), decimal>> PurchasePricesAsync(IReadOnlyCollection<Guid> storeIds, CancellationToken ct = default);
 

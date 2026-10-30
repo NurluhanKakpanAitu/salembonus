@@ -90,8 +90,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PlatformAuditEntry> PlatformAudit => Set<PlatformAuditEntry>();
     public DbSet<PlatformLead> PlatformLeads => Set<PlatformLead>();
 
+    /// <summary>
+    /// Іздеу үшін мәтінді кіші әріпке келтіру — латын, орыс және қазақ әріптері (SQL-де <c>salem_fold</c>, миграция SearchFold).
+    /// Базаның локалі C болса, <c>lower</c>/<c>ILIKE</c> кириллицаны теңестірмейді; бұл функция локальға тәуелсіз.
+    /// </summary>
+    public static string Fold(string text) => throw new NotSupportedException("Тек LINQ сұранысында (salem_fold)");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        modelBuilder.HasDbFunction(typeof(AppDbContext).GetMethod(nameof(Fold))!).HasName("salem_fold").HasSchema("public");
     }
 }

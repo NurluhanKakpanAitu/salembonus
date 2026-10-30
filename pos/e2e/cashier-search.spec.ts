@@ -8,6 +8,8 @@ import { posLogin, useLanguage } from './pos'
  */
 const DEMO_STORE = '11111111-1111-1111-1111-111111111111'
 const tag = 'Зкс' + Math.random().toString(36).slice(2, 6)
+// Санаттардың өз белгісі: тауар белгісімен іздегенде санат атауы арқылы басқа тауарлар араласпасын.
+const cat = Math.random().toString(36).slice(2, 6)
 
 async function seed(request: APIRequestContext, token: string) {
   const headers = { Authorization: `Bearer ${token}`, 'X-Store-Id': DEMO_STORE, 'Accept-Language': 'ru' }
@@ -20,11 +22,11 @@ async function seed(request: APIRequestContext, token: string) {
   const units = (await (await request.get('/api/pos/v1/catalog/units', { headers })).json()) as { id: string }[]
   const product = (name: string, nodeId: string) =>
     post('/api/pos/v1/products', { name, unitId: units[0].id, nodeId, opening: { quantity: 5, purchasePrice: 50, salePrice: 100 } })
-  const oils = await node(`Масла ${tag}`)
-  const filters = await node(`Фильтры ${tag}`)
+  const oils = await node(`Масла ${cat}`)
+  const filters = await node(`Фильтры ${cat}`)
   const items = [await product(`${tag} масло моторное`, oils.id), await product(`${tag} фильтр воздушный`, filters.id), await product(`Тосол ${tag.slice(3)}`, oils.id)]
   return {
-    oils: `Масла ${tag}`, filters: `Фильтры ${tag}`,
+    oils: `Масла ${cat}`, filters: `Фильтры ${cat}`,
     cleanup: async () => {
       for (const p of items) await request.post(`/api/pos/v1/products/${p.id}/archive`, { headers, data: {} })
       for (const n of [oils, filters]) await request.post(`/api/pos/v1/catalog/nodes/${n.id}/archive`, { headers, data: {} })
@@ -38,15 +40,25 @@ test('cashier search shows results in the grid and works together with categorie
   await useLanguage(page, 'ru')
   const token = await posLogin(page)
   const data = await seed(page.request, token)
+  let taken: string | null = null
   try {
     const listed = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith('/api/pos/v1/registers') && r.request().method() === 'GET')
     await page.goto('/cashier')
     const registers = (await (await listed).json()) as { id: string; isBound: boolean }[]
     const index = registers.findIndex((r) => !r.isBound || !!process.env.CI)
     test.skip(index < 0, 'касса занята другим устройством')
+    taken = registers[index].id
     await page.getByRole('button', { name: 'Подключить', exact: true }).nth(index).click()
     const search = page.locator('input[data-pos-search]')
     await expect(search).toBeVisible()
+
+    // 0) Әмбебап іздеу: сөздер кез келген ретпен және регистрмен, санат атауы бойынша да.
+    await search.fill(`МОТОРНОЕ ${tag.toLowerCase()} масло`)
+    await expect(card(page, `${tag} масло моторное`)).toBeVisible()
+    await expect(card(page, `${tag} фильтр воздушный`)).toHaveCount(0)
+    await search.fill(`фильтры ${tag}`)
+    await expect(card(page, `${tag} фильтр воздушный`)).toBeVisible()
+    await expect(card(page, `${tag} масло моторное`)).toHaveCount(0)
 
     // 1) Іздеу → санат: нәтиже бірден торда, тізім ашылмайды; санат таңдағанда іздеу қалады.
     await search.fill(tag)
@@ -80,6 +92,8 @@ test('cashier search shows results in the grid and works together with categorie
     await page.getByRole('menuitem', { name: 'Отключить это устройство' }).click()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Отключить', exact: true }).click()
   } finally {
+    // Тест құласа да касса бос қалады (әйтпесе келесі іске қосу оны «басқа құрылғыда» деп өткізіп жібереді).
+    if (taken) await page.request.post(`/api/pos/v1/settings/registers/${taken}/unbind`, { headers: { Authorization: `Bearer ${token}`, 'X-Store-Id': DEMO_STORE }, data: {} })
     await data.cleanup()
   }
 })

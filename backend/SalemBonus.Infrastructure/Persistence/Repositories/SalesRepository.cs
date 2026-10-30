@@ -23,13 +23,7 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
             var prefix = path + "/";
             products = products.Where(p => db.CatalogNodes.Any(n => n.Id == p.CatalogNodeId && (n.Path == path || n.Path.StartsWith(prefix))));
         }
-        if (f.Search is { } term)
-        {
-            var like = $"%{term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_")}%";
-            products = products.Where(p => EF.Functions.ILike(p.Name, like, "\\")
-                || (p.Article != null && EF.Functions.ILike(p.Article, like, "\\"))
-                || p.Barcodes.Any(b => b.Barcode.StartsWith(term)));
-        }
+        products = products.Search(db, f.Search);
 
         var since = DateTime.UtcNow.AddDays(-30);
         var rows = products.Select(p => new

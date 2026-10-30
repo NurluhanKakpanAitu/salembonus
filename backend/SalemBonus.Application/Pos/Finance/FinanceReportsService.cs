@@ -1,3 +1,4 @@
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
 using SalemBonus.Application.Pos.Catalog;
@@ -291,10 +292,9 @@ public class FinanceReportsService(
         }).ToList();
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
-            var byBarcode = (await analytics.ProductIdsByBarcodeAsync(c.OrgId, term, ct)).ToHashSet();
-            rows = rows.Where(r => byBarcode.Contains(r.ProductId) || r.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase)
-                                   || (r.Article?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false)).ToList();
+            var matching = await analytics.ProductIdsMatchingAsync(c.OrgId, search, ct);
+            var tokens = ProductSearch.Tokens(search);
+            rows = rows.Where(r => matching.Contains(r.ProductId) || ProductSearch.Matches(tokens, r.Name, r.Article)).ToList();
         }
         if (nodeId is { } node) rows = rows.Where(r => products.GetValueOrDefault(r.ProductId)?.NodeId is { } n && (n == node || roots.GetValueOrDefault(n).RootId == node)).ToList();
         if (brandId is { } brand) rows = rows.Where(r => products.GetValueOrDefault(r.ProductId)?.BrandId == brand).ToList();

@@ -41,14 +41,7 @@ public class ProductRepository(AppDbContext db) : IProductRepository
             var prefix = path + "/";
             q = q.Where(p => db.CatalogNodes.Any(n => n.Id == p.CatalogNodeId && (n.Path == path || n.Path.StartsWith(prefix))));
         }
-        if (f.Search is { } term)
-        {
-            var like = $"%{Escape(term)}%";
-            q = q.Where(p => EF.Functions.ILike(p.Name, like, "\\")
-                || (p.Article != null && EF.Functions.ILike(p.Article, like, "\\"))
-                || p.Barcodes.Any(b => b.Barcode.StartsWith(term)));
-        }
-        return q;
+        return q.Search(db, f.Search);
     }
 
     public Task<Product?> GetAsync(Guid orgId, Guid id, CancellationToken ct = default) =>
@@ -83,5 +76,4 @@ public class ProductRepository(AppDbContext db) : IProductRepository
         q.Include(p => p.Barcodes).Include(p => p.Images).Include(p => p.Characteristics).AsSplitQuery();
 
     /// <summary>ILIKE үлгісіндегі арнайы таңбалар (%, _) әріп ретінде ізделсін.</summary>
-    private static string Escape(string term) => term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 }

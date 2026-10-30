@@ -1,3 +1,4 @@
+using SalemBonus.Application.Common;
 using SalemBonus.Application.Common.Exceptions;
 using SalemBonus.Application.Common.Interfaces;
 using SalemBonus.Application.Common.Localization;
@@ -137,10 +138,10 @@ public partial class AnalyticsService
         if (q.HasReturns is { } hr) filtered = filtered.Where(l => hr ? l.Returned > 0 : l.Returned == 0);
         if (!string.IsNullOrWhiteSpace(q.Search))
         {
-            var term = q.Search.Trim();
-            var byBarcode = (await repo.ProductIdsByBarcodeAsync(c.OrgId, term, ct)).ToHashSet();
-            filtered = filtered.Where(l => byBarcode.Contains(l.ProductId) || l.Name.Contains(term, StringComparison.CurrentCultureIgnoreCase)
-                                           || (l.Article?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false));
+            // Каталогтағы тауар — барлық өрісі бойынша; чектегі атауы (тауар кейін өзгерсе) — атауы мен артикулы бойынша.
+            var matching = await repo.ProductIdsMatchingAsync(c.OrgId, q.Search, ct);
+            var tokens = ProductSearch.Tokens(q.Search);
+            filtered = filtered.Where(l => matching.Contains(l.ProductId) || ProductSearch.Matches(tokens, l.Name, l.Article));
         }
         var list = filtered.ToList();
         var profitComplete = list.Count > 0 && list.All(l => l.CostComplete);
@@ -238,10 +239,9 @@ public partial class AnalyticsService
         });
         if (!string.IsNullOrWhiteSpace(q.Search))
         {
-            var term = q.Search.Trim();
-            var byBarcode = (await repo.ProductIdsByBarcodeAsync(c.OrgId, term, ct)).ToHashSet();
-            rows = rows.Where(r => byBarcode.Contains((Guid)r["productId"]!) || ((string)r["name"]!).Contains(term, StringComparison.CurrentCultureIgnoreCase)
-                                   || ((r["article"] as string)?.Contains(term, StringComparison.CurrentCultureIgnoreCase) ?? false));
+            var matching = await repo.ProductIdsMatchingAsync(c.OrgId, q.Search, ct);
+            var tokens = ProductSearch.Tokens(q.Search);
+            rows = rows.Where(r => matching.Contains((Guid)r["productId"]!) || ProductSearch.Matches(tokens, (string)r["name"]!, r["article"] as string));
         }
         rows = q.Segment switch
         {

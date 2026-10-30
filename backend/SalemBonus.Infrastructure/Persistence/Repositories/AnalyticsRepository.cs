@@ -100,8 +100,8 @@ public class AnalyticsRepository(AppDbContext db) : IAnalyticsRepository
             Guid.TryParse(n.Path.Split('/')[0], out var root) && names.TryGetValue(root, out var rootName) ? (root, rootName) : (n.Id, n.Name));
     }
 
-    public async Task<IReadOnlyList<Guid>> ProductIdsByBarcodeAsync(Guid orgId, string barcode, CancellationToken ct = default) =>
-        await db.ProductBarcodes.AsNoTracking().Where(b => b.OrganizationId == orgId && b.Barcode == barcode).Select(b => b.ProductId).ToListAsync(ct);
+    public async Task<HashSet<Guid>> ProductIdsMatchingAsync(Guid orgId, string search, CancellationToken ct = default) =>
+        (await db.Products.AsNoTracking().Where(p => p.OrganizationId == orgId).Search(db, search).Select(p => p.Id).ToListAsync(ct)).ToHashSet();
 
     public async Task<Dictionary<(Guid StoreId, Guid ProductId), decimal>> PurchasePricesAsync(IReadOnlyCollection<Guid> storeIds, CancellationToken ct = default) =>
         await db.ProductPrices.AsNoTracking().Where(p => storeIds.Contains(p.StoreId) && p.PurchasePrice != null)
