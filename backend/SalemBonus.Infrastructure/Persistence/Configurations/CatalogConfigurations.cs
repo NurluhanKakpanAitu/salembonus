@@ -82,6 +82,8 @@ public class CharacteristicOptionConfiguration : IEntityTypeConfiguration<Charac
 
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
+    public const string ProductSearchText = "SearchText";
+
     public void Configure(EntityTypeBuilder<Product> b)
     {
         b.ToTable("products", Schemas.Pos);
@@ -97,6 +99,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         b.Property(x => x.VatRate).HasPrecision(5, 2);
         b.Property(x => x.MaxDiscountPercent).HasPrecision(5, 2);
         b.Property(x => x.Notes).HasMaxLength(1000);
+        // Іздеу мәтіні (ProductSearchQuery): тауардың өз мәтін өрістері кіші әріппен бір жолда. Postgres өзі есептейді (STORED) —
+        // іздеуде әр жолға salem_fold шақырылмайды. Домен моделінде жоқ (көлеңкелі қасиет), тек сұраныс үшін.
+        b.Property<string>(ProductSearchText)
+            .HasComputedColumnSql("""public.salem_fold("Name" || ' ' || coalesce("Article", '') || ' ' || coalesce("Description", '') || ' ' || coalesce("Supplier", '') || ' ' || coalesce("Manufacturer", '') || ' ' || coalesce("Country", ''))""", stored: true);
         b.HasIndex(x => new { x.OrganizationId, x.Name });
         b.HasIndex(x => new { x.OrganizationId, x.Article });
         b.HasIndex(x => x.CatalogNodeId);

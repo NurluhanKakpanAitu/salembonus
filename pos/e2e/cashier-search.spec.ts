@@ -52,6 +52,18 @@ test('cashier search shows results in the grid and works together with categorie
     const search = page.locator('input[data-pos-search]')
     await expect(search).toBeVisible()
 
+    // Сервер баяу жауап берсе — «Ищем товары…» көрінеді (жүйе қатып қалған сияқты емес), жауап келгенде — «Найдено».
+    await page.route('**/api/pos/v1/cashier/catalog?*', async (route) => {
+      if (route.request().url().includes('search=')) await new Promise((r) => setTimeout(r, 1500))
+      await route.continue()
+    })
+    await search.fill(tag)
+    await expect(page.getByRole('status').filter({ hasText: 'Ищем товары' })).toBeVisible()
+    await expect(page.getByLabel('Ищем товары…')).toBeVisible()
+    await expect(page.getByText(/^Найдено: \d+$/)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByRole('status').filter({ hasText: 'Ищем товары' })).toHaveCount(0)
+    await page.unroute('**/api/pos/v1/cashier/catalog?*')
+
     // 0) Әмбебап іздеу: сөздер кез келген ретпен және регистрмен, санат атауы бойынша да.
     await search.fill(`МОТОРНОЕ ${tag.toLowerCase()} масло`)
     await expect(card(page, `${tag} масло моторное`)).toBeVisible()

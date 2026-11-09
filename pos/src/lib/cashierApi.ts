@@ -20,11 +20,12 @@ export interface CreateSale {
 /** Касса API: контекст, каталог (баға мен қалдықпен), клиент, сатылым. */
 export const cashierApi = {
   context: () => api<CashierContext>(`${base}/context`),
-  catalog: (q: { search?: string; nodeId?: string | null; sort: CashierSort; page: number; pageSize: number }) => {
+  /** signal — тез терілгенде ескі сұраныс тоқтатылады (сервер де SQL-ды тоқтатады). */
+  catalog: (q: { search?: string; nodeId?: string | null; sort: CashierSort; page: number; pageSize: number }, signal?: AbortSignal) => {
     const p = new URLSearchParams({ sort: q.sort, page: String(q.page), pageSize: String(q.pageSize) })
     if (q.search?.trim()) p.set('search', q.search.trim())
     if (q.nodeId) p.set('nodeId', q.nodeId)
-    return api<CashierCatalog>(`${base}/catalog?${p}`)
+    return api<CashierCatalog>(`${base}/catalog?${p}`, { signal })
   },
   byBarcode: (code: string) => api<CashierProduct>(`${base}/catalog/by-barcode/${encodeURIComponent(code)}`),
   searchCustomers: (q: string) => api<CashierCustomer[]>(`${base}/customers?q=${encodeURIComponent(q)}`),

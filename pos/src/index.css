@@ -125,3 +125,9 @@ body {
     box-shadow: -8px 0 8px -8px rgb(11 18 32 / 0.12);
   }
 }
+
+/* Жүгіретін жолақ: кассада іздеу/санат жүктеліп жатқанда тор үстінде (CatalogPanel). */
+@keyframes salem-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}

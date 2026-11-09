@@ -1864,6 +1864,11 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("OrganizationId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SearchText")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasComputedColumnSql("public.salem_fold(\"Name\" || ' ' || coalesce(\"Article\", '') || ' ' || coalesce(\"Description\", '') || ' ' || coalesce(\"Supplier\", '') || ' ' || coalesce(\"Manufacturer\", '') || ' ' || coalesce(\"Country\", ''))", true);
+
                     b.Property<int?>("ShelfLifeDays")
                         .HasColumnType("integer");
 

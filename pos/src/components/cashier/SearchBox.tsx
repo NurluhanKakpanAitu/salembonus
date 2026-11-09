@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Barcode, Search, X } from 'lucide-react'
+import { useIsFetching } from '@tanstack/react-query'
+import { Barcode, Loader2, Search, X } from 'lucide-react'
 import { useFitPlaceholder } from '../ui/SearchInput'
 import { useT } from '../../lib/i18n'
 
@@ -17,6 +18,9 @@ export function SearchBox({ value, onSearch, onScan }: {
   const [q, setQ] = useState(value)
   const ref = useRef<HTMLDivElement>(null)
   const searchPlaceholder = useFitPlaceholder(t('pos.searchPlaceholder'), ref, 140)
+  // Теру тоқтағанын күтіп тұр не сервер жауап бермей тұр — белгі айналады (кассир «қатты» деп ойламасын).
+  const fetching = useIsFetching({ queryKey: ['cashier', 'catalog'] }) > 0
+  const busy = q.trim() !== value || (!!value && fetching)
 
   // Іздеу сырттан өзгерсе (торда «тазалау»), өріс те соған келеді.
   useEffect(() => { setQ((cur) => (cur.trim() === value ? cur : value)) }, [value])
@@ -42,7 +46,9 @@ export function SearchBox({ value, onSearch, onScan }: {
 
   return (
     <div ref={ref} className="relative min-w-[220px] flex-1 basis-60">
-      <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />
+      {busy
+        ? <Loader2 size={18} aria-label={t('pos.searching')} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 animate-spin text-brand" />
+        : <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-3" />}
       <input value={q} data-pos-search aria-label={t('pos.searchPlaceholder')}
         onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => void onKeyDown(e)}
         placeholder={searchPlaceholder}

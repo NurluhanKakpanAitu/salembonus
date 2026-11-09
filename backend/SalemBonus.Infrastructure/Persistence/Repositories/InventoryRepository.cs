@@ -79,7 +79,7 @@ public class InventoryRepository(AppDbContext db) : IInventoryRepository
         if (f.BrandId is { } bid) q = q.Where(p => p.BrandId == bid);
         if (f.NodePath is { } path)
             q = q.Where(p => p.CatalogNodeId != null && db.CatalogNodes.Any(n => n.Id == p.CatalogNodeId && (n.Path == path || n.Path.StartsWith(path + "/"))));
-        q = q.Search(db, f.Search);
+        q = q.Search(db, orgId, f.Search);
 
         var totals = db.StockBalances.Where(b => wids.Contains(b.WarehouseId)).GroupBy(b => b.ProductId)
             .Select(g => new { ProductId = g.Key, Total = g.Sum(x => x.Quantity) });

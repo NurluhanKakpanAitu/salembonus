@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
-import { ImageOff, LayoutGrid, List, Plus, X } from 'lucide-react'
+import { ImageOff, LayoutGrid, List, Loader2, Plus, X } from 'lucide-react'
 import { cashierApi } from '../../lib/cashierApi'
 import type { CashierProduct, CashierSort } from '../../lib/cashierTypes'
 import { CatalogIcon } from '../../lib/catalogIcons'
@@ -36,13 +36,14 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
 
   const query = useInfiniteQuery({
     queryKey: ['cashier', 'catalog', filter.nodeId, filter.sort, filter.search],
-    queryFn: ({ pageParam }) => cashierApi.catalog({ nodeId: filter.nodeId, sort: filter.sort, search: filter.search, page: pageParam, pageSize: PAGE }),
+    queryFn: ({ pageParam, signal }) => cashierApi.catalog({ nodeId: filter.nodeId, sort: filter.sort, search: filter.search, page: pageParam, pageSize: PAGE }, signal),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page * last.pageSize < last.total ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
   })
   const items = query.data?.pages.flatMap((p) => p.items) ?? []
   const total = query.data?.pages[0]?.total ?? 0
+  const refreshing = query.isFetching && !query.isFetchingNextPage
   // Санат пен іздеу бірге сүзеді: тақырып — санат, іздеу — жанында жеке белгі (✕ — тек іздеуді алады).
   const title = filter.nodeId ? roots.find((r) => r.id === filter.nodeId)?.name ?? t('pos.allProducts') : t('pos.allProducts')
 
@@ -74,7 +75,10 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
               <span className="break-all">{t('pos.searchResults', { q: filter.search })}</span> <X size={14} className="shrink-0" />
             </button>
           )}
-          <span className="text-[13px] text-ink-3">{t('pos.found', { n: total })}</span>
+          {/* Жаңа сұраныс жүріп жатқанда (іздеу, санат, сұрыптау) — «Ищем…»: ескі нәтиже бозарып тұрады, жүйе «қатып қалған» болып көрінбейді. */}
+          {refreshing
+            ? <span role="status" className="flex items-center gap-1.5 text-[13px] font-medium text-brand"><Loader2 size={14} className="animate-spin" /> {t('pos.searching')}</span>
+            : <span className="text-[13px] text-ink-3">{t('pos.found', { n: total })}</span>}
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
             {SORTS.map((s) => (
               <button key={s.key} type="button" onClick={() => onFilter({ sort: s.key })}
@@ -103,8 +107,9 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          {query.isLoading && <p className="py-16 text-center text-[14px] text-ink-3">{t('common.loading')}</p>}
+        {refreshing && <div className="h-0.5 w-full overflow-hidden bg-brand-soft"><div className="h-full w-1/3 animate-[salem-progress_1s_ease-in-out_infinite] bg-brand" /></div>}
+        <div className={`min-h-0 flex-1 overflow-y-auto p-3 transition-opacity ${refreshing ? 'opacity-60' : ''}`} aria-busy={refreshing}>
+          {query.isLoading && <p className="flex items-center justify-center gap-2 py-16 text-[14px] text-ink-3"><Loader2 size={18} className="animate-spin" /> {t('pos.searching')}</p>}
           {!query.isLoading && items.length === 0 && <p className="py-16 text-center text-[14px] text-ink-3">{t('catalog.nothingFound')}</p>}
           {filter.view === 'grid' ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3">

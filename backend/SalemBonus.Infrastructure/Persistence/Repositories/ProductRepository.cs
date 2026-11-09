@@ -41,7 +41,7 @@ public class ProductRepository(AppDbContext db) : IProductRepository
             var prefix = path + "/";
             q = q.Where(p => db.CatalogNodes.Any(n => n.Id == p.CatalogNodeId && (n.Path == path || n.Path.StartsWith(prefix))));
         }
-        return q.Search(db, f.Search);
+        return q.Search(db, orgId, f.Search);
     }
 
     public Task<Product?> GetAsync(Guid orgId, Guid id, CancellationToken ct = default) =>

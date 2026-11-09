@@ -23,7 +23,7 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
             var prefix = path + "/";
             products = products.Where(p => db.CatalogNodes.Any(n => n.Id == p.CatalogNodeId && (n.Path == path || n.Path.StartsWith(prefix))));
         }
-        products = products.Search(db, f.Search);
+        products = products.Search(db, orgId, f.Search);
 
         var since = DateTime.UtcNow.AddDays(-30);
         var rows = products.Select(p => new
