@@ -16,7 +16,6 @@ public record CashierContextDto(
     IReadOnlyList<TransferRecipientDto> TransferRecipients,
     decimal MaxDiscountPercent,
     bool CanApproveDiscount,
-    bool CanSellWithoutStock,
     bool CanReturn,
     bool CanViewStoreFinance,
     bool AutoPrint,

@@ -75,7 +75,6 @@ export const Permission = {
   CatalogLifecycle: 'catalog.lifecycle',
   CatalogDictionaries: 'catalog.dictionaries',
   SalesDebt: 'sales.debt',
-  SalesNegativeStock: 'sales.negative_stock',
   DiscountApprove: 'discount.approve',
 } as const
 

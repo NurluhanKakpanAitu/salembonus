@@ -368,6 +368,7 @@ public class StaffManagementService(
         foreach (var p in raw)
         {
             var key = p.Trim();
+            if (StaffPermissions.Retired.Contains(key)) continue;
             if (!StaffPermissions.All.Contains(key)) throw new ValidationException(Messages.StaffPermissionUnknown(Lang, p), "permissions");
             if (!list.Contains(key)) list.Add(key);
         }

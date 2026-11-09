@@ -21,7 +21,7 @@ public static class PlatformModules
     /// <summary>Рұқсат қай модульге жатады; null — ядро (әрқашан қолжетімді).</summary>
     public static string? ForPermission(string permission) => permission switch
     {
-        StaffPermissions.SalesCreate or StaffPermissions.SalesReturn or StaffPermissions.SalesDebt or StaffPermissions.SalesNegativeStock
+        StaffPermissions.SalesCreate or StaffPermissions.SalesReturn or StaffPermissions.SalesDebt
             or StaffPermissions.DiscountApprove => Cashier,
         StaffPermissions.SalesView or StaffPermissions.SalesExport => Sales,
         StaffPermissions.StatisticsView or StaffPermissions.StatisticsExport => Statistics,

@@ -26,7 +26,7 @@ public class StaffTests(ApiFixture api)
         var cashier = (await pos.Post(pos.Owner, S, new
         {
             firstName = "Дана", lastName = "Кассир", phone = cashierPhone, role = "Cashier", storeIds = new[] { storeId }, pin = "4729", maxDiscountPercent = 10,
-            permissions = new[] { "sales.create", "sales.return", "inventory.view", "staff.manage" },
+            permissions = new[] { "sales.create", "sales.return", "inventory.view", "staff.manage", "sales.negative_stock" }, // соңғысы алынып тасталған — үнсіз алынады
         })).Ok;
         Assert.Null(cashier["tempPassword"]?.GetValue<string>());
         var c = cashier["staff"]!;
@@ -37,6 +37,7 @@ public class StaffTests(ApiFixture api)
         var cashierPerms = c["permissions"]!.AsArray().Select(p => p!.GetValue<string>()).ToList();
         Assert.Contains("sales.return", cashierPerms);
         Assert.DoesNotContain("staff.manage", cashierPerms); // кассирге басқару құқығы берілмейді
+        Assert.DoesNotContain("sales.negative_stock", cashierPerms); // «в минус» сату жоқ
 
         // Әкімші: уақытша құпиясөзбен кіреді.
         var adminPhone = Phone();

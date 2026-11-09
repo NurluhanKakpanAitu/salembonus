@@ -145,10 +145,11 @@ export function ProductImage({ url, className }: { url: string | null; className
     : <span className={`${className} flex items-center justify-center bg-field text-ink-3`}><ImageOff size={22} /></span>
 }
 
+/** Қоймада жоқ не бағасы жоқ тауар себетке қосылмайды — батырма сөнік (қалдықтан көп сатуға ешкімге болмайды). */
 function AddButton({ p, onAdd }: { p: CashierProduct; onAdd: (p: CashierProduct) => void }) {
   const t = useT()
   return (
-    <button type="button" aria-label={t('pos.add')} onClick={() => onAdd(p)} disabled={p.price == null}
+    <button type="button" aria-label={t('pos.add')} onClick={() => onAdd(p)} disabled={p.price == null || p.stock <= 0} title={p.stock <= 0 ? t('pos.outOfStock') : undefined}
       className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-white shadow-sm hover:bg-brand-hover disabled:bg-line">
       <Plus size={19} />
     </button>

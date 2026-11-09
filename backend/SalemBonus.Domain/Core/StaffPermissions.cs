@@ -36,8 +36,11 @@ public static class StaffPermissions
     public const string SalesCreate = "sales.create";
     public const string SalesReturn = "sales.return";
     public const string SalesDebt = "sales.debt";
-    /// <summary>Қалдық жетпесе де сату.</summary>
-    public const string SalesNegativeStock = "sales.negative_stock";
+    /// <summary>
+    /// Алынып тасталған құқықтар: бұрын сақталған қызметкердің тізімінде болса, сақтағанда үнсіз алынады.
+    /// «sales.negative_stock» — қалдықтан көп сату; қазір ешкімге рұқсат жоқ (қоймада жоқты сатуға болмайды).
+    /// </summary>
+    public static readonly IReadOnlySet<string> Retired = new HashSet<string> { "sales.negative_stock" };
     /// <summary>Жеңілдік шегінен асқанда басқаның сатылымын растау.</summary>
     public const string DiscountApprove = "discount.approve";
 
@@ -77,7 +80,7 @@ public static class StaffPermissions
     [
         StatisticsView, FinanceView, StatisticsExport, CustomersContacts, FinanceOperate, FinanceReverse, FinanceAccounts,
         ProductsView, ProductsCreate, ProductsEdit, CatalogStructure, CatalogLifecycle, CatalogDictionaries,
-        SalesCreate, SalesReturn, SalesDebt, SalesNegativeStock, DiscountApprove, SalesView, SalesExport,
+        SalesCreate, SalesReturn, SalesDebt, DiscountApprove, SalesView, SalesExport,
         StaffManage, SettingsManage,
         InventoryView, InventoryReceive, InventoryPost, InventoryTransfer, InventoryWriteOff, InventoryWarehouses, InventorySuppliers,
         BonusView, BonusManage, BonusCampaigns, BonusAccrue, BonusWriteOff, BonusReverse, BonusTerms,

@@ -58,7 +58,6 @@ public class CashierService(
             recipients.Select(r => new TransferRecipientDto(r.Id, r.BankName, r.Account, r.HolderName)).ToList(),
             m.Has(StaffPermissions.DiscountApprove) ? 100 : m.MaxDiscountPercent,
             m.Has(StaffPermissions.DiscountApprove),
-            m.Has(StaffPermissions.SalesNegativeStock),
             m.Has(StaffPermissions.SalesReturn),
             m.Has(StaffPermissions.FinanceView),
             settings.AutoPrint,

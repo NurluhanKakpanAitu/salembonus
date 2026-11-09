@@ -23,6 +23,27 @@ public class SalesTests(ApiFixture api)
         Assert.Equal(7m, await pos.StockAsync(product));
     }
 
+    /// <summary>Қоймада жоқты ешкім сата алмайды — иесі де: қалдықтан көп сан — қате, қалдық өзгермейді; қалдыққа тең — өтеді.</summary>
+    [Fact]
+    public async Task Nobody_sells_more_than_in_stock_not_even_the_owner()
+    {
+        var pos = await api.NewDeviceAsync();
+        var product = await pos.CreateProductAsync(price: 1000, stock: 2);
+
+        foreach (var token in new[] { pos.Owner, pos.Cashier })
+        {
+            var over = await pos.SellAsync(token, [Line(product, 3)], [Cash(3000)]);
+            Assert.Equal(HttpStatusCode.BadRequest, over.Status);
+            Assert.Equal("items", over.Body!["field"]!.GetValue<string>());
+        }
+        Assert.Equal(2m, await pos.StockAsync(product));
+        Assert.Null((await pos.Get(pos.Owner, "/api/pos/v1/cashier/context")).Ok["canSellWithoutStock"]);
+
+        (await pos.SellAsync(pos.Owner, [Line(product, 2)], [Cash(2000)])).EnsureOk();
+        Assert.Equal(0m, await pos.StockAsync(product));
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.SellAsync(pos.Owner, [Line(product, 1)], [Cash(1000)])).Status);
+    }
+
     [Fact]
     public async Task Repeated_request_with_same_id_returns_the_same_receipt_and_sells_once()
     {

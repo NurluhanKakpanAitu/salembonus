@@ -32,9 +32,11 @@ export async function findClipped(page: Page, scope = 'body'): Promise<string[]>
       const spacing = s.letterSpacing === 'normal' ? 0 : px(s.letterSpacing) * text.length
       return ctx.measureText(text).width + spacing
     }
+    // Мәтінге қалатын ені: сыртқы ені − жиек − ішкі шегініс. clientWidth-ке сенбейміз: жаңа Edge <input>-та оны
+    // шегіністерсіз қайтарады (144px өріс → clientWidth 96), сонда шегініс екі рет алынып, жалған «обрезано» шығатын.
     const inner = (el: Element) => {
       const s = getComputedStyle(el)
-      return (el as HTMLElement).clientWidth - px(s.paddingLeft) - px(s.paddingRight)
+      return el.getBoundingClientRect().width - px(s.borderLeftWidth) - px(s.borderRightWidth) - px(s.paddingLeft) - px(s.paddingRight)
     }
     // Өрістің адамға түсінікті атауы: aria-label, <label for>, Field жапсырмасы, жақын тақырып.
     const nameOf = (el: Element) => {

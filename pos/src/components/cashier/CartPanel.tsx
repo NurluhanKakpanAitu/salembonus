@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Field'
 import { Modal } from '../ui/Modal'
 import { confirmDialog } from '../ui/Confirm'
+import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
 import { cart, totals, useCart } from '../../lib/cart'
 import { cashierApi } from '../../lib/cashierApi'
@@ -33,10 +34,15 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
   const quick = (['Cash', 'Card', 'Qr'] as const).filter((m) => ctx.paymentMethods.includes(m))
   const QUICK_ICON = { Cash: Banknote, Card: CreditCard, Qr: QrCode }
 
-  const changeQty = (productId: string, next: number, stock: number) => {
-    if (next <= 0) return cart.remove(productId)
-    if (!ctx.canSellWithoutStock && next > stock) return
-    cart.setQuantity(productId, next)
+  /** Қоймадағыдан көп сатуға болмайды (ешкімге): артығы қалдыққа дейін қысқарады, кассир себебін көреді. */
+  const changeQty = (line: { productId: string; name: string; stock: number }, next: number) => {
+    if (next <= 0) return cart.remove(line.productId)
+    if (next > line.stock) {
+      toast(line.stock > 0 ? t('pos.stockLimit', { name: line.name, n: num(line.stock) }) : t('pos.outOfStockError', { name: line.name }), 'error')
+      if (line.stock <= 0) return
+      next = line.stock
+    }
+    cart.setQuantity(line.productId, next)
   }
 
   return (
@@ -60,7 +66,7 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
         ) : (
           <ul className="divide-y divide-line">
             {state.lines.map((l) => {
-              const over = !ctx.canSellWithoutStock && l.quantity > l.stock
+              const over = l.quantity > l.stock
               return (
                 <li key={l.productId} className="flex gap-3 px-4 py-3">
                   <ProductImage url={l.imageUrl} className="size-14 shrink-0 rounded-lg border border-line" />
@@ -78,16 +84,11 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
                     <div className="mt-1.5 flex items-center gap-2">
                       <span className="whitespace-nowrap text-[13px] text-ink-2">{tenge(l.price)}</span>
                       <div className="ml-auto flex items-center rounded-lg bg-field">
-                        <button type="button" aria-label="-" onClick={() => changeQty(l.productId, l.quantity - 1, l.stock)}
+                        <button type="button" aria-label="-" onClick={() => changeQty(l, l.quantity - 1)}
                           className="flex size-8 items-center justify-center text-brand"><Minus size={15} /></button>
-                        <input value={num(l.quantity)} inputMode="decimal" aria-label={t('product.quantity')}
-                          onChange={(e) => {
-                            const v = Number(e.target.value.replace(',', '.').replace(/\s/g, ''))
-                            if (Number.isFinite(v)) changeQty(l.productId, v, l.stock)
-                          }}
-                          className="w-10 bg-transparent text-center text-[14px] font-semibold outline-none" />
-                        <button type="button" aria-label="+" onClick={() => changeQty(l.productId, l.quantity + 1, l.stock)}
-                          disabled={!ctx.canSellWithoutStock && l.quantity + 1 > l.stock}
+                        <QtyInput value={l.quantity} max={l.stock} onChange={(v) => changeQty(l, v)} />
+                        <button type="button" aria-label="+" onClick={() => changeQty(l, l.quantity + 1)}
+                          disabled={l.quantity + 1 > l.stock}
                           className="flex size-8 items-center justify-center text-brand disabled:text-ink-3"><Plus size={15} /></button>
                       </div>
                       <span className="min-w-16 shrink-0 whitespace-nowrap text-right text-[14px] font-bold">{tenge(Math.round(l.price * l.quantity * 100) / 100)}</span>
@@ -137,6 +138,29 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
         )}
       </div>
     </aside>
+  )
+}
+
+/**
+ * Себет жолындағы сан: теріліп жатқан мәтін бөлек сақталады — өрісті тазалау жолды себеттен өшірмейді (бұрын «» → 0 → өшетін).
+ * Қалдықтан көп терілсе — өріс бірден қалдыққа қайтады (себет те қалдықпен шектелген).
+ */
+function QtyInput({ value, max, onChange }: { value: number; max: number; onChange: (v: number) => void }) {
+  const t = useT()
+  const [draft, setDraft] = useState(num(value))
+  useEffect(() => setDraft(num(value)), [value])
+  return (
+    <input value={draft} inputMode="decimal" aria-label={t('product.quantity')}
+      onChange={(e) => {
+        const raw = e.target.value
+        setDraft(raw)
+        const v = Number(raw.replace(',', '.').replace(/\s/g, ''))
+        if (!raw.trim() || !Number.isFinite(v) || v <= 0) return
+        onChange(v)
+        if (v > max && max > 0) setDraft(num(max))
+      }}
+      onBlur={() => setDraft(num(value))}
+      className="w-10 bg-transparent text-center text-[14px] font-semibold outline-none" />
   )
 }
 

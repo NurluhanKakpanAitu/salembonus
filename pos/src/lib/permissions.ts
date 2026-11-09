@@ -8,7 +8,7 @@ import type { StaffRole } from './types'
 export interface PermissionGroup { module: string; label: TranslationKey; permissions: string[] }
 
 export const PERMISSION_GROUPS: PermissionGroup[] = [
-  { module: 'cashier', label: 'permGroup.cashier', permissions: ['sales.create', 'sales.return', 'sales.debt', 'sales.negative_stock', 'discount.approve'] },
+  { module: 'cashier', label: 'permGroup.cashier', permissions: ['sales.create', 'sales.return', 'sales.debt', 'discount.approve'] },
   { module: 'products', label: 'permGroup.products', permissions: ['products.view', 'products.create', 'products.edit', 'catalog.structure', 'catalog.lifecycle', 'catalog.dictionaries'] },
   { module: 'warehouse', label: 'permGroup.warehouse', permissions: ['inventory.view', 'inventory.receive', 'inventory.post', 'inventory.transfer', 'inventory.writeoff', 'inventory.warehouses', 'inventory.suppliers'] },
   { module: 'sales', label: 'permGroup.sales', permissions: ['sales.view', 'sales.export'] },
@@ -24,7 +24,7 @@ export const ALL_PERMISSIONS = PERMISSION_GROUPS.flatMap((g) => g.permissions)
 /** Рөлдің әдепкі жиыны (сервердегі StaffPermissions.DefaultsFor-мен бірдей). */
 export function defaultPermissions(role: StaffRole): string[] {
   if (role === 'Owner') return ALL_PERMISSIONS
-  if (role === 'Admin') return ALL_PERMISSIONS.filter((p) => !['finance.view', 'sales.negative_stock', 'staff.manage', 'settings.manage'].includes(p))
+  if (role === 'Admin') return ALL_PERMISSIONS.filter((p) => !['finance.view', 'staff.manage', 'settings.manage'].includes(p))
   return ['sales.create', 'inventory.view']
 }
 

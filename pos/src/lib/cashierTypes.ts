@@ -15,7 +15,6 @@ export interface CashierContext {
   transferRecipients: TransferRecipient[]
   maxDiscountPercent: number
   canApproveDiscount: boolean
-  canSellWithoutStock: boolean
   canReturn: boolean
   canViewStoreFinance: boolean
   autoPrint: boolean

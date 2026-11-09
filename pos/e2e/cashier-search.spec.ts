@@ -100,6 +100,23 @@ test('cashier search shows results in the grid and works together with categorie
     await search.press('Escape')
     await expect(search).toHaveValue('')
 
+    // Қоймада 5 дана: 50 терілсе — себетте 5, себебі көрсетіледі; өрісті тазалау жолды өшірмейді.
+    await search.fill(`${tag} масло моторное`)
+    await expect(page.getByText(/^Найдено: 1$/)).toBeVisible() // тор жаңарды — бұрынғы нәтиженің бірінші тауарын баспаймыз
+    await page.locator('section').getByRole('button', { name: 'Добавить в корзину' }).first().click()
+    const qty = page.getByRole('textbox', { name: 'Количество' })
+    await expect(qty).toHaveValue('1', { timeout: 10_000 })
+    await qty.fill('50')
+    await expect(qty).toHaveValue('5')
+    await expect(page.getByText(`«${tag} масло моторное»: в наличии только 5`)).toBeVisible()
+    await expect(page.getByRole('button', { name: '+', exact: true })).toBeDisabled()
+    await qty.fill('')
+    await expect(qty).toBeVisible()
+    await qty.press('Tab')
+    await expect(qty).toHaveValue('5')
+    await page.getByRole('button', { name: 'Очистить' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Очистить', exact: true }).click()
+
     await page.getByRole('button', { name: 'Menu' }).first().click()
     await page.getByRole('menuitem', { name: 'Отключить это устройство' }).click()
     await page.getByRole('alertdialog').getByRole('button', { name: 'Отключить', exact: true }).click()

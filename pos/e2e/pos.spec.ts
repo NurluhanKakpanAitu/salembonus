@@ -147,7 +147,8 @@ async function checkCashier(page: Page, lang: 'ru' | 'kk') {
   await expectNothingClipped(page, `${lang} /cashier › подключение кассы`)
   ourRegister = registers[index].id
   await page.getByRole('button', { name: l('Подключить', 'Қосу')[lang], exact: true }).nth(index).click()
-  const add = page.getByRole('button', { name: l('Добавить в корзину', 'Себетке қосу')[lang] })
+  // Қоймада жоқ тауардың батырмасы сөнік — себетке бар тауар қосылады.
+  const add = page.getByRole('button', { name: l('Добавить в корзину', 'Себетке қосу')[lang], disabled: false })
   await expect(add.first()).toBeVisible()
   await expectNothingClipped(page, `${lang} /cashier`)
 

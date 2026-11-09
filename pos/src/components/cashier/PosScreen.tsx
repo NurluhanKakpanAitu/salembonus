@@ -77,7 +77,8 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
     if (!ctx) return
     if (p.price == null) return toast(t('pos.noPriceError', { name: p.name }), 'error')
     const inCart = useCart.getState().lines.find((l) => l.productId === p.id)?.quantity ?? 0
-    if (!ctx.canSellWithoutStock && inCart + 1 > p.stock)
+    // Қоймадағыдан көп сатуға болмайды — ешкімге (сервер де тексереді).
+    if (inCart + 1 > p.stock)
       return toast(p.stock > 0 ? t('pos.stockLimit', { name: p.name, n: num(p.stock) }) : t('pos.outOfStockError', { name: p.name }), 'error')
     cart.add(p)
   }

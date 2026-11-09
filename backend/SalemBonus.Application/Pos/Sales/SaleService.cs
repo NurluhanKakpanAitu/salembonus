@@ -150,15 +150,14 @@ public class SaleService(
         var sale = await unitOfWork.InTransactionAsync(async () =>
         {
             // Қалдық транзакция ішінде бұғатталып тексеріледі: екі касса соңғы данаға бір уақытта таласса,
-            // екіншісі күтеді де, нақты қалдықты көреді.
+            // екіншісі күтеді де, нақты қалдықты көреді. Қоймада жоқты ешкім сата алмайды — иесі де («в минус» жоқ).
             var balances = await sales.BalancesForUpdateAsync(warehouse.Id, ids, ct);
-            if (!m.Has(StaffPermissions.SalesNegativeStock))
-                foreach (var l in lines)
-                {
-                    var available = balances.TryGetValue(l.ProductId, out var b) ? b.Quantity : 0;
-                    if (l.Quantity > available)
-                        throw new ValidationException(Messages.SaleStockInsufficient(Lang, l.Name, available), "items");
-                }
+            foreach (var l in lines)
+            {
+                var available = balances.TryGetValue(l.ProductId, out var b) ? b.Quantity : 0;
+                if (l.Quantity > available)
+                    throw new ValidationException(Messages.SaleStockInsufficient(Lang, l.Name, available), "items");
+            }
 
             var now = DateTime.UtcNow;
             var sale = new Sale
