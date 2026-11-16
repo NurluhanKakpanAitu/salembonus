@@ -20,7 +20,8 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 export function receiptHtml(r: Receipt, t: Translator) {
   const rows = r.items.map((i, n) => `
     <tr><td colspan="3">${n + 1}. ${esc(i.name)}${i.article ? ` <span class="muted">${esc(i.article)}</span>` : ''}</td></tr>
-    <tr><td class="muted">${num(i.quantity)} × ${tenge(i.price)}</td><td></td><td class="r">${tenge(i.lineTotal)}</td></tr>`).join('')
+    <tr><td class="muted">${num(i.quantity)} × ${tenge(i.price)}</td><td></td><td class="r">${tenge(i.lineTotal)}</td></tr>${i.lineDiscount ? `
+    <tr><td class="muted">${esc(t('pos.lineDiscount'))}</td><td></td><td class="r">− ${tenge(i.lineDiscount)}</td></tr>` : ''}`).join('')
   const line = (label: string, value: string, cls = '') => `<tr class="${cls}"><td colspan="2">${label}</td><td class="r">${value}</td></tr>`
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${t('pos.receiptNo', { n: r.number })}</title><style>
     @page { size: 80mm auto; margin: 4mm }
@@ -112,6 +113,7 @@ export function ReceiptModal({ saleId, canReturn, onClose, onReturn }: {
                     <td className="py-1 pr-2">
                       <div className="font-medium">{i.name}</div>
                       {i.article && <div className="text-[11px] text-ink-3">{t('pos.article', { a: i.article })}</div>}
+                      {!!i.lineDiscount && <div className="text-[11px] text-violet-700">{t('pos.lineDiscount')}: − {tenge(i.lineDiscount)}</div>}
                       {i.returnedQuantity > 0 && <div className="text-[11px] text-danger">{t('receipt.returnedQty', { n: num(i.returnedQuantity) })}</div>}
                     </td>
                     <td className="py-1 pl-3 text-right">{num(i.quantity)}</td>

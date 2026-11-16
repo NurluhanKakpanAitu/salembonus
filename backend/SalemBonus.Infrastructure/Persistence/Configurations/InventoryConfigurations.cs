@@ -123,6 +123,9 @@ public class StockDocumentLineConfiguration : IEntityTypeConfiguration<StockDocu
     {
         b.ToTable("stock_document_lines", Schemas.Pos);
         b.HasKey(x => x.Id);
+        // Id кодта қойылады: проведённая приёмканы түзеткенде жаңа жол бар құжаттың навигациясы арқылы қосылады — EF оны
+        // «өзгерген» деп ойлап UPDATE жібермесін (0 жол → DbUpdateConcurrencyException), INSERT болсын.
+        b.Property(x => x.Id).ValueGeneratedNever();
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
         b.Property(x => x.Article).HasMaxLength(64);
         b.Property(x => x.Quantity).HasPrecision(18, 3);

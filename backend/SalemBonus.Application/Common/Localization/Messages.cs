@@ -363,6 +363,15 @@ public static class Messages
         "Қойма бойынша аяқталмаған құжат бар (черновик не жолдағы перемещение)", "По складу есть незавершённые документы (черновик или перемещение в пути)");
     public static string DocumentNotFound(AppLanguage l) => Pick(l, "Құжат табылмады", "Документ не найден");
     public static string DocumentNotDraft(AppLanguage l) => Pick(l, "Тек черновикті өзгертуге болады", "Изменять можно только черновик");
+    public static string ReceiptEditNotAllowed(AppLanguage l) => Pick(l,
+        "Сторноланған не жойылған приёмканы өзгертуге болмайды", "Сторнированную или удалённую приёмку изменить нельзя");
+    public static string ReceiptEditWarehouse(AppLanguage l) => Pick(l,
+        "Проведённая приёмканың қоймасын өзгертуге болмайды", "Склад проведённой приёмки изменить нельзя");
+    public static string ReceiptEditBelowPaid(AppLanguage l, decimal paid) => Pick(l,
+        $"Жеткізушіге {paid:N0} ₸ төленген — приёмка сомасы одан аз болмауы керек", $"Поставщику уже оплачено {paid:N0} ₸ — сумма приёмки не может быть меньше");
+    public static string ReceiptEditSold(AppLanguage l, string name, decimal available) => Pick(l,
+        $"«{name}»: тауардың бір бөлігі сатылып кеткен — қазір қоймада {available:0.###}, санын одан көп азайтуға болмайды",
+        $"«{name}»: часть товара уже продана — на складе {available:0.###}, уменьшить количество сильнее нельзя");
     public static string DocumentNotPosted(AppLanguage l) => Pick(l, "Құжат проведён емес", "Документ не проведён");
     public static string DocumentLinesRequired(AppLanguage l) => Pick(l, "Кемінде бір тауар қосыңыз", "Добавьте хотя бы один товар");
     public static string DocumentTooManyLines(AppLanguage l, int max) => Pick(l, $"Бір құжатта {max} жолдан артық болмайды", $"В одном документе не больше {max} строк");
@@ -496,6 +505,17 @@ public static class Messages
 
     public static string DiscountTooLarge(AppLanguage l) => Pick(l,
         "Жеңілдік сомадан артық болмауы керек", "Скидка не может быть больше суммы чека");
+
+    public static string LineDiscountTooLarge(AppLanguage l, string name) => Pick(l,
+        $"«{name}»: жеңілдік жолдың сомасынан артық", $"«{name}»: скидка больше суммы позиции");
+
+    public static string SalePriceBelowList(AppLanguage l, string name, decimal price) => Pick(l,
+        $"«{name}»: бағаны тек көтеруге болады (кемінде {price:N0} ₸) — арзандату үшін жеңілдік жасаңыз",
+        $"«{name}»: цену можно только повысить (не ниже {price:N0} ₸) — чтобы снизить, сделайте скидку");
+
+    public static string SaleBelowCost(AppLanguage l, string name, decimal cost) => Pick(l,
+        $"«{name}»: өзіндік құны {cost:N0} ₸ — жеңілдікпен одан арзан сатуға болмайды",
+        $"«{name}»: себестоимость {cost:N0} ₸ — со скидкой дешевле продавать нельзя");
 
     public static string DiscountProductLimit(AppLanguage l, string product, decimal limit) => Pick(l,
         $"«{product}» тауарына жеңілдік {limit:0.##}%-дан аспауы керек — әкімшінің растауы керек",

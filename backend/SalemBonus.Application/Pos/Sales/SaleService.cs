@@ -38,7 +38,11 @@ public class SaleService(
     public const int MaxLines = 200;
     private AppLanguage Lang => access.Lang;
 
-    private sealed record Line(Guid ProductId, string Name, string? Article, string? Unit, decimal Quantity, decimal Price, decimal LineTotal);
+    /// <summary>LineTotal — баға × саны (жеңілдіксіз), LineDiscount — осы жолдың өз жеңілдігі, Net — жол жеңілдігінен кейінгі сома.</summary>
+    private sealed record Line(Guid ProductId, string Name, string? Article, string? Unit, decimal Quantity, decimal Price, decimal LineTotal, decimal LineDiscount)
+    {
+        public decimal Net => LineTotal - LineDiscount;
+    }
 
     public async Task<ReceiptDto> CreateAsync(CreateSaleRequest request, string? deviceToken, CancellationToken ct = default)
     {
@@ -55,7 +59,7 @@ public class SaleService(
         // ---------- Тауарлар мен бағалар ----------
         var requested = (request.Items ?? [])
             .GroupBy(i => i.ProductId)
-            .Select(g => (ProductId: g.Key, Quantity: Math.Round(g.Sum(x => x.Quantity), 3)))
+            .Select(g => (ProductId: g.Key, Quantity: Math.Round(g.Sum(x => x.Quantity), 3), g.Last().Price, g.Last().Discount))
             .ToList();
         if (requested.Count == 0) throw new ValidationException(Messages.SaleEmpty(Lang), "items");
         if (requested.Count > MaxLines) throw new ValidationException(Messages.SaleTooManyLines(Lang, MaxLines), "items");
@@ -68,33 +72,62 @@ public class SaleService(
         var units = (await catalog.ListUnitsAsync(orgId, ct)).ToDictionary(u => u.Id, u => u.ShortName);
 
         var lines = new List<Line>();
-        foreach (var (productId, quantity) in requested)
+        foreach (var (productId, quantity, requestedPrice, lineDiscountRequest) in requested)
         {
             if (!products.TryGetValue(productId, out var p) || p.Status != Domain.Pos.Catalog.CatalogStatus.Active || p.HideInCashier)
                 throw new ValidationException(Messages.SaleProductUnavailable(Lang), "items");
-            if (!prices.TryGetValue(productId, out var price) || price <= 0)
+            if (!prices.TryGetValue(productId, out var listPrice) || listPrice <= 0)
                 throw new ValidationException(Messages.SaleNoPrice(Lang, p.Name), "items");
-            lines.Add(new Line(productId, p.Name, p.Article, units.GetValueOrDefault(p.UnitId), quantity, price, Math.Round(price * quantity, 2)));
+            // Кассир бағаны тек көтере алады; төмендету — жеңілдік (шегі, растауы, өзіндік құн тексерісі бар).
+            var price = listPrice;
+            if (requestedPrice is { } rp && Math.Round(rp, 2) != listPrice)
+                price = Math.Round(rp, 2) > listPrice ? Math.Round(rp, 2) : throw new ValidationException(Messages.SalePriceBelowList(Lang, p.Name, listPrice), "items");
+            var lineTotal = Math.Round(price * quantity, 2);
+            decimal lineDiscount = 0;
+            if (lineDiscountRequest is { Value: > 0 } ld)
+                lineDiscount = (Enum.TryParse<DiscountKind>(ld.Kind, ignoreCase: true, out var lk) ? lk
+                        : throw new ValidationException(Messages.DiscountKindInvalid(Lang), "items")) switch
+                {
+                    DiscountKind.Percent when ld.Value <= 100 => Math.Round(lineTotal * ld.Value / 100m, 0, MidpointRounding.AwayFromZero),
+                    DiscountKind.Amount when ld.Value <= lineTotal => Math.Round(ld.Value, 2),
+                    _ => throw new ValidationException(Messages.LineDiscountTooLarge(Lang, p.Name), "items"),
+                };
+            lines.Add(new Line(productId, p.Name, p.Article, units.GetValueOrDefault(p.UnitId), quantity, price, lineTotal, lineDiscount));
         }
         var subtotal = lines.Sum(l => l.LineTotal);
+        var lineDiscounts = lines.Sum(l => l.LineDiscount);
+        var net = subtotal - lineDiscounts;
 
-        // ---------- Жеңілдік (ТЗ §6.5–6.6) ----------
+        // ---------- Жеңілдік (ТЗ §6.5–6.6): жол жеңілдіктері + чекке жеңілдік (жол жеңілдіктерінен кейінгі сомадан) ----------
         DiscountKind? discountKind = null;
         decimal? discountValue = null;
-        decimal discount = 0;
+        decimal checkDiscount = 0;
         Guid? approvedBy = null;
         if (request.Discount is { Value: > 0 } d)
         {
             discountKind = Enum.TryParse<DiscountKind>(d.Kind, ignoreCase: true, out var k) ? k
                 : throw new ValidationException(Messages.DiscountKindInvalid(Lang), "discount");
             discountValue = Math.Round(d.Value, 2);
-            discount = k switch
+            checkDiscount = k switch
             {
-                DiscountKind.Percent when d.Value <= 100 => Math.Round(subtotal * d.Value / 100m, 0, MidpointRounding.AwayFromZero),
-                DiscountKind.Amount when d.Value <= subtotal => Math.Round(d.Value, 2),
+                DiscountKind.Percent when d.Value <= 100 => Math.Round(net * d.Value / 100m, 0, MidpointRounding.AwayFromZero),
+                DiscountKind.Amount when d.Value <= net => Math.Round(d.Value, 2),
                 _ => throw new ValidationException(Messages.DiscountTooLarge(Lang), "discount"),
             };
+        }
+        var discount = lineDiscounts + checkDiscount;
 
+        // Жеңілдіктен кейін тауар өзіндік құнынан (кіріс бағасы) арзан сатылмайды. Бонус — төлем түрі, мұнда кірмейді.
+        foreach (var l in lines)
+        {
+            var share = net == 0 ? 0 : checkDiscount * l.Net / net;
+            if (l.LineDiscount + share > 0 && costs.TryGetValue(l.ProductId, out var unitCost)
+                && Math.Round((l.Net - share) / l.Quantity, 2) < unitCost)
+                throw new ValidationException(Messages.SaleBelowCost(Lang, l.Name, unitCost), "items");
+        }
+
+        if (discount > 0)
+        {
             // Кассир өз шегінен асырса — құқығы бар қызметкер PIN-імен растайды. Тауардың өз шегі (карточкадағы
             // «Макс. скидка») бәріне қатысты: ол да асса — растау керек.
             var percent = subtotal == 0 ? 0 : discount / subtotal * 100m;
@@ -114,8 +147,8 @@ public class SaleService(
         }
         var afterDiscount = subtotal - discount;
         // Бонус тек «бонусқа қатысатын» тауарлардың үлесінен (карточкадағы «Участвует в бонусной системе»).
-        var eligibleTotal = lines.Where(l => products[l.ProductId].BonusEligible).Sum(l => l.LineTotal);
-        var eligibleShare = subtotal == 0 ? 0 : eligibleTotal / subtotal;
+        var eligibleTotal = lines.Where(l => products[l.ProductId].BonusEligible).Sum(l => l.Net);
+        var eligibleShare = net == 0 ? 0 : eligibleTotal / net;
 
         // ---------- Клиент мен бонус (ТЗ §6.1–6.4) ----------
         Customer? customer = null;
@@ -135,15 +168,18 @@ public class SaleService(
         // ---------- Төлем (ТЗ §7–10, §21.2–21.3) ----------
         var (payments, debtRequest) = await ValidatePaymentsAsync(request.Payments ?? [], total, m, customer, ct);
 
-        // Жеңілдік пен бонус жолдарға үлес бойынша бөлінеді — қайтарғанда клиент нақты төлегенін алады.
-        var reduction = discount + request.BonusRedeem;
-        var shares = new decimal[lines.Count];
-        if (reduction > 0 && subtotal > 0)
+        // Жолдың өз жеңілдігі өзінде; чек жеңілдігі мен бонус жолдарға (жол жеңілдігінен кейінгі) үлес бойынша бөлінеді —
+        // қайтарғанда клиент нақты төлегенін алады.
+        var reduction = checkDiscount + request.BonusRedeem;
+        var shares = lines.Select(l => l.LineDiscount).ToArray();
+        if (reduction > 0 && net > 0)
         {
             // Бүтін теңгемен: қайтарғанда клиентке тиынсыз сома беріледі (қалдығы соңғы жолға).
             var digits = reduction % 1 == 0 ? 0 : 2;
-            for (var i = 0; i < lines.Count - 1; i++) shares[i] = Math.Round(reduction * lines[i].LineTotal / subtotal, digits);
-            shares[^1] = reduction - shares[..^1].Sum();
+            var spread = new decimal[lines.Count];
+            for (var i = 0; i < lines.Count - 1; i++) spread[i] = Math.Round(reduction * lines[i].Net / net, digits);
+            spread[^1] = reduction - spread[..^1].Sum();
+            for (var i = 0; i < lines.Count; i++) shares[i] += spread[i];
         }
 
         var warehouse = await warehouses.EnsureDefaultAsync(orgId, m.StoreId, ct);
@@ -182,7 +218,7 @@ public class SaleService(
             sale.Items = lines.Select((l, i) => new SaleItem
             {
                 Id = Guid.NewGuid(), SaleId = sale.Id, ProductId = l.ProductId, Name = l.Name, Article = l.Article,
-                UnitShortName = l.Unit, Quantity = l.Quantity, Price = l.Price, LineTotal = l.LineTotal, Discount = shares[i], SortOrder = i + 1,
+                UnitShortName = l.Unit, Quantity = l.Quantity, Price = l.Price, LineTotal = l.LineTotal, Discount = shares[i], LineDiscount = l.LineDiscount, SortOrder = i + 1,
                 UnitCost = costs.TryGetValue(l.ProductId, out var cost) ? cost : null,
             }).ToList();
             sale.Payments = payments.Select(p => { p.SaleId = sale.Id; return p; }).ToList();
@@ -349,7 +385,7 @@ public class SaleService(
             cashierUser is null ? string.Empty : $"{cashierUser.FirstName} {cashierUser.LastName}".Trim(),
             customerDto,
             sale.Items.OrderBy(i => i.SortOrder).Select(i => new ReceiptItemDto(
-                i.Id, i.ProductId, i.Name, i.Article, i.UnitShortName, i.Quantity, i.Price, i.LineTotal, i.Discount, i.ReturnedQuantity)).ToList(),
+                i.Id, i.ProductId, i.Name, i.Article, i.UnitShortName, i.Quantity, i.Price, i.LineTotal, i.Discount, i.ReturnedQuantity, i.LineDiscount)).ToList(),
             sale.Subtotal, sale.DiscountKind?.ToString(), sale.DiscountValue, sale.DiscountAmount,
             sale.BonusRedeemed, sale.BonusAccrued, sale.Total,
             sale.Payments.Select(p => new ReceiptPaymentDto(p.Method.ToString(), p.Amount, p.Received, p.Change, p.TransferRecipient)).ToList(),

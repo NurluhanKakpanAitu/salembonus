@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Banknote, ChevronRight, CreditCard, Gift, Minus, Percent, Plus, QrCode, ShoppingCart, Trash2, UserPlus, UserRound, X } from 'lucide-react'
+import { Banknote, ChevronRight, CreditCard, Gift, Minus, Pencil, Percent, Plus, QrCode, ShoppingCart, Trash2, UserPlus, UserRound, X } from 'lucide-react'
 import { CustomerCardModal } from './CustomerCard'
 import { Button } from '../ui/Button'
 import { Field, Input } from '../ui/Field'
@@ -8,7 +8,7 @@ import { Modal } from '../ui/Modal'
 import { confirmDialog } from '../ui/Confirm'
 import { toast } from '../ui/Toast'
 import { ApiError } from '../../lib/api'
-import { cart, totals, useCart } from '../../lib/cart'
+import { cart, lineMath, totals, useCart, type CartLine } from '../../lib/cart'
 import { cashierApi } from '../../lib/cashierApi'
 import type { CashierContext, CashierCustomer, PaymentMethod } from '../../lib/cashierTypes'
 import { num, tenge } from '../../lib/money'
@@ -81,8 +81,13 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
                         <X size={16} />
                       </button>
                     </div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <span className="whitespace-nowrap text-[13px] text-ink-2">{tenge(l.price)}</span>
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <LinePrice line={l} />
+                      <button type="button" aria-label={t('pos.lineDiscount')} aria-pressed={!!l.discount} title={t('pos.lineDiscount')}
+                        onClick={() => cart.setLineDiscount(l.productId, l.discount ? null : { kind: 'Percent', value: 0 })}
+                        className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${l.discount ? 'bg-violet-100 text-violet-600' : 'text-ink-3 hover:bg-field hover:text-violet-600'}`}>
+                        <Percent size={15} />
+                      </button>
                       <div className="ml-auto flex items-center rounded-lg bg-field">
                         <button type="button" aria-label="-" onClick={() => changeQty(l, l.quantity - 1)}
                           className="flex size-8 items-center justify-center text-brand"><Minus size={15} /></button>
@@ -91,8 +96,12 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
                           disabled={l.quantity + 1 > l.stock}
                           className="flex size-8 items-center justify-center text-brand disabled:text-ink-3"><Plus size={15} /></button>
                       </div>
-                      <span className="min-w-16 shrink-0 whitespace-nowrap text-right text-[14px] font-bold">{tenge(Math.round(l.price * l.quantity * 100) / 100)}</span>
+                      <span className="min-w-16 shrink-0 text-right">
+                        {lineMath(l).discount > 0 && <span className="block whitespace-nowrap text-[12px] text-ink-3 line-through">{tenge(lineMath(l).gross)}</span>}
+                        <span className="block whitespace-nowrap text-[14px] font-bold">{tenge(lineMath(l).net)}</span>
+                      </span>
                     </div>
+                    {l.discount && <LineDiscountRow line={l} />}
                     {over && <p className="mt-1 text-[12px] text-danger">{t('pos.stockLeft', { n: num(l.stock) })}</p>}
                   </div>
                 </li>
@@ -138,6 +147,68 @@ export function CartPanel({ ctx, onPay }: { ctx: CashierContext; onPay: (method:
         )}
       </div>
     </aside>
+  )
+}
+
+/**
+ * Позиция бағасы: қарындашты басса — өріс. Бағаны тек көтеруге болады (каталог бағасынан төмені — қате, арзандату үшін
+ * «%» жеңілдігі). Көтерілген баға ерекшеленеді, астында каталог бағасы.
+ */
+function LinePrice({ line }: { line: CartLine }) {
+  const t = useT()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const start = () => { setDraft(String(line.price)); setEditing(true) }
+  const commit = () => {
+    const v = Number(draft.replace(',', '.').replace(/\s/g, ''))
+    setEditing(false)
+    if (!draft.trim() || !Number.isFinite(v) || v === line.price) return
+    if (!cart.setPrice(line.productId, v)) toast(t('pos.priceOnlyUp', { price: tenge(line.basePrice) }), 'error')
+  }
+  if (editing)
+    return (
+      <input autoFocus value={draft} inputMode="decimal" aria-label={t('pos.editPrice')} onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') setEditing(false) }}
+        className="h-8 w-24 rounded-lg border border-brand bg-surface px-2 text-right text-[14px] outline-none" />
+    )
+  const raised = line.price > line.basePrice
+  return (
+    <button type="button" onClick={start} aria-label={t('pos.editPrice')} title={t('pos.editPrice')}
+      className="group flex items-center gap-1 rounded-lg px-1 py-0.5 text-left hover:bg-field">
+      <span className="leading-tight">
+        <span className={`block whitespace-nowrap text-[13px] ${raised ? 'font-semibold text-brand' : 'text-ink-2'}`}>{tenge(line.price)}</span>
+        {raised && <span className="block whitespace-nowrap text-[11px] text-ink-3">{t('pos.listPrice', { price: tenge(line.basePrice) })}</span>}
+      </span>
+      <Pencil size={13} className="shrink-0 text-ink-3 group-hover:text-brand" />
+    </button>
+  )
+}
+
+/** Позиция жеңілдігі: пайыз не сома; сомасы мен жаңа баға бірден көрінеді. Шек пен өзіндік құнды сервер тексереді. */
+function LineDiscountRow({ line }: { line: CartLine }) {
+  const t = useT()
+  const d = line.discount ?? { kind: 'Percent' as const, value: 0 }
+  const m = lineMath(line)
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded-lg bg-violet-50 px-2 py-1.5">
+      <span className="text-[12px] font-medium text-violet-700">{t('pos.lineDiscount')}</span>
+      <div className="ml-auto flex items-center gap-1.5">
+        <input autoFocus value={d.value ? String(d.value) : ''} inputMode="decimal" placeholder="0" aria-label={t('pos.lineDiscountValue')}
+          onChange={(e) => cart.setLineDiscount(line.productId, { ...d, value: Number(e.target.value.replace(',', '.').replace(/[^\d.]/g, '')) || 0 })}
+          className="h-8 w-16 rounded-lg border border-line bg-surface px-2 text-right text-[14px] outline-none focus:border-brand" />
+        <div className="flex rounded-lg bg-surface p-0.5">
+          {(['Percent', 'Amount'] as const).map((k) => (
+            <button key={k} type="button" aria-pressed={d.kind === k} onClick={() => cart.setLineDiscount(line.productId, { ...d, kind: k })}
+              className={`h-7 w-7 rounded-md text-[13px] font-semibold ${d.kind === k ? 'bg-violet-600 text-white' : 'text-ink-3'}`}>
+              {k === 'Percent' ? '%' : '₸'}
+            </button>
+          ))}
+        </div>
+        {m.discount > 0 && <span className="whitespace-nowrap text-[12px] font-semibold text-violet-700">− {tenge(m.discount)}</span>}
+        <button type="button" aria-label={t('pos.removeLineDiscount')} onClick={() => cart.setLineDiscount(line.productId, null)}
+          className="flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-surface hover:text-danger"><X size={14} /></button>
+      </div>
+    </div>
   )
 }
 
@@ -388,9 +459,9 @@ function DiscountBlock({ ctx, sum }: { ctx: CashierContext; sum: ReturnType<type
           </div>
         </div>
       </div>
-      {sum.discount > 0 && (
+      {sum.checkDiscount > 0 && (
         <p className={`mt-1.5 text-[12px] ${needsApproval ? 'text-amber-600' : 'text-ink-3'}`}>
-          {needsApproval ? t('pos.discountNeedsApproval', { limit: num(ctx.maxDiscountPercent) }) : `− ${tenge(sum.discount)}`}
+          {needsApproval ? t('pos.discountNeedsApproval', { limit: num(ctx.maxDiscountPercent) }) : `− ${tenge(sum.checkDiscount)}`}
         </p>
       )}
     </div>

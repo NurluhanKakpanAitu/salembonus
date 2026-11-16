@@ -54,7 +54,11 @@ public record CashierCustomerDto(
 
 public record RegisterCustomerRequest(string? Phone, string? FirstName, string? LastName, DateOnly? BirthDate);
 
-public record SaleLineRequest(Guid ProductId, decimal Quantity);
+/// <summary>
+/// Чек жолы. Price — кассир өзгерткен баға: тек каталог бағасынан жоғары (төмендету — жеңілдік арқылы). Discount — осы жолға
+/// жеңілдік (пайыз не сома). Жеңілдіктен кейінгі баға тауардың кіріс бағасынан төмен болмайды.
+/// </summary>
+public record SaleLineRequest(Guid ProductId, decimal Quantity, decimal? Price = null, SaleDiscountRequest? Discount = null);
 
 public record SaleDiscountRequest(string? Kind, decimal Value);
 
@@ -73,8 +77,9 @@ public record CreateSaleRequest(
     DiscountApprovalRequest? Approval,
     IReadOnlyList<SalePaymentRequest>? Payments);
 
+/// <summary>LineDiscount — осы позицияның өз жеңілдігі (чекте жеке жол), Discount — оған қоса чек жеңілдігі мен бонустың үлесі.</summary>
 public record ReceiptItemDto(Guid Id, Guid ProductId, string Name, string? Article, string? Unit, decimal Quantity, decimal Price,
-    decimal LineTotal, decimal Discount, decimal ReturnedQuantity);
+    decimal LineTotal, decimal Discount, decimal ReturnedQuantity, decimal LineDiscount = 0);
 
 public record ReceiptPaymentDto(string Method, decimal Amount, decimal? Received, decimal? Change, string? TransferRecipient);
 

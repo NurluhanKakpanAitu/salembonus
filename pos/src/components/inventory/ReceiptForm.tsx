@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, Ban, Check, FileText, Plus, Save, Sparkles, Undo2, Wallet } from 'lucide-react'
+import { ArrowLeft, Ban, Check, Pencil, Plus, Save, Sparkles, Undo2, X } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { Field, Input, Select, Textarea } from '../ui/Field'
-import { Modal } from '../ui/Modal'
+import { Field, Input, Select } from '../ui/Field'
 import { RowMenu } from '../ui/RowMenu'
 import { confirmDialog } from '../ui/Confirm'
 import { toast } from '../ui/Toast'
@@ -12,9 +11,9 @@ import { ApiError } from '../../lib/api'
 import { inventoryApi, inventoryKeys } from '../../lib/inventoryApi'
 import type { SaveReceipt, StockDocument, Supplier } from '../../lib/inventoryTypes'
 import { productApi } from '../../lib/productApi'
-import { dateOnly, dateTime, isoDate } from '../../lib/dates'
+import { dateTime, isoDate } from '../../lib/dates'
 import { num, tenge } from '../../lib/money'
-import { useT, type TranslationKey } from '../../lib/i18n'
+import { useT } from '../../lib/i18n'
 import { LinesEditor, toNum, type LineDraft } from './LinesEditor'
 import { SupplierModal } from './SuppliersTab'
 import { InvoiceRecognizeModal, type RecognizedHeader } from './InvoiceRecognizeModal'
@@ -47,7 +46,10 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
   const warehouses = useQuery({ queryKey: inventoryKeys.warehouses, queryFn: () => inventoryApi.warehouses() }).data ?? []
   const suppliers = useQuery({ queryKey: inventoryKeys.suppliers, queryFn: inventoryApi.suppliers }).data ?? []
   const isQuick = doc ? doc.isQuick : quick
-  const readOnly = !!doc && doc.status !== 'Draft'
+  // Проведённая приёмка да түзетіледі («Редактировать»): қоймаға тек айырма жазылады, қоймасы өзгермейді (сервер тексереді).
+  const [editing, setEditing] = useState(false)
+  const posted = doc?.status === 'Posted'
+  const readOnly = !!doc && doc.status !== 'Draft' && !(posted && editing)
 
   const [h, setH] = useState<Header>({ warehouseId: '', date: isoDate(new Date()), supplierId: params.get('supplierId') ?? '', supplierInvoiceNumber: '', basis: '', comment: '' })
   const [lines, setLines] = useState<LineDraft[]>([])
@@ -55,8 +57,7 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
   const [saving, setSaving] = useState<'draft' | 'post' | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [addingSupplier, setAddingSupplier] = useState(false)
-  const [paying, setPaying] = useState(false)
-  const [reversing, setReversing] = useState<{ kind: 'doc' } | { kind: 'payment'; id: string } | null>(null)
+  const [reversing, setReversing] = useState<{ kind: 'doc' } | null>(null)
   const [recognizing, setRecognizing] = useState(false)
 
   // Жүктелген құжат → форма (бір рет); жаңа құжат → әдепкі қойма.
@@ -107,13 +108,15 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
     setErrors(errs)
     if (Object.keys(errs).length) return
     if (post && !(await confirmDialog({ title: t('inv.receipts.postTitle'), message: t('inv.receipts.postConfirm', { n: totals.count, sum: tenge(totals.sum) }), confirmLabel: t('inv.receipts.post') }))) return
+    if (posted && editing && !(await confirmDialog({ title: t('inv.receipts.editTitle', { number: doc!.number }), message: t('inv.receipts.editConfirm'), confirmLabel: t('inv.receipts.saveChanges') }))) return
 
     setSaving(post ? 'post' : 'draft')
     try {
       const saved = id ? await inventoryApi.updateReceipt(id, body()) : await inventoryApi.createReceipt(body())
       const final = post ? await inventoryApi.postDocument(saved.id) : saved
       await qc.invalidateQueries({ queryKey: inventoryKeys.all })
-      toast(post ? t('inv.receipts.posted', { number: final.number }) : t('inv.doc.draftSaved', { number: final.number }))
+      toast(post ? t('inv.receipts.posted', { number: final.number }) : posted ? t('inv.receipts.edited', { number: final.number }) : t('inv.doc.draftSaved', { number: final.number }))
+      if (posted) setEditing(false)
       if (!id) navigate(`/warehouse/receipts/${final.id}`, { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.field) setErrors({ [err.field]: err.message })
@@ -165,19 +168,25 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
         </div>
         {doc && <DocStatus status={doc.status} kind="doc" />}
         <div className="ml-auto flex flex-wrap gap-2">
-          {!readOnly && perms.receive && (
+          {!readOnly && !posted && perms.receive && (
             <Button type="button" variant="secondary" icon={<Sparkles size={17} />} disabled={!!saving} onClick={() => setRecognizing(true)}>{t('inv.ai.button')}</Button>
           )}
-          {!readOnly && perms.receive && (
+          {!readOnly && !posted && perms.receive && (
             <Button type="submit" variant="secondary" icon={<Save size={17} />} loading={saving === 'draft'} disabled={!!saving}>{t('inv.doc.saveDraft')}</Button>
           )}
-          {!readOnly && perms.post && (
+          {posted && perms.post && !editing && (
+            <Button type="button" variant="secondary" icon={<Pencil size={17} />} onClick={() => setEditing(true)}>{t('inv.receipts.edit')}</Button>
+          )}
+          {posted && editing && (
+            <>
+              <Button type="button" variant="secondary" icon={<X size={17} />} disabled={!!saving} onClick={() => { setEditing(false); setErrors({}); if (doc) { setLines(linesFromDoc(doc)); setH({ warehouseId: doc.warehouseId, date: isoDate(new Date(doc.date)), supplierId: doc.supplierId ?? '', supplierInvoiceNumber: doc.supplierInvoiceNumber ?? '', basis: doc.basis ?? '', comment: doc.comment ?? '' }) } }}>{t('common.cancel')}</Button>
+              <Button type="submit" icon={<Save size={17} />} loading={saving === 'draft'} disabled={!!saving}>{t('inv.receipts.saveChanges')}</Button>
+            </>
+          )}
+          {!readOnly && !posted && perms.post && (
             <Button type="button" icon={<Check size={17} />} loading={saving === 'post'} disabled={!!saving} onClick={() => void save(true)}>
               {isQuick ? t('inv.receipts.accept') : t('inv.receipts.post')}
             </Button>
-          )}
-          {doc?.status === 'Posted' && doc.supplierId && doc.remaining > 0 && perms.post && (
-            <Button type="button" icon={<Wallet size={17} />} onClick={() => setPaying(true)}>{t('inv.pay.register')}</Button>
           )}
           {doc && (
             <RowMenu items={[
@@ -193,7 +202,7 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
           <section className="rounded-2xl border border-line bg-surface p-5">
             <div className={`grid gap-4 ${isQuick ? 'md:grid-cols-2' : 'md:grid-cols-2 2xl:grid-cols-3'}`}>
               <Field label={t('inv.mov.warehouse')} required error={errors.warehouseId}>
-                <Select value={h.warehouseId} disabled={readOnly} onChange={(e) => set({ warehouseId: e.target.value })} error={!!errors.warehouseId}>
+                <Select value={h.warehouseId} disabled={readOnly || posted} onChange={(e) => set({ warehouseId: e.target.value })} error={!!errors.warehouseId}>
                   <option value="">{t('product.choose')}</option>
                   {activeWarehouses.map((w) => <option key={w.id} value={w.id}>{w.name}{w.isDefault ? ` · ${t('inv.wh.default')}` : ''}</option>)}
                 </Select>
@@ -240,26 +249,6 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
             {errors.lines && <p className="mt-2 text-[13px] text-danger">{errors.lines}</p>}
           </section>
 
-          {doc && doc.payments.length > 0 && (
-            <section className="rounded-2xl border border-line bg-surface p-5">
-              <h2 className="mb-3 text-[16px] font-bold">{t('inv.pay.history')}</h2>
-              <div className="divide-y divide-line">
-                {doc.payments.map((p) => (
-                  <div key={p.id} className={`flex items-center gap-3 py-2.5 ${p.status === 'Reversed' ? 'opacity-60' : ''}`}>
-                    <Wallet size={18} className="text-ink-3" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[14px] font-semibold">{tenge(p.amount)} <span className="font-normal text-ink-3">· {t(`pay.${p.method}` as TranslationKey)}{p.reference ? ` · №${p.reference}` : ''}</span></div>
-                      <div className="text-[12px] text-ink-3">{dateOnly(p.date)} · {p.createdByName}{p.comment ? ` · ${p.comment}` : ''}</div>
-                      {p.status === 'Reversed' && <div className="text-[12px] text-danger">{t('inv.pay.reversed')}: {p.reversalReason}</div>}
-                    </div>
-                    {p.status === 'Registered' && perms.post && (
-                      <button type="button" className="text-[12px] text-ink-3 hover:text-danger" onClick={() => setReversing({ kind: 'payment', id: p.id })}>{t('inv.pay.reverse')}</button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
           {errors.form && <p className="text-[14px] text-danger">{errors.form}</p>}
         </div>
 
@@ -269,15 +258,6 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
             <Row label={t('inv.doc.lines')} value={num(totals.count)} />
             <Row label={t('inv.doc.totalQty')} value={num(totals.qty)} />
             <Row label={t('inv.doc.purchaseSum')} value={tenge(totals.sum)} bold />
-            {doc?.status === 'Posted' && doc.supplierId && (
-              <>
-                <Row label={t('inv.doc.paid')} value={tenge(doc.paid)} />
-                <div className={`mt-2 rounded-xl px-3 py-2 ${doc.remaining > 0 ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'}`}>
-                  <div className="text-[12px]">{t('inv.doc.remaining')}</div>
-                  <div className="text-[18px] font-bold">{tenge(doc.remaining)}</div>
-                </div>
-              </>
-            )}
             {doc?.status === 'Reversed' && <p className="mt-3 rounded-xl bg-danger-soft px-3 py-2 text-[13px] text-danger">{t('inv.doc.reversedHint')}: {doc.reversalReason}</p>}
           </section>
           {supplier && (
@@ -299,14 +279,9 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
 
       {addingSupplier && <SupplierModal onClose={() => setAddingSupplier(false)} onSaved={(s: Supplier) => { void qc.invalidateQueries({ queryKey: inventoryKeys.suppliers }); set({ supplierId: s.id }); setAddingSupplier(false); toast(t('catalog.created')) }} />}
       {recognizing && <InvoiceRecognizeModal warehouseId={h.warehouseId || null} suppliers={suppliers} onClose={() => setRecognizing(false)} onApply={applyRecognized} />}
-      {paying && doc && <PaymentModal doc={doc} onClose={() => setPaying(false)} onDone={() => { setPaying(false); void qc.invalidateQueries({ queryKey: inventoryKeys.all }) }} />}
       {reversing?.kind === 'doc' && doc && (
         <ReasonModal title={t('inv.doc.reverseTitle', { number: doc.number })} hint={t('inv.doc.reverseHint')} confirmLabel={t('inv.doc.reverse')} onClose={() => setReversing(null)}
           onSubmit={async (reason) => { if (await run(() => inventoryApi.reverseDocument(doc.id, reason), t('inv.doc.reversedDone'))) setReversing(null) }} />
-      )}
-      {reversing?.kind === 'payment' && (
-        <ReasonModal title={t('inv.pay.reverse')} confirmLabel={t('inv.pay.reverse')} onClose={() => setReversing(null)}
-          onSubmit={async (reason) => { if (await run(() => inventoryApi.reversePayment(reversing.id, reason), t('catalog.saved'))) setReversing(null) }} />
       )}
     </form>
   )
@@ -318,65 +293,5 @@ function Row({ label, value, bold }: { label: string; value: string; bold?: bool
       <span className="text-ink-2">{label}</span>
       <span className={bold ? 'text-[16px] font-bold' : 'font-semibold'}>{value}</span>
     </div>
-  )
-}
-
-/** Жеткізушіге төлем (ТЗ §13): толық не ішінара, қарыздан аспайды, идемпотентті кілтпен. */
-function PaymentModal({ doc, onClose, onDone }: { doc: StockDocument; onClose: () => void; onDone: () => void }) {
-  const t = useT()
-  const [amount, setAmount] = useState(String(doc.remaining))
-  const [method, setMethod] = useState('Transfer')
-  const [reference, setReference] = useState('')
-  const [date, setDate] = useState(isoDate(new Date()))
-  const [comment, setComment] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [key] = useState(() => crypto.randomUUID())
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault()
-    const value = toNum(amount)
-    if (value == null || value <= 0) return setError(t('inv.pay.amountInvalid'))
-    setLoading(true)
-    setError(null)
-    try {
-      await inventoryApi.registerPayment(doc.id, { clientRequestId: key, documentId: doc.id, amount: value, method, reference: reference || null, date, comment: comment || null })
-      toast(t('inv.pay.done', { sum: tenge(value) }))
-      onDone()
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : String(err))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Modal title={t('inv.pay.register')} onClose={onClose} width={520}>
-      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-        <div className="rounded-xl bg-field px-4 py-3 text-[14px]">
-          <div className="flex justify-between"><span className="text-ink-2">{t('inv.doc.total')}</span><b>{tenge(doc.total)}</b></div>
-          <div className="flex justify-between"><span className="text-ink-2">{t('inv.doc.paid')}</span><b>{tenge(doc.paid)}</b></div>
-          <div className="flex justify-between text-danger"><span>{t('inv.doc.remaining')}</span><b>{tenge(doc.remaining)}</b></div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label={t('inv.pay.amount')} required error={error}>
-            <Input autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} error={!!error} />
-          </Field>
-          <Field label={t('inv.pay.method')} required>
-            <Select value={method} onChange={(e) => setMethod(e.target.value)}>
-              {['Transfer', 'Cash', 'Card'].map((m) => <option key={m} value={m}>{t(`pay.${m}` as TranslationKey)}</option>)}
-            </Select>
-          </Field>
-          <Field label={t('inv.pay.reference')}><Input value={reference} onChange={(e) => setReference(e.target.value)} maxLength={64} /></Field>
-          <Field label={t('inv.pay.date')}><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
-        </div>
-        <Field label={t('node.description')}><Textarea value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} /></Field>
-        <p className="text-[12px] text-ink-3"><FileText size={13} className="mr-1 inline" />{t('inv.pay.note')}</p>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" loading={loading}>{t('inv.pay.confirm')}</Button>
-        </div>
-      </form>
-    </Modal>
   )
 }

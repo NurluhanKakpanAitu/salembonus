@@ -89,6 +89,9 @@ public class StockDocumentService(
     public async Task<StockDocumentDto> UpdateReceiptAsync(Guid id, SaveReceiptRequest r, CancellationToken ct = default)
     {
         var (orgId, m) = await access.RequireAsync(StaffPermissions.InventoryReceive, ct);
+        var current = await repo.GetDocumentForUpdateAsync(orgId, id, ct) ?? throw new NotFoundException(Messages.DocumentNotFound(Lang));
+        if (current.Type == StockDocumentType.Receipt && current.Status == StockDocumentStatus.Posted)
+            return await EditPostedReceiptAsync(orgId, m, current, r, ct);
         var doc = await RequireDraftAsync(orgId, id, StockDocumentType.Receipt, ct);
         var before = Snapshot(doc);
         doc.IsQuick = r.IsQuick;
@@ -96,6 +99,79 @@ public class StockDocumentService(
         doc.UpdatedAt = DateTime.UtcNow;
         access.Audit(orgId, m.StoreId, "inventory.receipt.update", "stock_document", doc.Id, before, Snapshot(doc));
         await unitOfWork.SaveChangesAsync(ct);
+        return await GetAsync(doc.Id, ct);
+    }
+
+    /// <summary>
+    /// Проведённая приёмканы түзету: тауар, сан, баға, жеткізуші, нөмір — бәрі өзгереді, құжат проведён күйінде қалады.
+    /// Қалдыққа тек айырма жазылады (жаңа сан − ескі сан, «Правка ПР-…» қозғалысы), кіріс бағасы жаңарады. Сатылып кеткен
+    /// тауарды қалдықтан көп азайтуға болмайды, сомасы жеткізушіге төленгеннен аз болмайды, қоймасы өзгермейді.
+    /// </summary>
+    private async Task<StockDocumentDto> EditPostedReceiptAsync(Guid orgId, StoreMembership m, StockDocument doc, SaveReceiptRequest r, CancellationToken ct)
+    {
+        if (!m.Has(StaffPermissions.InventoryPost)) throw new ForbiddenException(Messages.StaffPermissionDenied(Lang));
+        if (doc.StoreId != m.StoreId) throw new ForbiddenException(Messages.StaffStoreForbidden(Lang));
+        if (r.WarehouseId is { } wid && wid != doc.WarehouseId) throw new ValidationException(Messages.ReceiptEditWarehouse(Lang), "warehouseId");
+        var before = Snapshot(doc);
+        var oldQty = doc.Lines.GroupBy(l => l.ProductId).ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+        var warehouseId = doc.WarehouseId;
+        await ApplyReceiptAsync(orgId, m, doc, r with { WarehouseId = warehouseId }, ct);
+        if (doc.Lines.Count == 0) throw new ValidationException(Messages.DocumentLinesRequired(Lang), "lines");
+        if (doc.Total < doc.Paid) throw new ValidationException(Messages.ReceiptEditBelowPaid(Lang, doc.Paid), "lines");
+
+        var ids = doc.Lines.Select(l => l.ProductId).Concat(oldQty.Keys).Distinct().ToList();
+        var catalogProducts = (await repo.ProductsAsync(orgId, ids, ct)).ToDictionary(p => p.Id);
+        foreach (var l in doc.Lines)
+            if (!oldQty.ContainsKey(l.ProductId) && catalogProducts.GetValueOrDefault(l.ProductId) is not { Status: CatalogStatus.Active })
+                throw new ValidationException(Messages.DocumentProductArchived(Lang, l.Name), "lines");
+        var canSetRetail = m.Has(StaffPermissions.ProductsEdit);
+
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            var now = DateTime.UtcNow;
+            var newQty = doc.Lines.ToDictionary(l => l.ProductId, l => l.Quantity);
+            var deltas = ids
+                .Select(id => new StockDelta(id, newQty.GetValueOrDefault(id) - oldQty.GetValueOrDefault(id),
+                    doc.Lines.FirstOrDefault(l => l.ProductId == id)?.PurchasePrice))
+                .Where(d => d.Delta != 0).ToList();
+            if (deltas.Count > 0)
+            {
+                // Азайту сатылып кеткен тауардан аспасын: қалдық минусқа кетсе — түсінікті хабар.
+                var balances = await repo.BalancesAsync(warehouseId, deltas.Select(d => d.ProductId).ToList(), ct);
+                foreach (var d in deltas.Where(d => d.Delta < 0))
+                {
+                    var available = balances.GetValueOrDefault(d.ProductId);
+                    if (available + d.Delta < 0)
+                        throw new ValidationException(Messages.ReceiptEditSold(Lang, catalogProducts.GetValueOrDefault(d.ProductId)?.Name ?? "?", available), "lines");
+                }
+                await posting.ApplyAsync(orgId, doc.StoreId, warehouseId, deltas, catalogProducts, StockMovementType.Receipt, doc.Id, doc.Number,
+                    $"Правка {doc.Number}", access.StaffUserId, allowNegative: false, now, ct);
+            }
+
+            var prices = await repo.PricesAsync(doc.StoreId, doc.Lines.Select(l => l.ProductId).ToList(), ct);
+            foreach (var l in doc.Lines)
+            {
+                if (!prices.TryGetValue(l.ProductId, out var price))
+                {
+                    price = new ProductPrice { ProductId = l.ProductId, StoreId = doc.StoreId, SalePrice = 0 };
+                    repo.AddPrice(price);
+                    prices[l.ProductId] = price;
+                }
+                price.PurchasePrice = l.PurchasePrice;
+                if (l.RetailPrice is { } retail && canSetRetail && retail != price.SalePrice)
+                {
+                    access.Audit(orgId, doc.StoreId, "catalog.product.price", "product", l.ProductId,
+                        new { SalePrice = price.SalePrice }, new { SalePrice = retail, Source = doc.Number });
+                    price.SalePrice = retail;
+                }
+                price.UpdatedAt = now;
+            }
+            doc.IsQuick = r.IsQuick;
+            doc.UpdatedAt = now;
+            access.Audit(orgId, doc.StoreId, "inventory.receipt.edit", "stock_document", doc.Id, before, Snapshot(doc));
+            await unitOfWork.SaveChangesAsync(ct);
+            return doc;
+        }, ct);
         return await GetAsync(doc.Id, ct);
     }
 

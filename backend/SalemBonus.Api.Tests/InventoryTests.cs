@@ -94,7 +94,7 @@ public class InventoryTests(ApiFixture api)
     }
 
     [Fact]
-    public async Task Retail_price_changes_only_when_the_line_says_so_and_posted_receipt_is_frozen()
+    public async Task Retail_price_changes_only_when_the_line_says_so_and_posted_receipt_edits_move_only_the_difference()
     {
         var pos = await api.NewDeviceAsync();
         var product = await pos.CreateProductAsync(price: 1500, stock: 2, purchase: 900);
@@ -108,11 +108,12 @@ public class InventoryTests(ApiFixture api)
         Assert.Equal(1500m, card["salePrice"]!.GetValue<decimal>()); // розница көрсетілмеді — өзгермейді
         Assert.Equal(5m, await pos.StockAsync(product));
 
+        // Проведённая приёмка түзетіледі: 3 → 30 дана — қоймаға тек айырма (+27); «удалить черновик» — бәрібір жоқ.
         var edit = await pos.Put(pos.Owner, $"{Inv}/receipts/{id}", new { lines = new[] { ReceiptLine(product, 30, 1000) } });
         var cancel = await pos.Post(pos.Owner, $"{Inv}/documents/{id}/cancel", new { });
-        Assert.Equal(HttpStatusCode.BadRequest, edit.Status);
+        Assert.Equal("Posted", edit.Ok["status"]!.GetValue<string>());
         Assert.Equal(HttpStatusCode.BadRequest, cancel.Status);
-        Assert.Equal(5m, await pos.StockAsync(product));
+        Assert.Equal(32m, await pos.StockAsync(product));
     }
 
     [Fact]

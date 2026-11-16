@@ -86,6 +86,8 @@ public class SaleItem
     /// қайтарылсын деп сақталады.
     /// </summary>
     public decimal Discount { get; set; }
+    /// <summary>Позицияның өз жеңілдігі (кассир жолға жасаған), Discount ішінде де бар — чекте жеке көрсетіледі.</summary>
+    public decimal LineDiscount { get; set; }
     public decimal ReturnedQuantity { get; set; }
     /// <summary>
     /// Сатылған сәттегі бір бірліктің өзіндік құны (кіріс бағасы). Кейін баға өзгерсе де, пайда осымен

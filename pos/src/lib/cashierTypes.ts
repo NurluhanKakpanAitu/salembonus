@@ -77,7 +77,7 @@ export interface Receipt {
   cashierName: string
   customer: { id: string; fullName: string; phone: string; bonusBalance: number | null } | null
   items: { id: string; productId: string; name: string; article: string | null; unit: string | null; quantity: number; price: number;
-    lineTotal: number; discount: number; returnedQuantity: number }[]
+    lineTotal: number; discount: number; returnedQuantity: number; lineDiscount?: number }[]
   subtotal: number
   discountKind: string | null
   discountValue: number | null

@@ -9,7 +9,8 @@ const json = (method: string, body?: unknown): RequestInit => ({ method, body: b
 
 export interface CreateSale {
   clientRequestId: string
-  items: { productId: string; quantity: number }[]
+  /** price — кассир көтерген баға (тек жоғары), discount — позиция жеңілдігі. */
+  items: { productId: string; quantity: number; price?: number | null; discount?: { kind: 'Percent' | 'Amount'; value: number } | null }[]
   customerId: string | null
   bonusRedeem: number
   discount: { kind: 'Percent' | 'Amount'; value: number } | null

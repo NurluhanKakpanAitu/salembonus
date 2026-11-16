@@ -129,10 +129,14 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
     try {
       const receipt = await cashierApi.createSale({
         clientRequestId: state.requestId,
-        items: state.lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+        // Кассир көтерген баға мен позиция жеңілдігі; сервер қайта тексереді (тек жоғары, өзіндік құннан төмен емес).
+        items: state.lines.map((l) => ({
+          productId: l.productId, quantity: l.quantity, price: l.price !== l.basePrice ? l.price : null,
+          discount: l.discount && l.discount.value > 0 ? l.discount : null,
+        })),
         customerId: state.customer?.id ?? null,
         bonusRedeem: sum.bonus,
-        discount: sum.discount > 0 ? { kind: state.discount.kind, value: state.discount.value } : null,
+        discount: sum.checkDiscount > 0 ? { kind: state.discount.kind, value: state.discount.value } : null,
         approval: approvedBy ?? null,
         payments,
       })
