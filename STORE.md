@@ -30,7 +30,7 @@
 - Аккаунтты өшіру қосымшаның ішінде бұрыннан бар (Профиль → Аккаунтты өшіру). Енді SalemPos-та сатып алуы не қарызы бар клиент
   те өшіріледі: чек дүкенде клиентсіз қалады; өтелмеген қарыз болса, қосымша қай дүкенде қарыз барын айтып, өшірмейді.
 - Тексерушіге арналған нөмір: `REVIEW_PHONE` / `REVIEW_CODE` — тек осы нөмірге тұрақты код, SMS жіберілмейді.
-- `frontend/store/` — дүкен суреттері: иконка 1024 және 512, Play feature graphic 1024×500, скриншоттар (App Store 6.9″
+- `frontend/store/` — дүкен суреттері: иконка 1024 және 512, Play feature graphic 1024×500, скриншоттар (App Store 6.3″ 1206×2622, 6.9″
   1320×2868 және Google Play 1080×1920, орысша мен қазақша жазумен). Қайта жасау: `npm run native:assets`.
 - iOS: камера мен фото рұқсатының мәтіні (орысша / қазақша), `PrivacyInfo.xcprivacy`, `ITSAppUsesNonExemptEncryption = NO`
   (экспорттық шифрлау сұрағы қайта қойылмайды).
@@ -194,21 +194,29 @@ Push-ты тек нақты iPhone-да тексер (7.3): Xcode-тан ▶ а�
 
 ### 3.4. App Store Connect
 
+> **2026-11-16: жасалды.** Bundle ID `kz.salembonus.app` (Push Notifications қосулы) Yernur Dulsenbek аккаунтында
+> (Individual, Team ID KTBW66KP5R) тіркелді, қосымша жасалды — Apple ID **6835465387**. Төмендегі кестенің бәрі толтырылды,
+> App Privacy жарияланды. **Қалғаны:** билд (3.3), App Review Information-дағы нөмір мен код және байланыс деректері,
+> сосын 3.5.
+
 https://appstoreconnect.apple.com → **Apps → +** → New App: iOS, аты `SalemBonus`, тілі **Russian**, Bundle ID
 `kz.salembonus.app`, SKU `salembonus-ios`, Full Access.
 
 | Бөлім | Жауап |
 |---|---|
+| App Information → Subtitle | Бонусы всех магазинов |
 | App Information → Category | Primary **Shopping**, Secondary **Lifestyle** |
-| App Information → Content Rights | Үшінші тараптың мазмұны жоқ (дүкен атаулары мен суреттерін дүкендер өзі береді — «Yes, has rights» деп растау) |
+| App Information → Content Rights | «Yes, has rights» — дүкен атаулары мен суреттерін дүкендер өзі береді |
 | Age Rating | сауалнаманың бәріне **None / No** → **4+** |
-| Pricing | Free, барлық ел (не тек Kazakhstan) |
+| Pricing and Availability | Free; тек **Kazakhstan** (ЕО елдері DSA бойынша сатушы мәртебесін талап етеді) |
 | App Privacy → Privacy Policy URL | `https://salembonus.kz/privacy` |
 | App Privacy → Data types | төмендегі кесте |
-| Localizations | Russian (негізгі) + **Kazakh** қос — 5-бөлімдегі мәтіндер |
-| Screenshots (iPhone 6.9″) | `frontend/store/screenshots/app-store-6.9/ru/*.png` (қазақша — `kk/`) |
-| Support URL | `https://salembonus.kz` |
-| Copyright | `2026 <заңды тұлғаның атауы>` |
+| Localizations | тек Russian — App Store-да **қазақ тілі жоқ** (тек Google Play-де) |
+| Screenshots (iPhone, Dynamic Island «орташа дисплей») | `frontend/store/screenshots/app-store-6.3/ru/*.png` — бұл ұяшық тек 6,1–6,3″ (1206×2622) қабылдайды; iPad ұяшығы iPhone-only билд жүктелген соң жоғалады |
+| Support URL, Marketing URL | `https://salembonus.kz` |
+| Version | `1.0.0` (Xcode-тағы MARKETING_VERSION-мен бірдей) |
+| Copyright | `2026 Yernur Dulsenbek` |
+| Release | Manual — тексеруден өткен соң өзің жариялайсың |
 | App Review Information | Sign-in required ✓, User name `REVIEW_PHONE`, Password `REVIEW_CODE`, байланыс телефоны мен поштасы |
 
 **App Privacy** (Data Used to Track You — **жоқ**; бәрі Linked to You, мақсаты **App Functionality**):
@@ -228,7 +236,7 @@ https://appstoreconnect.apple.com → **Apps → +** → New App: iOS, аты `S
 
 > SalemBonus is a loyalty wallet: one account keeps the bonus cards of many partner stores in Kazakhstan.
 > Sign in: enter the phone number above, tap the button, enter the code above (no SMS is sent to this number).
-> Native features: camera QR scanner to add a store's bonus card (Stores tab → the blue scan button at the top; store code for manual entry: <КОД>),
+> Native features: camera QR scanner to add a store's bonus card (Stores tab → the blue scan button at the top; store code for manual entry: MKMAUTO — продта бар дүкеннің кодын тексер),
 > automatic full screen brightness while the customer's QR code is shown at the checkout, haptic feedback,
 > push notifications when bonuses are earned or spent at a partner store, on the customer's birthday and for store promotions
 > (allow notifications after sign-in; tapping one opens that store's messages),

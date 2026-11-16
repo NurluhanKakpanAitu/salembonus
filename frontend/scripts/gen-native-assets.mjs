@@ -8,7 +8,7 @@
  *   ios/…/AppIcon.appiconset      — 1024×1024, мөлдірсіз (Apple талабы)
  *   ios/…/Splash.imageset         — 2732×2732, ашық және қараңғы тақырып
  *   store/                        — дүкен беті: Play иконкасы 512, feature graphic 1024×500,
- *                                   скриншоттар (App Store 6.9" 1320×2868, Google Play 1080×1920) орысша және қазақша
+ *                                   скриншоттар (App Store 6.9" 1320×2868, 6.3" 1206×2622, Google Play 1080×1920) орысша және қазақша
  *
  * Скрипт кез келген уақытта қайта іске қосылады: логотип не макеттер өзгерсе, файлдар жаңадан жазылады.
  */
@@ -173,6 +173,8 @@ for (const [i, shot] of SHOTS.entries()) {
   for (const lang of ['ru', 'kk']) {
     const name = `${i + 1}-${shot.file.replace(/^\d-/, '')}`
     await out(`store/screenshots/app-store-6.9/${lang}/${name}`, await storeShot(src, shot[lang], 1320, 2868))
+    // App Store Connect-тің негізгі iPhone ұяшығы (Dynamic Island, «орташа дисплей») 6,1–6,3″ өлшемін ғана қабылдайды.
+    await out(`store/screenshots/app-store-6.3/${lang}/${name}`, await storeShot(src, shot[lang], 1206, 2622))
     await out(`store/screenshots/google-play/${lang}/${name}`, await storeShot(src, shot[lang], 1080, 1920))
   }
 }
