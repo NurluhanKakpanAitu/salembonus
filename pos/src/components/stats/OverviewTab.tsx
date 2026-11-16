@@ -142,8 +142,6 @@ export function OverviewTab({ filters }: { filters: AnalyticsFilters }) {
           items={o ? [
             { label: t('stats.sup.purchases'), value: tenge(o.suppliers.purchases) },
             { label: t('stats.sup.documents'), value: num(o.suppliers.receiptDocuments) },
-            { label: t('stats.sup.paid'), value: tenge(o.suppliers.paid) },
-            { label: t('stats.sup.debt'), value: tenge(o.suppliers.debt), tone: o.suppliers.debt > 0 ? 'text-danger' : undefined },
           ] : null} />
         <SummaryCard title={t('stats.block.finance')} icon={<Banknote size={18} />} onMore={o?.finance ? () => go('/statistics/finance') : undefined}
           items={o ? (o.finance ? [

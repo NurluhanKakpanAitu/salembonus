@@ -12,6 +12,13 @@ using SalemBonus.Infrastructure.Identity;
 
 const string FrontendCors = "Frontend";
 
+// Хабарлардағы сандар («не ниже 1 000 ₸») сервер қай машинада тұрса да бірдей: мыңдықтар бөлінбейтін бос орынмен, бөлшек — нүкте.
+// Docker/CI (Linux, invariant) «1,000» берер еді, Windows (ru) — «1 000»; енді әрқашан «1 000».
+var numbers = (System.Globalization.CultureInfo)System.Globalization.CultureInfo.InvariantCulture.Clone();
+numbers.NumberFormat.NumberGroupSeparator = " ";
+numbers.NumberFormat.CurrencyGroupSeparator = " ";
+System.Globalization.CultureInfo.DefaultThreadCurrentCulture = numbers;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();

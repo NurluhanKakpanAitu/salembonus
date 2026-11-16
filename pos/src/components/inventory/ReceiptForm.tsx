@@ -268,7 +268,6 @@ export function ReceiptForm({ quick = false }: { quick?: boolean }) {
               </div>
               <div className="text-[15px] font-semibold">{supplier.name}</div>
               <div className="mt-1 text-[13px] text-ink-2">{[supplier.taxId && `${t('inv.sup.taxId')}: ${supplier.taxId}`, supplier.phone, supplier.email, supplier.address].filter(Boolean).map((x) => <div key={String(x)}>{x}</div>)}</div>
-              {supplier.debt > 0 && <div className="mt-2 text-[13px] text-danger">{t('inv.sup.debt')}: {tenge(supplier.debt)}</div>}
             </section>
           )}
           {!doc && (

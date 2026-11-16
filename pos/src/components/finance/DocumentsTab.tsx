@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, ChevronRight, FileText, HandCoins, Truck } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, ChevronRight, FileText, HandCoins } from 'lucide-react'
 import { financeKeys } from '../../lib/financeApi'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { Segmented } from '../stats/statsUi'
@@ -18,11 +18,8 @@ const REPORTS: { key: string; to: string }[] = [
   { key: 'categories', to: '/finance/income-expense' },
   { key: 'productProfit', to: '/finance/product-profit' },
   { key: 'customerDebts', to: '/finance/customer-debts' },
-  { key: 'supplierDebts', to: '/finance/supplier-debts' },
-  { key: 'supplierPayments', to: '/finance/transactions?type=SupplierPayment' },
   { key: 'customerPayments', to: '/finance/transactions?type=CustomerPayment' },
   { key: 'collections', to: '/finance/transactions?type=Collection' },
-  { key: 'reconciliation', to: '/finance/supplier-debts' },
   { key: 'journal', to: '/finance/transactions' },
 ]
 
@@ -45,7 +42,6 @@ export function DocumentsTab({ filters, storeIds }: { filters: FinanceFilters; s
     { key: 'income', icon: <ArrowDownLeft size={18} />, tone: 'bg-success-soft text-success', onClick: () => setForm('Income') },
     { key: 'expense', icon: <ArrowUpRight size={18} />, tone: 'bg-danger-soft text-danger', onClick: () => setForm('Expense') },
     { key: 'transfer', icon: <ArrowLeftRight size={18} />, tone: 'bg-brand-soft text-brand', onClick: () => setForm('transfer') },
-    { key: 'supplierPayment', icon: <Truck size={18} />, tone: 'bg-violet-50 text-violet-600', onClick: () => nav(`/finance/supplier-debts${search}`) },
     { key: 'customerPayment', icon: <HandCoins size={18} />, tone: 'bg-amber-50 text-amber-700', onClick: () => nav(`/finance/customer-debts${search}`) },
   ]
   return (
@@ -55,7 +51,7 @@ export function DocumentsTab({ filters, storeIds }: { filters: FinanceFilters; s
       {view === 'documents' ? (
         <>
           {canOperate && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
               {quick.map((b) => (
                 <button key={b.key} type="button" onClick={b.onClick} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-left hover:border-brand">
                   <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${b.tone}`}>{b.icon}</span>

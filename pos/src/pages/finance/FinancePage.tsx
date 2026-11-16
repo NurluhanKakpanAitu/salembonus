@@ -16,7 +16,6 @@ const TransactionsTab = lazy(() => import('../../components/finance/Transactions
 const AccountsTab = lazy(() => import('../../components/finance/AccountsTab').then((m) => ({ default: m.AccountsTab })))
 const ProductProfitTab = lazy(() => import('../../components/finance/ProductProfitTab').then((m) => ({ default: m.ProductProfitTab })))
 const CustomerDebtsTab = lazy(() => import('../../components/finance/CustomerDebtsTab').then((m) => ({ default: m.CustomerDebtsTab })))
-const SupplierDebtsTab = lazy(() => import('../../components/finance/SupplierDebtsTab').then((m) => ({ default: m.SupplierDebtsTab })))
 const DocumentsTab = lazy(() => import('../../components/finance/DocumentsTab').then((m) => ({ default: m.DocumentsTab })))
 
 /** Кезең сүзгісі керек емес подразделдер: қарыздар — ағымдағы жағдай, шоттар — ағымдағы қалдық (кезең тек выпискаға). */
@@ -67,7 +66,6 @@ export function FinancePage() {
           <Route path="accounts" element={<AccountsTab filters={filters} storeIds={storeIds} />} />
           <Route path="product-profit" element={<ProductProfitTab filters={filters} storeIds={storeIds} />} />
           <Route path="customer-debts" element={<CustomerDebtsTab filters={filters} storeIds={storeIds} />} />
-          <Route path="supplier-debts" element={<SupplierDebtsTab filters={filters} storeIds={storeIds} />} />
           <Route path="documents" element={<DocumentsTab filters={filters} storeIds={storeIds} />} />
           <Route path="*" element={<Navigate to={`/finance${search}`} replace />} />
         </Routes>
