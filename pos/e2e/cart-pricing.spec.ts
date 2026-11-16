@@ -19,6 +19,7 @@ async function seed(request: APIRequestContext, token: string) {
   expect((await request.post(`/api/pos/v1/inventory/documents/${doc.id}/post`, { headers, data: {} })).ok()).toBe(true)
   return {
     receiptId: doc.id,
+    productId: product,
     cleanup: async () => { await request.post(`/api/pos/v1/products/${product}/archive`, { headers, data: {} }) },
   }
 }
@@ -32,9 +33,17 @@ test('cart line price goes only up, each line can get its own discount, posted r
     // Проведённая приёмка: «Редактировать» бар, төлем батырмасы жоқ.
     await page.goto(`/warehouse/receipts/${data.receiptId}`)
     await expect(page.getByRole('button', { name: 'Редактировать' })).toBeVisible()
+    // Жолдағы тауар атауы — карточкаға сілтеме (қарау режимінде сол бетте ашылады), артқа — приёмкаға қайту.
+    await page.getByRole('link', { name: `${tag} антифриз` }).click()
+    await expect(page).toHaveURL(new RegExp(`/products/${data.productId}$`))
+    await expect.poll(() => page.locator('input').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value))).toContain(`${tag} антифриз`)
+    await page.goBack()
+    await expect(page.getByRole('button', { name: 'Редактировать' })).toBeVisible()
     await expect(page.getByRole('button', { name: /оплат/i })).toHaveCount(0)
     await page.getByRole('button', { name: 'Редактировать' }).click()
     await expect(page.getByRole('button', { name: 'Сохранить изменения' })).toBeVisible()
+    // Өңдеу кезінде карточка жаңа қойындыда ашылады — сақталмаған жолдар жоғалмайды.
+    await expect(page.getByRole('link', { name: `${tag} антифриз` })).toHaveAttribute('target', '_blank')
     await expectNothingClipped(page, 'ru /warehouse/receipts › правка проведённой')
     await page.getByRole('button', { name: 'Отмена' }).click()
 

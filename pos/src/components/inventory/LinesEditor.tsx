@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { Plus, ScanLine, Search, Trash2 } from 'lucide-react'
 import { Input } from '../ui/Field'
 import { useFitPlaceholder } from '../ui/SearchInput'
@@ -175,7 +176,10 @@ export function LinesEditor({ lines, onChange, mode, canRetail, disabled, enrich
                   <div className="flex items-center gap-2.5">
                     <ProductThumb url={l.imageUrl} size={36} />
                     <span className="min-w-0">
-                      <span className="block truncate font-semibold">{l.name}</span>
+                      {/* Тауар карточкасына өту: қарау режимінде сол бетте, өңдеу кезінде — жаңа қойындыда (сақталмаған жолдар жоғалмасын). */}
+                      <Link to={`/products/${l.productId}`} title={t('inv.stock.openProduct')}
+                        {...(disabled ? {} : { target: '_blank', rel: 'noopener' })}
+                        className="block truncate font-semibold hover:text-brand hover:underline">{l.name}</Link>
                       {l.unit && <span className="block text-[12px] text-ink-3">{l.unit}</span>}
                     </span>
                   </div>
