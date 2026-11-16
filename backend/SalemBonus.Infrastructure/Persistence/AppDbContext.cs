@@ -96,6 +96,38 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     /// </summary>
     public static string Fold(string text) => throw new NotSupportedException("Тек LINQ сұранысында (salem_fold)");
 
+    /// <summary>
+    /// Кассаның жергілікті каталогы (CatalogSyncAsync) өзгерістерді уақыт белгісімен алады. Сондықтан бағасы өзгерсе — баға
+    /// белгісі, штрихкод/сурет/сипаттама қосылса, өзгерсе не өшсе — тауардың белгісі мұнда өзі жаңарады (әр сервисте ұмытылмасын).
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        foreach (var e in ChangeTracker.Entries<ProductPrice>().Where(e => e.State == EntityState.Modified))
+            e.Entity.UpdatedAt = now;
+        var touched = ChangeTracker.Entries()
+            .Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+            .Select(e => e.Entity switch
+            {
+                ProductBarcode b => (Guid?)b.ProductId,
+                ProductImage i => i.ProductId,
+                ProductCharacteristicValue c => c.ProductId,
+                _ => null,
+            })
+            .OfType<Guid>().ToHashSet();
+        foreach (var e in ChangeTracker.Entries<Product>().Where(e => e.State != EntityState.Deleted && (touched.Contains(e.Entity.Id) || e.State == EntityState.Modified)))
+        {
+            e.Entity.UpdatedAt = now;
+            if (e.State != EntityState.Added) e.Property(p => p.UpdatedAt).IsModified = true; // тек белгі — басқа бағандар қайта жазылмайды
+            touched.Remove(e.Entity.Id);
+        }
+        var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, ct);
+        // Тауардың өзі жүктелмеген болса (тек штрихкод не сурет өзгерді) — белгісі бөлек жаңарады.
+        if (touched.Count > 0)
+            await Products.Where(p => touched.Contains(p.Id)).ExecuteUpdateAsync(s => s.SetProperty(p => p.UpdatedAt, now), ct);
+        return result;
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

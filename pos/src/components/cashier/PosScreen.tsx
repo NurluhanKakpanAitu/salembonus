@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BarChart3, ChevronDown, Loader2, Monitor, ReceiptText, Settings, ShoppingCart } from 'lucide-react'
 import { RowMenu, type RowMenuItem } from '../ui/RowMenu'
@@ -10,6 +10,8 @@ import type { CashierProduct, PaymentMethod, Receipt, SalePaymentInput } from '.
 import { num, tenge } from '../../lib/money'
 import { useIsDesktop } from '../../lib/useMediaQuery'
 import { useT } from '../../lib/i18n'
+import { activeStore, useAuth } from '../../lib/auth'
+import { findByBarcode, openLocalCatalog, syncLocalCatalog } from '../../lib/localCatalog'
 import { CartPanel } from './CartPanel'
 import { CatalogPanel, type CatalogFilter } from './CatalogPanel'
 import { PaymentModal } from './PaymentModal'
@@ -57,6 +59,22 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
   const [viewing, setViewing] = useState<string | null>(null)
   const [returning, setReturning] = useState<string | null>(null)
 
+  // Жергілікті каталог: ашылғанда (алдымен браузердегі көшірме), минут сайын және бет қайта көрінгенде — тек өзгерістер.
+  const storeId = useAuth(activeStore)?.id
+  useEffect(() => {
+    if (!storeId) return
+    void openLocalCatalog(storeId)
+    const timer = window.setInterval(() => void syncLocalCatalog(), 60_000)
+    const onVisible = () => document.visibilityState === 'visible' && void syncLocalCatalog()
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', onVisible)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', onVisible)
+    }
+  }, [storeId])
+
   const print = async (id: string) => {
     try {
       printReceipt(await cashierApi.sale(id), t)
@@ -84,6 +102,9 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
   }
 
   const scan = async (code: string) => {
+    // Жергілікті каталогта бар болса — серверге бармай, бірден.
+    const local = findByBarcode(code)
+    if (local) { add(local); return true }
     try {
       add(await cashierApi.byBarcode(code))
       return true
@@ -122,7 +143,7 @@ export function PosScreen({ menu = [] }: { menu?: RowMenuItem[] }) {
       // ТЗ §17.10: баптауда қосулы болса — чек төлемнен кейін бірден басылады.
       if (ctx.autoPrint) printReceipt(receipt, t)
       void qc.invalidateQueries({ queryKey: ['cashier', 'catalog'] })
-      void qc.invalidateQueries({ queryKey: ['cashier', 'search'] })
+      void syncLocalCatalog() // қалдық пен «популярлық» бірден жаңарады
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       if (err instanceof ApiError && err.field === 'approval') setApproval({ payments, error: null })

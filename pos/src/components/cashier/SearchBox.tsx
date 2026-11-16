@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useIsFetching } from '@tanstack/react-query'
 import { Barcode, Loader2, Search, X } from 'lucide-react'
 import { useFitPlaceholder } from '../ui/SearchInput'
+import { useLocalCatalog } from '../../lib/localCatalog'
 import { useT } from '../../lib/i18n'
 
 /**
@@ -20,6 +21,8 @@ export function SearchBox({ value, onSearch, onScan }: {
   const searchPlaceholder = useFitPlaceholder(t('pos.searchPlaceholder'), ref, 140)
   // Теру тоқтағанын күтіп тұр не сервер жауап бермей тұр — белгі айналады (кассир «қатты» деп ойламасын).
   const fetching = useIsFetching({ queryKey: ['cashier', 'catalog'] }) > 0
+  // Каталог браузерде болса — іздеу бірден, күту қысқа; серверден ізделсе — әр әріпке сұраныс жібермейміз.
+  const delay = useLocalCatalog((s) => s.ready) ? 80 : 250
   const busy = q.trim() !== value || (!!value && fetching)
 
   // Іздеу сырттан өзгерсе (торда «тазалау»), өріс те соған келеді.
@@ -27,9 +30,9 @@ export function SearchBox({ value, onSearch, onScan }: {
   useEffect(() => {
     const term = q.trim()
     if (term === value) return
-    const id = setTimeout(() => onSearch(term), 250)
+    const id = setTimeout(() => onSearch(term), delay)
     return () => clearTimeout(id)
-  }, [q, value, onSearch])
+  }, [q, value, onSearch, delay])
 
   const clear = () => { setQ(''); onSearch('') }
 

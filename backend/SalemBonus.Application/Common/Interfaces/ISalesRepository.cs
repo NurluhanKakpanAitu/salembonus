@@ -12,6 +12,9 @@ public record CashierCatalogFilter(string? Search, string? NodePath, CashierSort
 /// <summary>Касса каталогының жолы: тауар + осы дүкендегі баға мен қалдық.</summary>
 public record CashierCatalogRow(Product Product, decimal? Price, decimal Stock);
 
+/// <summary>Жергілікті каталогқа: тауарлар (штрихкод, сурет, сипаттамасымен), 30 күндік сатылым, сатудан алынғандар, барлық сатылатын саны.</summary>
+public record CatalogSyncData(IReadOnlyList<CashierCatalogRow> Rows, IReadOnlyDictionary<Guid, decimal> Sold, IReadOnlyList<Guid> Removed, int Total);
+
 public interface ISalesRepository
 {
     /// <summary>Кассаға көрінетін тауарлар (белсенді, «кассада жасыру» емес), баға мен қалдығымен.</summary>
@@ -74,6 +77,13 @@ public interface ISalesRepository
     /// <summary>
     /// Аты-жөні не нөмірдің бөлігі бойынша іздеу — тек осы дүкенде картасы бар клиенттер (бөтен бизнестің клиенті көрінбейді).
     /// </summary>
+    /// <summary>
+    /// Касса каталогы браузерге: since жоқ — барлық сатылатын тауар; бар болса — содан кейін өзгергендер (тауар, баға, қалдық
+    /// қозғалысы) және сатудан алынғандар.
+    /// </summary>
+    Task<CatalogSyncData> CatalogSyncAsync(Guid orgId, Guid storeId, Guid warehouseId, DateTime? sinceUtc, CancellationToken ct = default);
+    /// <summary>Анықтамалықтардың нұсқасы (бренд, өлшем бірлігі өзгерген соңғы уақыт): өзгерсе, касса каталогты толық жүктейді.</summary>
+    Task<DateTime> CatalogDictionariesVersionAsync(Guid orgId, CancellationToken ct = default);
     Task<IReadOnlyList<Customer>> SearchStoreCustomersAsync(Guid storeId, string term, PhoneSearch? phone, int take, CancellationToken ct = default);
     /// <summary>Растай алатын қызметкерлер (жеңілдік шегінен асқанда).</summary>
     Task<IReadOnlyList<(Guid Id, string Name)>> ListApproversAsync(Guid storeId, string permission, CancellationToken ct = default);

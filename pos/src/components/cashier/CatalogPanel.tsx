@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { ImageOff, LayoutGrid, List, Loader2, Plus, X } from 'lucide-react'
 import { cashierApi } from '../../lib/cashierApi'
@@ -7,6 +7,7 @@ import { CatalogIcon } from '../../lib/catalogIcons'
 import { useCatalogNodes } from '../../lib/catalogHooks'
 import { num, tenge } from '../../lib/money'
 import { useT, type TranslationKey } from '../../lib/i18n'
+import { buildIndex, searchLocal, toProduct, useLocalCatalog } from '../../lib/localCatalog'
 
 const PAGE = 40
 const SORTS: { key: CashierSort; label: TranslationKey }[] = [
@@ -34,16 +35,28 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
   const roots = useMemo(() => (nodes ?? []).filter((n) => n.depth === 0 && n.status === 'Active')
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)), [nodes])
 
+  // Жергілікті каталог дайын болса — іздеу, санат, сұрыптау браузерде, бірден (lib/localCatalog). Алғаш ашылғанда
+  // (көшірме әлі жоқ) — бұрынғыдай серверден.
+  const local = useLocalCatalog()
+  const nodeNames = useMemo(() => new Map((nodes ?? []).map((n) => [n.id, n.name])), [nodes])
+  const index = useMemo(() => (local.ready ? buildIndex(local.items, nodeNames) : []), [local.ready, local.items, nodeNames])
+  const found = useMemo(() => (local.ready ? searchLocal(index, filter) : []), [local.ready, index, filter])
+  const [limit, setLimit] = useState(PAGE)
+  useEffect(() => setLimit(PAGE), [filter.search, filter.nodeId, filter.sort])
+
   const query = useInfiniteQuery({
+    enabled: !local.ready,
     queryKey: ['cashier', 'catalog', filter.nodeId, filter.sort, filter.search],
     queryFn: ({ pageParam, signal }) => cashierApi.catalog({ nodeId: filter.nodeId, sort: filter.sort, search: filter.search, page: pageParam, pageSize: PAGE }, signal),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.page * last.pageSize < last.total ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
   })
-  const items = query.data?.pages.flatMap((p) => p.items) ?? []
-  const total = query.data?.pages[0]?.total ?? 0
-  const refreshing = query.isFetching && !query.isFetchingNextPage
+  const items = local.ready ? found.slice(0, limit).map(toProduct) : query.data?.pages.flatMap((p) => p.items) ?? []
+  const total = local.ready ? found.length : query.data?.pages[0]?.total ?? 0
+  const loading = !local.ready && query.isLoading
+  const refreshing = !local.ready && query.isFetching && !query.isFetchingNextPage
+  const hasMore = local.ready ? found.length > limit : query.hasNextPage
   // Санат пен іздеу бірге сүзеді: тақырып — санат, іздеу — жанында жеке белгі (✕ — тек іздеуді алады).
   const title = filter.nodeId ? roots.find((r) => r.id === filter.nodeId)?.name ?? t('pos.allProducts') : t('pos.allProducts')
 
@@ -109,8 +122,8 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
 
         {refreshing && <div className="h-0.5 w-full overflow-hidden bg-brand-soft"><div className="h-full w-1/3 animate-[salem-progress_1s_ease-in-out_infinite] bg-brand" /></div>}
         <div className={`min-h-0 flex-1 overflow-y-auto p-3 transition-opacity ${refreshing ? 'opacity-60' : ''}`} aria-busy={refreshing}>
-          {query.isLoading && <p className="flex items-center justify-center gap-2 py-16 text-[14px] text-ink-3"><Loader2 size={18} className="animate-spin" /> {t('pos.searching')}</p>}
-          {!query.isLoading && items.length === 0 && <p className="py-16 text-center text-[14px] text-ink-3">{t('catalog.nothingFound')}</p>}
+          {loading && <p className="flex items-center justify-center gap-2 py-16 text-[14px] text-ink-3"><Loader2 size={18} className="animate-spin" /> {t('pos.searching')}</p>}
+          {!loading && items.length === 0 && <p className="py-16 text-center text-[14px] text-ink-3">{t('catalog.nothingFound')}</p>}
           {filter.view === 'grid' ? (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-3">
               {items.map((p) => <ProductCard key={p.id} p={p} onAdd={onAdd} />)}
@@ -120,8 +133,8 @@ export function CatalogPanel({ filter, onFilter, onAdd }: {
               {items.map((p) => <ProductRow key={p.id} p={p} onAdd={onAdd} />)}
             </div>
           )}
-          {query.hasNextPage && (
-            <button type="button" onClick={() => void query.fetchNextPage()} disabled={query.isFetchingNextPage}
+          {hasMore && (
+            <button type="button" onClick={() => (local.ready ? setLimit((n) => n + PAGE) : void query.fetchNextPage())} disabled={query.isFetchingNextPage}
               className="mx-auto mt-4 block rounded-xl bg-field px-5 py-2.5 text-[14px] font-medium text-brand hover:bg-brand-soft">
               {query.isFetchingNextPage ? t('common.loading') : t('pos.showMore')}
             </button>

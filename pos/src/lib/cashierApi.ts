@@ -27,6 +27,13 @@ export const cashierApi = {
     if (q.nodeId) p.set('nodeId', q.nodeId)
     return api<CashierCatalog>(`${base}/catalog?${p}`, { signal })
   },
+  /** Жергілікті каталог (lib/localCatalog): since/version жоқ — толық, бар болса — өзгерістер. */
+  catalogSync: <T,>(since: string | null, version: string | null) => {
+    const p = new URLSearchParams()
+    if (since) p.set('since', since)
+    if (version) p.set('version', version)
+    return api<T>(`${base}/catalog/sync${p.size ? `?${p}` : ''}`)
+  },
   byBarcode: (code: string) => api<CashierProduct>(`${base}/catalog/by-barcode/${encodeURIComponent(code)}`),
   searchCustomers: (q: string) => api<CashierCustomer[]>(`${base}/customers?q=${encodeURIComponent(q)}`),
   customer: (id: string) => api<CashierCustomer>(`${base}/customers/${id}`),

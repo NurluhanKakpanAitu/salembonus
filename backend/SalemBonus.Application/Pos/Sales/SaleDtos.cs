@@ -33,6 +33,21 @@ public record CashierProductDto(
 
 public record CashierCatalogDto(IReadOnlyList<CashierProductDto> Items, int Total, int Page, int PageSize);
 
+/// <summary>
+/// Кассаның жергілікті каталогы (браузерде IndexedDB): тауар + іздеу мен сұрыптауға керегі. Barcodes — барлық штрихкод,
+/// NodePath — санат жолы (id/id/…, санат сүзгісі мен санат атаулары бойынша іздеу үшін), Extra — сипаттамалар, жеткізуші,
+/// өндіруші, ел, сипаттама (іздеуге ғана), Sold — соңғы 30 күндегі сатылым («Популярные»).
+/// </summary>
+public record CashierSyncItemDto(
+    Guid Id, string Name, string? Article, IReadOnlyList<string> Barcodes, string? ImageUrl, string? BrandName, string? UnitShortName,
+    decimal? Price, decimal Stock, Guid? NodeId, string? NodePath, bool IsRecommended, bool BonusEligible, decimal Sold, string? Extra);
+
+/// <summary>
+/// Синхрондау жауабы. Full — толық каталог (алғаш не бренд/өлшем бірлігі өзгерсе), әйтпесе тек өзгергендер мен Removed (сатудан
+/// алынғандар). ServerTime мен Version келесі сұраныста қайтарылады; Total — касса тексереді: сәйкес келмесе, толық жүктейді.
+/// </summary>
+public record CashierCatalogSyncDto(DateTime ServerTime, string Version, bool Full, IReadOnlyList<CashierSyncItemDto> Items, IReadOnlyList<Guid> Removed, int Total);
+
 public record CashierCustomerDto(
     Guid Id, string FullName, string Phone, DateOnly? BirthDate, string Level, string LevelKey, int Balance,
     decimal AccrualPercent, bool HasCard, decimal DebtTotal);

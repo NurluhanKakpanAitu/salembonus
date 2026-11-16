@@ -25,10 +25,11 @@ async function seed(request: APIRequestContext, token: string) {
   const oils = await node(`Масла ${cat}`)
   const filters = await node(`Фильтры ${cat}`)
   const items = [await product(`${tag} масло моторное`, oils.id), await product(`${tag} фильтр воздушный`, filters.id), await product(`Тосол ${tag.slice(3)}`, oils.id)]
+  const extra: string[] = []
   return {
-    oils: `Масла ${cat}`, filters: `Фильтры ${cat}`,
+    oils: `Масла ${cat}`, filters: `Фильтры ${cat}`, unitId: units[0].id, extra,
     cleanup: async () => {
-      for (const p of items) await request.post(`/api/pos/v1/products/${p.id}/archive`, { headers, data: {} })
+      for (const id of [...items.map((p) => p.id), ...extra]) await request.post(`/api/pos/v1/products/${id}/archive`, { headers, data: {} })
       for (const n of [oils, filters]) await request.post(`/api/pos/v1/catalog/nodes/${n.id}/archive`, { headers, data: {} })
     },
   }
@@ -48,21 +49,33 @@ test('cashier search shows results in the grid and works together with categorie
     const index = registers.findIndex((r) => !r.isBound || !!process.env.CI)
     test.skip(index < 0, 'касса занята другим устройством')
     taken = registers[index].id
+    // Каталогтың бірінші синхрондауын батырмадан бұрын күтеміз (кейін тыңдасақ — келесі минуттық синхрондауды күтіп қаламыз).
+    const firstSync = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith('/api/pos/v1/cashier/catalog/sync'))
     await page.getByRole('button', { name: 'Подключить', exact: true }).nth(index).click()
     const search = page.locator('input[data-pos-search]')
     await expect(search).toBeVisible()
 
-    // Сервер баяу жауап берсе — «Ищем товары…» көрінеді (жүйе қатып қалған сияқты емес), жауап келгенде — «Найдено».
-    await page.route('**/api/pos/v1/cashier/catalog?*', async (route) => {
-      if (route.request().url().includes('search=')) await new Promise((r) => setTimeout(r, 1500))
-      await route.continue()
-    })
+    // Жергілікті каталог: касса ашылғанда бүкіл каталог бір рет келеді, сосын іздеу серверге бармайды.
+    await firstSync
+    const serverSearches: string[] = []
+    page.on('request', (r) => { if (/\/cashier\/catalog\?.*search=/.test(r.url())) serverSearches.push(r.url()) })
     await search.fill(tag)
-    await expect(page.getByRole('status').filter({ hasText: 'Ищем товары' })).toBeVisible()
-    await expect(page.getByLabel('Ищем товары…')).toBeVisible()
-    await expect(page.getByText(/^Найдено: \d+$/)).toBeVisible({ timeout: 10_000 })
-    await expect(page.getByRole('status').filter({ hasText: 'Ищем товары' })).toHaveCount(0)
-    await page.unroute('**/api/pos/v1/cashier/catalog?*')
+    await expect(card(page, `${tag} масло моторное`)).toBeVisible()
+    await expect(page.getByText(/^Найдено: 2$/)).toBeVisible()
+
+    // Касса ашық тұрғанда қосылған тауар синхрондаудан кейін іздеуде шығады (минут сайын не бет қайта көрінгенде).
+    const late = `${tag} свеча зажигания`
+    const created = await page.request.post('/api/pos/v1/products', {
+      headers: { Authorization: `Bearer ${token}`, 'X-Store-Id': DEMO_STORE },
+      data: { name: late, unitId: data.unitId, opening: { quantity: 2, purchasePrice: 50, salePrice: 900 } },
+    })
+    expect(created.ok(), await created.text()).toBe(true)
+    data.extra.push(((await created.json()) as { id: string }).id)
+    const synced = page.waitForResponse((r) => new URL(r.url()).pathname.endsWith('/api/pos/v1/cashier/catalog/sync'))
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')))
+    await synced
+    await expect(card(page, late)).toBeVisible()
+    expect(serverSearches, 'іздеу серверге бармауы керек').toEqual([])
 
     // 0) Әмбебап іздеу: сөздер кез келген ретпен және регистрмен, санат атауы бойынша да.
     await search.fill(`МОТОРНОЕ ${tag.toLowerCase()} масло`)

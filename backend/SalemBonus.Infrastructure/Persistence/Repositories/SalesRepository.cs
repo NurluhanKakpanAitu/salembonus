@@ -67,6 +67,46 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
         return new CashierCatalogRow(row.Product, row.Price, row.Stock);
     }
 
+    public async Task<CatalogSyncData> CatalogSyncAsync(Guid orgId, Guid storeId, Guid warehouseId, DateTime? sinceUtc, CancellationToken ct = default)
+    {
+        var products = Sellable(orgId);
+        if (sinceUtc is { } since)
+            products = products.Where(p => p.UpdatedAt > since
+                || db.ProductPrices.Any(x => x.ProductId == p.Id && x.StoreId == storeId && x.UpdatedAt > since)
+                || db.StockMovements.Any(m => m.ProductId == p.Id && m.WarehouseId == warehouseId && m.CreatedAt > since)
+                || db.StockBalances.Any(b => b.ProductId == p.Id && b.WarehouseId == warehouseId && b.UpdatedAt > since));
+        var list = await products.Include(p => p.Barcodes).Include(p => p.Images).Include(p => p.Characteristics)
+            .AsSplitQuery().ToListAsync(ct);
+
+        var ids = list.Select(p => p.Id).ToList();
+        var full = sinceUtc is null;
+        var prices = await db.ProductPrices.AsNoTracking().Where(x => x.StoreId == storeId && (full || ids.Contains(x.ProductId)))
+            .ToDictionaryAsync(x => x.ProductId, x => x.SalePrice, ct);
+        var stock = await db.StockBalances.AsNoTracking().Where(b => b.WarehouseId == warehouseId && (full || ids.Contains(b.ProductId)))
+            .ToDictionaryAsync(b => b.ProductId, b => b.Quantity, ct);
+        var monthAgo = DateTime.UtcNow.AddDays(-30);
+        var sold = await (from i in db.SaleItems
+                          join s in db.Sales on i.SaleId equals s.Id
+                          where s.StoreId == storeId && s.CreatedAt >= monthAgo && (full || ids.Contains(i.ProductId))
+                          group i by i.ProductId into g
+                          select new { g.Key, Qty = g.Sum(x => x.Quantity) }).ToDictionaryAsync(x => x.Key, x => x.Qty, ct);
+        var removed = sinceUtc is { } s2
+            ? await db.Products.AsNoTracking()
+                .Where(p => p.OrganizationId == orgId && p.UpdatedAt > s2 && (p.Status != CatalogStatus.Active || p.HideInCashier))
+                .Select(p => p.Id).ToListAsync(ct)
+            : [];
+        var total = await Sellable(orgId).CountAsync(ct);
+        var rows = list.Select(p => new CashierCatalogRow(p, prices.TryGetValue(p.Id, out var pr) ? pr : null, stock.GetValueOrDefault(p.Id))).ToList();
+        return new CatalogSyncData(rows, sold, removed, total);
+    }
+
+    public async Task<DateTime> CatalogDictionariesVersionAsync(Guid orgId, CancellationToken ct = default)
+    {
+        var brands = await db.Brands.Where(b => b.OrganizationId == orgId).MaxAsync(b => (DateTime?)b.UpdatedAt, ct) ?? DateTime.MinValue;
+        var units = await db.Units.Where(u => u.OrganizationId == orgId).MaxAsync(u => (DateTime?)u.UpdatedAt, ct) ?? DateTime.MinValue;
+        return brands > units ? brands : units;
+    }
+
     /// <summary>Бетке шыққан тауарлардың суреті мен штрихкоды бөлек сұраныспен (әр жолға JOIN емес).</summary>
     private async Task LoadMediaAsync(List<Product> products, CancellationToken ct)
     {

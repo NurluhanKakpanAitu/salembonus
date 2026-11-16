@@ -86,6 +86,41 @@ public class CashierService(
         return new CashierCatalogDto(items.Select(r => ToDto(r, lookup)).ToList(), total, page, pageSize);
     }
 
+    /// <summary>
+    /// Жергілікті каталог (кассаның браузерінде): іздеу серверге бармайды, касса минут сайын тек өзгерістерді алады.
+    /// since — алдыңғы жауаптың ServerTime; бір минуттық қабаттасумен ізделеді (транзакция кешірек жабылса да өзгеріс жоғалмайды,
+    /// қайталанған жол зиянсыз). version өзгерсе (бренд не өлшем бірлігі атауы) — толық каталог.
+    /// </summary>
+    public async Task<CashierCatalogSyncDto> CatalogSyncAsync(DateTime? since, string? version, CancellationToken ct = default)
+    {
+        var (orgId, m) = await access.RequireAsync(StaffPermissions.SalesCreate, ct);
+        var serverTime = DateTime.UtcNow;
+        var warehouse = await warehouses.EnsureDefaultAsync(orgId, m.StoreId, ct);
+        var current = (await sales.CatalogDictionariesVersionAsync(orgId, ct)).Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var full = since is null || version != current;
+        var sinceUtc = full ? (DateTime?)null : DateTime.SpecifyKind(since!.Value, DateTimeKind.Utc).AddMinutes(-1);
+        var data = await sales.CatalogSyncAsync(orgId, m.StoreId, warehouse.Id, sinceUtc, ct);
+        var lookup = await LookupAsync(orgId, ct);
+        var nodes = (await catalog.ListNodesAsync(orgId, ct)).ToDictionary(n => n.Id, n => n.Path);
+        var items = data.Rows.Select(r =>
+        {
+            var p = r.Product;
+            var extra = string.Join(' ', p.Characteristics.Select(c => c.Value)
+                .Append(p.Supplier).Append(p.Manufacturer).Append(p.Country)
+                .Append(p.Description is { Length: > 300 } d ? d[..300] : p.Description)
+                .Where(x => !string.IsNullOrWhiteSpace(x)));
+            return new CashierSyncItemDto(
+                p.Id, p.Name, p.Article,
+                p.Barcodes.OrderByDescending(b => b.IsPrimary).Select(b => b.Barcode).ToList(),
+                p.Images.FirstOrDefault(i => i.IsPrimary)?.Url ?? p.Images.OrderBy(i => i.SortOrder).FirstOrDefault()?.Url,
+                p.BrandId is { } b ? lookup.Brands.GetValueOrDefault(b) : null,
+                lookup.Units.GetValueOrDefault(p.UnitId),
+                r.Price, r.Stock, p.CatalogNodeId, p.CatalogNodeId is { } n ? nodes.GetValueOrDefault(n) : null,
+                p.IsRecommended, p.BonusEligible, data.Sold.GetValueOrDefault(p.Id), extra.Length == 0 ? null : extra);
+        }).ToList();
+        return new CashierCatalogSyncDto(serverTime, current, full, items, data.Removed, data.Total);
+    }
+
     /// <summary>Сканер: бір сәйкестік — касса оны бірден себетке қосады (ТЗ §3.8).</summary>
     public async Task<CashierProductDto> ByBarcodeAsync(string barcode, CancellationToken ct = default)
     {

@@ -26,6 +26,11 @@ public class CashierController(CashierService cashier, DebtService debts, Financ
         [FromQuery] int page = 1, [FromQuery] int pageSize = 40, CancellationToken ct = default) =>
         Ok(await cashier.CatalogAsync(search, nodeId, sort, page, pageSize, ct));
 
+    /// <summary>Жергілікті каталог: since/version жоқ — толық, бар болса — өзгерістер (касса минут сайын шақырады).</summary>
+    [HttpGet("catalog/sync")]
+    public async Task<ActionResult<CashierCatalogSyncDto>> CatalogSync([FromQuery] DateTime? since, [FromQuery] string? version, CancellationToken ct) =>
+        Ok(await cashier.CatalogSyncAsync(since, version, ct));
+
     [HttpGet("catalog/by-barcode/{barcode}")]
     public async Task<ActionResult<CashierProductDto>> ByBarcode(string barcode, CancellationToken ct) =>
         Ok(await cashier.ByBarcodeAsync(barcode, ct));
