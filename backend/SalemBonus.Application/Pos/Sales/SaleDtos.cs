@@ -134,7 +134,7 @@ public record CreateReturnRequest(Guid ClientRequestId, IReadOnlyList<ReturnLine
     Guid? TransferRecipientId, string? Reason, string? ReasonCode = null, string? Condition = null, string? StockAction = null);
 
 public record DebtPaymentDto(decimal Amount, string? Method, bool IsReturn, string? TransferRecipient, decimal RemainingAfter,
-    DateTime CreatedAt, string CashierName);
+    DateTime CreatedAt, string CashierName, bool IsWriteOff = false, string? Comment = null);
 
 public record DebtDto(Guid Id, Guid? SaleId, long? SaleNumber, decimal Amount, decimal Paid, decimal Remaining, DateOnly DueDate,
     string? Comment, string Status, DateTime CreatedAt, string CashierName, IReadOnlyList<DebtPaymentDto> Payments);

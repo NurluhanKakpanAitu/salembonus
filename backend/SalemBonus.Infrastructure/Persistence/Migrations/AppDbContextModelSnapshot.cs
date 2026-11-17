@@ -2817,6 +2817,10 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("WarehouseId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("WrittenOff")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SupplierId");
@@ -2834,7 +2838,6 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("SalemBonus.Domain.Pos.Inventory.StockDocumentLine", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Article")
@@ -3146,8 +3149,10 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DocumentId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsWriteOff")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Method")
-                        .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
@@ -3346,6 +3351,10 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<string>("Comment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -3353,6 +3362,9 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<bool>("IsReturn")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsWriteOff")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Method")

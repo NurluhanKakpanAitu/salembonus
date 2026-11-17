@@ -84,7 +84,8 @@ export interface SupplierPayment {
   documentId: string | null
   documentNumber: string | null
   amount: number
-  method: 'Cash' | 'Card' | 'Transfer' | 'Qr'
+  /** «WriteOff» — қарыз ақшасыз жабылды (Финансы → «Закрыть долг»). */
+  method: 'Cash' | 'Card' | 'Transfer' | 'Qr' | 'WriteOff'
   reference: string | null
   date: string
   comment: string | null

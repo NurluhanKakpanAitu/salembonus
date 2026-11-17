@@ -41,6 +41,10 @@ public class DebtPayment
     /// <summary>Ақшамен өтеу түрі. Тауар қайтарумен жабылса — null (<see cref="IsReturn"/>).</summary>
     public PaymentMethod? Method { get; set; }
     public bool IsReturn { get; set; }
+    /// <summary>«Закрыть долг»: қарыз ақшасыз жабылды (дәптерде өтелген, кешірілген т.б.). Method — null, ақша шоттарына, выручкаға, кассаға тимейді.</summary>
+    public bool IsWriteOff { get; set; }
+    /// <summary>Жабу себебі (міндетті) не өтеуге түсініктеме.</summary>
+    public string? Comment { get; set; }
     public string? TransferRecipient { get; set; }
     public decimal RemainingAfter { get; set; }
     public Guid StaffUserId { get; set; }

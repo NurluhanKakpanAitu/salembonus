@@ -186,7 +186,7 @@ public class FinanceRepository(AppDbContext db) : IFinanceRepository
 
     public async Task<IReadOnlyList<StockDocument>> SupplierDocumentsAsync(IReadOnlyCollection<Guid> storeIds, CancellationToken ct = default) =>
         await db.StockDocuments.AsNoTracking()
-            .Where(d => storeIds.Contains(d.StoreId) && d.Type == StockDocumentType.Receipt && d.Status == StockDocumentStatus.Posted && d.SupplierId != null)
+            .Where(d => storeIds.Contains(d.StoreId) && (d.Type == StockDocumentType.Receipt || d.Type == StockDocumentType.OpeningDebt) && d.Status == StockDocumentStatus.Posted && d.SupplierId != null)
             .OrderByDescending(d => d.Date).ToListAsync(ct);
 
     public async Task<IReadOnlyList<SupplierPayment>> SupplierPaymentsAsync(IReadOnlyCollection<Guid> storeIds, DateTime? fromUtc, DateTime? toUtc, CancellationToken ct = default)
@@ -237,15 +237,15 @@ public class FinanceRepository(AppDbContext db) : IFinanceRepository
                 $"Возврат по чеку №{sale?.Number}", sale?.CustomerId is null ? null : CounterpartyType.Customer, sale?.CustomerId, Customer(sale?.CustomerId), sale is null ? null : $"№{sale.Number}"));
         }
         foreach (var d in debts)
-            foreach (var p in d.Payments.Where(p => !p.IsReturn && p.Method is { } && p.Amount > 0).OrderBy(p => p.CreatedAt))
+            foreach (var p in d.Payments.Where(p => !p.IsReturn && !p.IsWriteOff && p.Method is { } && p.Amount > 0).OrderBy(p => p.CreatedAt))
                 rows.Add(new BackfillSource("debts", FinanceOperationType.CustomerPayment, d.StoreId, p.Id, d.Id, p.CreatedAt, [(p.Method!.Value, p.Amount)],
                     "Оплата от клиента", CounterpartyType.Customer, d.CustomerId, Customer(d.CustomerId), null));
         var payments = await db.SupplierPayments.AsNoTracking()
-            .Where(p => p.Status == SupplierPaymentStatus.Registered && db.Stores.Any(s => s.Id == p.StoreId && s.OrganizationId == orgId)).OrderBy(p => p.CreatedAt).ToListAsync(ct);
+            .Where(p => p.Status == SupplierPaymentStatus.Registered && p.Method != null && db.Stores.Any(s => s.Id == p.StoreId && s.OrganizationId == orgId)).OrderBy(p => p.CreatedAt).ToListAsync(ct);
         var docIds = payments.Where(p => p.DocumentId != null).Select(p => p.DocumentId!.Value).ToHashSet();
         var docNumbers = docIds.Count == 0 ? [] : await db.StockDocuments.AsNoTracking().Where(d => docIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, d => d.Number, ct);
         foreach (var p in payments)
-            rows.Add(new BackfillSource("inventory", FinanceOperationType.SupplierPayment, p.StoreId, p.Id, p.DocumentId, p.CreatedAt, [(p.Method, -p.Amount)],
+            rows.Add(new BackfillSource("inventory", FinanceOperationType.SupplierPayment, p.StoreId, p.Id, p.DocumentId, p.CreatedAt, [(p.Method!.Value, -p.Amount)],
                 "Оплата поставщику" + (p.DocumentId is { } did && docNumbers.TryGetValue(did, out var n) ? " · " + n : ""),
                 CounterpartyType.Supplier, p.SupplierId, suppliers.GetValueOrDefault(p.SupplierId).Name, p.Reference));
         return rows.OrderBy(r => r.Date).ToList();

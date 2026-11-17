@@ -118,6 +118,14 @@ public class FinanceController(FinanceOperationsService ops, FinanceReportsServi
     [HttpPost("customer-debts/payments")]
     public async Task<ActionResult<CustomerDebtCardDto>> CustomerPayment([FromBody] CustomerPaymentRequest r, CancellationToken ct) => Ok(await debts.CustomerPaymentAsync(r, ct));
 
+    /// <summary>Дәптердегі қарызды қолмен енгізу (сатылымсыз).</summary>
+    [HttpPost("customer-debts")]
+    public async Task<ActionResult<CustomerDebtCardDto>> AddCustomerDebt([FromBody] ManualCustomerDebtRequest r, CancellationToken ct) => Ok(await debts.AddCustomerDebtAsync(r, ct));
+
+    /// <summary>«Закрыть долг»: ақшасыз, себебімен.</summary>
+    [HttpPost("customer-debts/documents/{debtId:guid}/close")]
+    public async Task<ActionResult<CustomerDebtCardDto>> CloseCustomerDebt(Guid debtId, [FromBody] CloseDebtRequest r, CancellationToken ct) => Ok(await debts.CloseCustomerDebtAsync(debtId, r, ct));
+
     [HttpGet("supplier-debts")]
     public async Task<ActionResult<SupplierDebtsDto>> SupplierDebts([FromQuery] string? storeIds, [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, [FromQuery] string? segment,
         [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 15, CancellationToken ct = default) =>
@@ -129,6 +137,14 @@ public class FinanceController(FinanceOperationsService ops, FinanceReportsServi
 
     [HttpPost("supplier-debts/payments")]
     public async Task<ActionResult<SupplierDebtCardDto>> SupplierPayment([FromBody] SupplierPaymentRequest r, CancellationToken ct) => Ok(await debts.SupplierPaymentAsync(r, ct));
+
+    /// <summary>Жеткізушіге дәптердегі қарызды қолмен енгізу («Начальный долг» құжаты).</summary>
+    [HttpPost("supplier-debts")]
+    public async Task<ActionResult<SupplierDebtCardDto>> AddSupplierDebt([FromBody] ManualSupplierDebtRequest r, CancellationToken ct) => Ok(await debts.AddSupplierDebtAsync(r, ct));
+
+    /// <summary>«Закрыть долг» поставщику: ақшасыз, себебімен.</summary>
+    [HttpPost("supplier-debts/documents/{documentId:guid}/close")]
+    public async Task<ActionResult<SupplierDebtCardDto>> CloseSupplierDebt(Guid documentId, [FromBody] CloseDebtRequest r, CancellationToken ct) => Ok(await debts.CloseSupplierDebtAsync(documentId, r, ct));
 
     [HttpPut("supplier-debts/documents/{documentId:guid}/due-date")]
     public async Task<IActionResult> SetDueDate(Guid documentId, [FromBody] SetDueDateRequest r, CancellationToken ct) { await debts.SetDueDateAsync(documentId, r, ct); return NoContent(); }

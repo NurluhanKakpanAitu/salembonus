@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeftRight, Download, FileText, History, Pencil, Plus, Power, Scale } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea, Toggle } from '../ui/Field'
@@ -31,7 +31,7 @@ export function AccountsTab({ filters, storeIds }: { filters: FinanceFilters; st
   const [showAll, setShowAll] = useState(false)
   const [form, setForm] = useState<{ a?: FinanceAccount } | null>(null)
   const [transfer, setTransfer] = useState<{ from?: string; collection?: boolean } | null>(null)
-  const [adjust, setAdjust] = useState<FinanceAccount | null>(null)
+  const [adjust, setAdjust] = useState<FinanceAccount | 'pick' | null>(null)
   const [backfilling, setBackfilling] = useState(false)
   const q = useQuery({ queryKey: [...financeKeys.accounts(showAll), storeIds], queryFn: () => financeApi.accounts(storeIds, showAll) })
   const invalidate = () => void qc.invalidateQueries({ queryKey: financeKeys.all })
@@ -69,6 +69,8 @@ export function AccountsTab({ filters, storeIds }: { filters: FinanceFilters; st
         <Toggle checked={showAll} onChange={setShowAll} label={t('fin.showInactive')} />
         <span className="ml-auto" />
         {canManage && <Button variant="ghost" className="h-10! px-3!" icon={<History size={16} />} loading={backfilling} onClick={() => void backfill()} title={t('fin.backfillHint')}>{t('fin.backfill')}</Button>}
+        {canReverse && <Link to="/finance/transactions?type=Adjustment" className="inline-flex h-10 items-center gap-1.5 rounded-xl px-3 text-[14px] font-semibold text-brand hover:bg-brand-soft"><History size={16} />{t('fin.adj.history')}</Link>}
+        {canReverse && <Button variant="secondary" className="h-10! px-3!" icon={<Scale size={16} />} onClick={() => setAdjust('pick')}>{t('fin.adj.open')}</Button>}
         {canOperate && <Button variant="secondary" className="h-10! px-3!" icon={<ArrowLeftRight size={16} />} onClick={() => setTransfer({})}>{t('fin.transfer')}</Button>}
         {canManage && <Button className="h-10! px-3!" icon={<Plus size={16} />} onClick={() => setForm({})}>{t('fin.addAccount')}</Button>}
       </div>
@@ -119,7 +121,7 @@ export function AccountsTab({ filters, storeIds }: { filters: FinanceFilters; st
       </div>
       {form && <AccountForm initial={form.a} onClose={() => setForm(null)} onSaved={() => { setForm(null); invalidate() }} />}
       {transfer && <TransferModal accounts={d?.accounts ?? []} from={transfer.from} collection={transfer.collection} onClose={() => setTransfer(null)} onDone={() => { setTransfer(null); invalidate() }} />}
-      {adjust && <AdjustModal account={adjust} onClose={() => setAdjust(null)} onDone={() => { setAdjust(null); invalidate() }} />}
+      {adjust && <AdjustModal account={adjust === 'pick' ? undefined : adjust} accounts={(d?.accounts ?? []).filter((a) => a.isActive)} onClose={() => setAdjust(null)} onDone={() => { setAdjust(null); invalidate() }} />}
       {statementId && <StatementModal id={statementId} filters={filters} onClose={() => setParams((p) => { const n = new URLSearchParams(p); n.delete('statement'); n.delete('op'); return n }, { replace: true })} />}
     </div>
   )
@@ -188,33 +190,66 @@ function AccountForm({ initial, onClose, onSaved }: { initial?: FinanceAccount; 
   )
 }
 
-/** Қалдық түзетуі (§9, §14): тек finance.reverse құқығымен, себеп міндетті, аудитке жазылады; P&L-ге түспейді. */
-function AdjustModal({ account, onClose, onDone }: { account: FinanceAccount; onClose: () => void; onDone: () => void }) {
+/**
+ * Қалдық түзетуі (§9, §14): тек finance.reverse құқығымен, себеп міндетті, аудитке жазылады; P&L-ге түспейді.
+ * Екі тәсіл: «нақты қалдық» — ақшаны санап, барын енгізеді (айырмасы өзі есептеледі), не «сомаға өзгерту» (±). Тарихы — журналда «Корректировка».
+ */
+function AdjustModal({ account: initial, accounts, onClose, onDone }: { account?: FinanceAccount; accounts: FinanceAccount[]; onClose: () => void; onDone: () => void }) {
   const t = useT()
+  const [accountId, setAccountId] = useState(initial?.id ?? (accounts.length === 1 ? accounts[0].id : ''))
+  const account = initial ?? accounts.find((a) => a.id === accountId)
+  const [mode, setMode] = useState<'actual' | 'delta'>('actual')
   const [amount, setAmount] = useState('')
   const [reason, setReason] = useState('')
   const [documentNumber, setDocumentNumber] = useState('')
   const [busy, setBusy] = useState(false)
   const requestId = useRef(crypto.randomUUID())
-  const sum = Number(amount.replace(',', '.')) || 0
+  const entered = Number(amount.replace(/\s/g, '').replace(',', '.'))
+  const filled = amount.trim() !== '' && Number.isFinite(entered)
+  const sum = !account || !filled ? 0 : Math.round((mode === 'actual' ? entered - account.balance : entered) * 100) / 100
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (sum === 0 || reason.trim().length < 3) return
+    if (!account || sum === 0 || reason.trim().length < 3) return
     if (!(await confirmDialog({ message: t('fin.adjustConfirm', { name: account.name, amount: tenge(sum), after: tenge(account.balance + sum) }), confirmLabel: t('fin.adjust'), danger: true }))) return
     setBusy(true)
     try { await financeApi.adjust({ accountId: account.id, amount: sum, reason: reason.trim(), documentNumber: documentNumber.trim() || null, clientRequestId: requestId.current }); toast(t('fin.adjusted')); onDone() }
     catch (err) { reportError(err, t('fin.failed')) } finally { setBusy(false) }
   }
   return (
-    <Modal title={`${t('fin.adjust')} · ${account.name}`} onClose={onClose} width={480}>
+    <Modal title={account && initial ? `${t('fin.adjust')} · ${account.name}` : t('fin.adjust')} onClose={onClose} width={500}>
       <form onSubmit={submit} className="flex flex-col gap-4">
-        <p className="text-[13px] text-ink-2">{t('fin.adjustHint')} {t('fin.balance')}: <b>{tenge(account.balance)}</b>{sum !== 0 && <> → <b>{tenge(account.balance + sum)}</b></>}</p>
-        <Field label={t('fin.adjustAmount')} required hint={t('fin.adjustAmountHint')}><Input autoFocus inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="±0" /></Field>
-        <Field label={t('inv.reason')} required><Textarea value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>
+        {!initial && (
+          <Field label={t('fin.account')} required>
+            <Select autoFocus aria-label={t('fin.account')} value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+              <option value="">{t('fin.adj.chooseAccount')}</option>
+              {accounts.map((a) => <option key={a.id} value={a.id}>{a.name} · {tenge(a.balance)}</option>)}
+            </Select>
+          </Field>
+        )}
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-field p-1">
+          {(['actual', 'delta'] as const).map((m) => (
+            <button key={m} type="button" onClick={() => { setMode(m); setAmount('') }}
+              className={`rounded-lg px-3 py-2 text-[13px] font-semibold ${mode === m ? 'bg-surface text-brand shadow-sm' : 'text-ink-2 hover:text-ink'}`}>{t(`fin.adj.mode.${m}`)}</button>
+          ))}
+        </div>
+        {account && <p className="text-[13px] text-ink-2">{t('fin.adjustHint')} {t('fin.balance')}: <b>{tenge(account.balance)}</b>{sum !== 0 && <> → <b>{tenge(account.balance + sum)}</b></>}</p>}
+        {mode === 'actual' ? (
+          <Field label={t('fin.adj.actual')} required hint={t('fin.adj.actualHint')}>
+            <Input autoFocus={!!initial} aria-label={t('fin.adj.actual')} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={account ? String(account.balance) : '0'} />
+          </Field>
+        ) : (
+          <Field label={t('fin.adjustAmount')} required hint={t('fin.adjustAmountHint')}><Input autoFocus={!!initial} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="±0" /></Field>
+        )}
+        {account && filled && (
+          <p className={`rounded-xl px-3 py-2 text-[14px] ${sum === 0 ? 'bg-field text-ink-2' : sum > 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
+            {sum === 0 ? t('fin.adj.noChange') : <>{t('fin.adj.diff')}: <b>{sum > 0 ? '+' : ''}{tenge(sum)}</b></>}
+          </p>
+        )}
+        <Field label={t('inv.reason')} required><Textarea aria-label={t('inv.reason')} value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} /></Field>
         <Field label={t('fin.col.document')}><Input value={documentNumber} maxLength={64} onChange={(e) => setDocumentNumber(e.target.value)} /></Field>
         <div className="flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button type="submit" variant="danger" loading={busy} disabled={sum === 0 || reason.trim().length < 3}>{t('fin.adjust')}</Button>
+          <Button type="submit" variant="danger" loading={busy} disabled={!account || sum === 0 || reason.trim().length < 3}>{t('fin.adjust')}</Button>
         </div>
       </form>
     </Modal>

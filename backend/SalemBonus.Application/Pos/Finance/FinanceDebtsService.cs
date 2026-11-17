@@ -12,13 +12,14 @@ namespace SalemBonus.Application.Pos.Finance;
 
 /// <summary>
 /// Қарыздар (ТЗ «Финансы» §11–12): клиент қарызы — проведённый қарызға сатылымнан, жеткізуші қарызы — проведённый приёмкадан.
-/// Қолмен қарыз енгізу жоқ. Төлем: бір не бірнеше құжатқа айқын бөлу (сумма бөлулерінің қосындысы = төлем), қарыздан аспайды,
+/// Дәптердегі қарызды қолмен енгізуге болады (клиентке — сатылымсыз қарыз, жеткізушіге — «Начальный долг» құжаты), «Закрыть» — ақшасыз жабу, себебімен тарихта. Төлем: бір не бірнеше құжатқа айқын бөлу (сумма бөлулерінің қосындысы = төлем), қарыздан аспайды,
 /// ақшаны азайтады/көбейтеді, бірақ выручка мен COGS-қа тимейді (§3.1). Қайталанбау — ClientRequestId.
 /// </summary>
 public class FinanceDebtsService(
     IFinanceRepository repo,
     ISalesRepository sales,
     IInventoryRepository inventory,
+    Inventory.WarehouseService warehouses,
     FinanceOperationsService operations,
     FinanceLedger ledger,
     CatalogAccess access,
@@ -94,7 +95,7 @@ public class FinanceDebtsService(
                 d.Status == DebtStatus.Paid ? "Paid" : d.DueDate < today ? "Overdue" : d.Paid > 0 ? "Partial" : "Open", d.Status == DebtStatus.Open && d.DueDate < today, d.Comment)).ToList(),
             payments.Select(p => new CustomerDebtPaymentDto(p.Id, p.CreatedAt, p.DebtId, numbers.GetValueOrDefault(p.DebtId), p.Amount, p.Method?.ToString(), p.IsReturn,
                 p.RemainingAfter, staff.GetValueOrDefault(p.StaffUserId) ?? "", ops.GetValueOrDefault(p.Id).Id is { } oid && oid != Guid.Empty ? oid : null,
-                ops.GetValueOrDefault(p.Id).Number)).ToList());
+                ops.GetValueOrDefault(p.Id).Number, p.IsWriteOff, p.Comment)).ToList());
     }
 
     /// <summary>«Принять оплату» (§11.1): бөлулер бойынша, FIFO жоқ; әр қарызға өз төлемі мен өз қаржы операциясы.</summary>
@@ -141,6 +142,61 @@ public class FinanceDebtsService(
         return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
     }
 
+    /// <summary>
+    /// «Добавить долг» (дәптерден): сатылымсыз қарыз — клиент, сома, пайда болған күні, мерзімі. Ақшаға да, выручкаға да тимейді:
+    /// тауар бұрын (жүйеге дейін) берілген, мұнда тек клиенттің қарызы тіркеледі. Аудитке жазылады.
+    /// </summary>
+    public async Task<CustomerDebtCardDto> AddCustomerDebtAsync(ManualCustomerDebtRequest r, CancellationToken ct = default)
+    {
+        var c = await operations.ContextAsync(null, null, null, ct, StaffPermissions.FinanceOperate);
+        if (r.CustomerId is not { } customerId) throw new ValidationException(Messages.FinanceCounterpartyRequired(Lang), "customerId");
+        if (!(await repo.CustomersAsync([customerId], ct)).ContainsKey(customerId))
+            throw new ValidationException(Messages.CustomerNotFound(Lang), "customerId");
+        var amount = Math.Round(r.Amount, 2);
+        if (amount <= 0) throw new ValidationException(Messages.FinanceAmountInvalid(Lang), "amount");
+        var (createdAt, date) = ManualDate(c, r.Date);
+        var due = r.DueDate ?? date.AddDays(30);
+        if (due < date) throw new ValidationException(Messages.DebtDueBeforeDate(Lang), "dueDate");
+        var debt = new Debt
+        {
+            Id = Guid.NewGuid(), OrganizationId = c.OrgId, StoreId = c.Current.StoreId, CustomerId = customerId, Amount = amount, DueDate = due,
+            Comment = CatalogAccess.Optional(r.Comment, 500), StaffUserId = access.StaffUserId, CreatedAt = createdAt,
+        };
+        sales.AddDebt(debt);
+        access.Audit(c.OrgId, debt.StoreId, "finance.customer.debt.add", "debt", debt.Id, null, new { Amount = amount, Date = date, DueDate = due, debt.Comment });
+        await unitOfWork.SaveChangesAsync(ct);
+        return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
+    }
+
+    /// <summary>«Закрыть долг»: ақшасыз жабу (дәптер бойынша өтелген, кешірілді т.б.). Тарихқа «Закрыт» жазбасы, себеп міндетті; шот, выручка, касса өзгермейді.</summary>
+    public async Task<CustomerDebtCardDto> CloseCustomerDebtAsync(Guid debtId, CloseDebtRequest r, CancellationToken ct = default)
+    {
+        var c = await operations.ContextAsync(null, null, null, ct, StaffPermissions.FinanceOperate);
+        var reason = CloseReason(r);
+        var customerId = Guid.Empty;
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            var debt = (await repo.DebtsForUpdateAsync([debtId], ct)).FirstOrDefault();
+            if (debt is null || !c.StoreIds.Contains(debt.StoreId)) throw new NotFoundException(Messages.DebtNotFound(Lang));
+            if (debt.Status != DebtStatus.Open || debt.Remaining <= 0) throw new ValidationException(Messages.DebtAlreadyPaid(Lang), "debtId");
+            customerId = debt.CustomerId;
+            var amount = debt.Remaining;
+            var now = DateTime.UtcNow;
+            debt.Paid += amount;
+            debt.Status = DebtStatus.Paid;
+            debt.ClosedAt = now;
+            sales.AddDebtPayment(new DebtPayment
+            {
+                Id = Guid.NewGuid(), DebtId = debt.Id, Amount = amount, Method = null, IsWriteOff = true, Comment = reason, RemainingAfter = 0,
+                StaffUserId = access.StaffUserId, CreatedAt = now,
+            });
+            access.Audit(c.OrgId, debt.StoreId, "finance.customer.debt.close", "debt", debt.Id, new { Remaining = amount }, new { Remaining = 0, Reason = reason });
+            await unitOfWork.SaveChangesAsync(ct);
+            return true;
+        }, ct);
+        return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
+    }
+
     // ---------- Жеткізуші қарызы (§12) ----------
 
     public async Task<SupplierDebtsDto> SupplierDebtsAsync(string? storeIds, DateOnly? from, DateOnly? to, string? segment, string? search, int page, int pageSize, CancellationToken ct = default)
@@ -155,9 +211,9 @@ public class FinanceDebtsService(
             var open = g.Where(d => d.Remaining > 0).ToList();
             var overdue = open.Where(d => d.PaymentDueDate < today).Sum(d => d.Remaining);
             var s = suppliers.GetValueOrDefault(g.Key);
-            var inPeriod = g.Where(d => d.Date >= c.FromUtc && d.Date < c.ToUtc).ToList();
+            var inPeriod = g.Where(d => d.Type == StockDocumentType.Receipt && d.Date >= c.FromUtc && d.Date < c.ToUtc).ToList();
             return new SupplierDebtRowDto(g.Key, s.Name ?? "—", Phone(s.Phone, c.CanContacts), g.Max(d => (DateTime?)d.Date), inPeriod.Sum(d => d.Total),
-                payments.Where(p => p.SupplierId == g.Key && p.Status == SupplierPaymentStatus.Registered).Sum(p => p.Amount),
+                payments.Where(p => p.SupplierId == g.Key && p.Status == SupplierPaymentStatus.Registered && !p.IsWriteOff).Sum(p => p.Amount),
                 open.Sum(d => d.Remaining), overdue, open.Where(d => d.PaymentDueDate != null).Min(d => d.PaymentDueDate), open.Count,
                 open.Count == 0 ? "Paid" : overdue > 0 ? "Overdue" : open.Any(d => d.Paid > 0) ? "Partial" : "Open");
         }).ToList();
@@ -209,11 +265,11 @@ public class FinanceDebtsService(
         return new SupplierDebtCardDto(supplierId, s.Name, Phone(s.Phone, c.CanContacts), s.TaxId, s.Address, open.Sum(d => d.Remaining),
             open.Where(d => d.PaymentDueDate < today).Sum(d => d.Remaining), open.Count, open.Where(d => d.PaymentDueDate != null).Min(d => d.PaymentDueDate),
             docs.OrderByDescending(d => d.Date).Select(d => new SupplierDebtDocDto(d.Id, d.Number, d.Date, d.SupplierInvoiceNumber, d.Total, d.Paid, d.Remaining, d.PaymentDueDate,
-                d.Remaining > 0 && d.PaymentDueDate < today, d.Lines.Count)).ToList(),
+                d.Remaining > 0 && d.PaymentDueDate < today, d.Lines.Count, d.Type == StockDocumentType.OpeningDebt ? "opening" : "receipt", d.WrittenOff, d.Comment)).ToList(),
             payments.OrderByDescending(p => p.CreatedAt).Select(p => new SupplierPaymentRowDto(p.Id, p.CreatedAt, p.Date, p.DocumentId,
-                p.DocumentId is { } did ? numbers.GetValueOrDefault(did) : null, p.Amount, p.Method.ToString(), p.Reference, p.Status.ToString(),
+                p.DocumentId is { } did ? numbers.GetValueOrDefault(did) : null, p.Amount, p.Method?.ToString() ?? "WriteOff", p.Reference, p.Status.ToString(),
                 staff.GetValueOrDefault(p.CreatedBy) ?? "", ops.GetValueOrDefault(p.Id).Id is { } oid && oid != Guid.Empty ? oid : null, ops.GetValueOrDefault(p.Id).Number,
-                ops.GetValueOrDefault(p.Id).Id is { } oid2 && accountNames.TryGetValue(oid2, out var an) ? an : null)).ToList());
+                ops.GetValueOrDefault(p.Id).Id is { } oid2 && accountNames.TryGetValue(oid2, out var an) ? an : null, p.IsWriteOff, p.Comment)).ToList());
     }
 
     /// <summary>«Оплатить поставщику» (§12.2): бірнеше накладнаяға бөлу; әр накладнаяға өз төлем жазбасы мен қаржы операциясы (сторно — жеке).</summary>
@@ -236,7 +292,7 @@ public class FinanceDebtsService(
             foreach (var (docId, amount) in allocations)
             {
                 var doc = await inventory.GetDocumentForUpdateAsync(c.OrgId, docId, ct) ?? throw new ValidationException(Messages.DocumentNotFound(Lang), "allocations");
-                if (doc.SupplierId != supplierId || doc.Type != StockDocumentType.Receipt || doc.Status != StockDocumentStatus.Posted || !c.StoreIds.Contains(doc.StoreId))
+                if (doc.SupplierId != supplierId || doc.Type is not (StockDocumentType.Receipt or StockDocumentType.OpeningDebt) || doc.Status != StockDocumentStatus.Posted || !c.StoreIds.Contains(doc.StoreId))
                     throw new ValidationException(Messages.DocumentNotPosted(Lang), "allocations");
                 // Параллель төлем (§17): құжат бұғатталған күйде қалдық қайта тексеріледі.
                 if (amount > doc.Remaining) throw new ValidationException(Messages.PaymentExceedsDebt(Lang, doc.Remaining), "allocations");
@@ -256,6 +312,67 @@ public class FinanceDebtsService(
                 access.Audit(c.OrgId, doc.StoreId, "inventory.supplier.payment", "supplier_payment", payment.Id, null,
                     new { doc.Number, payment.Amount, Method = method.ToString(), Account = account.Name, Remaining = doc.Remaining });
             }
+            await unitOfWork.SaveChangesAsync(ct);
+            return true;
+        }, ct);
+        return await SupplierCardAsync(supplierId, null, ct);
+    }
+
+    /// <summary>
+    /// «Добавить долг» поставщику (дәптерден): тауарсыз «Начальный долг» құжаты (ДЛГ-…). Қалдыққа, закупкаға, приёмкалар тізіміне тимейді,
+    /// тек жеткізуші қарызына қосылады; оны кәдімгідей төлеуге не «Закрыть»-пен жабуға болады.
+    /// </summary>
+    public async Task<SupplierDebtCardDto> AddSupplierDebtAsync(ManualSupplierDebtRequest r, CancellationToken ct = default)
+    {
+        var c = await operations.ContextAsync(null, null, null, ct, StaffPermissions.FinanceOperate);
+        if (r.SupplierId is not { } supplierId) throw new ValidationException(Messages.FinanceCounterpartyRequired(Lang), "supplierId");
+        if ((await repo.SuppliersAsync(c.OrgId, ct)).GetValueOrDefault(supplierId).Name is null) throw new ValidationException(Messages.SupplierNotFound(Lang), "supplierId");
+        var amount = Math.Round(r.Amount, 2);
+        if (amount <= 0) throw new ValidationException(Messages.FinanceAmountInvalid(Lang), "amount");
+        var (createdAt, date) = ManualDate(c, r.Date);
+        if (r.DueDate is { } due && due < date) throw new ValidationException(Messages.DebtDueBeforeDate(Lang), "dueDate");
+        // Құжат дүкен қоймасына байланады (схема талабы), бірақ жолсыз — қалдыққа әсері жоқ.
+        var warehouse = await warehouses.EnsureDefaultAsync(c.OrgId, c.Current.StoreId, ct);
+        var doc = new StockDocument
+        {
+            Id = Guid.NewGuid(), OrganizationId = c.OrgId, StoreId = c.Current.StoreId, WarehouseId = warehouse.Id, Type = StockDocumentType.OpeningDebt,
+            Status = StockDocumentStatus.Posted, Date = createdAt, SupplierId = supplierId, SupplierInvoiceNumber = CatalogAccess.Optional(r.DocumentNumber, 64),
+            Comment = CatalogAccess.Optional(r.Comment, 1000), Total = amount, PaymentDueDate = r.DueDate,
+            CreatedBy = access.StaffUserId, PostedAt = DateTime.UtcNow, PostedBy = access.StaffUserId,
+        };
+        doc.Seq = await inventory.NextDocumentNumberAsync(c.OrgId, "supplierdebt", ct);
+        doc.Number = $"ДЛГ-{doc.Seq:D6}";
+        inventory.AddDocument(doc);
+        access.Audit(c.OrgId, doc.StoreId, "finance.supplier.debt.add", "stock_document", doc.Id, null,
+            new { doc.Number, Amount = amount, Date = date, r.DueDate, doc.SupplierInvoiceNumber, doc.Comment });
+        await unitOfWork.SaveChangesAsync(ct);
+        return await SupplierCardAsync(supplierId, null, ct);
+    }
+
+    /// <summary>«Закрыть долг» поставщику: қалдықты ақшасыз жабу, себеп міндетті. Төлем емес — шот пен ақша ағынына тимейді, тарихта «Закрыт» болып көрінеді.</summary>
+    public async Task<SupplierDebtCardDto> CloseSupplierDebtAsync(Guid documentId, CloseDebtRequest r, CancellationToken ct = default)
+    {
+        var c = await operations.ContextAsync(null, null, null, ct, StaffPermissions.FinanceOperate);
+        var reason = CloseReason(r);
+        var supplierId = Guid.Empty;
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            var doc = await inventory.GetDocumentForUpdateAsync(c.OrgId, documentId, ct);
+            if (doc is null || doc.SupplierId is null || doc.Type is not (StockDocumentType.Receipt or StockDocumentType.OpeningDebt)
+                || doc.Status != StockDocumentStatus.Posted || !c.StoreIds.Contains(doc.StoreId))
+                throw new NotFoundException(Messages.DocumentNotFound(Lang));
+            if (doc.Remaining <= 0) throw new ValidationException(Messages.DebtAlreadyPaid(Lang), "documentId");
+            supplierId = doc.SupplierId.Value;
+            var amount = doc.Remaining;
+            var now = DateTime.UtcNow;
+            inventory.AddPayment(new SupplierPayment
+            {
+                Id = Guid.NewGuid(), OrganizationId = c.OrgId, StoreId = doc.StoreId, SupplierId = supplierId, DocumentId = doc.Id, Amount = amount, Method = null,
+                IsWriteOff = true, Date = c.LocalDate(now), Comment = reason, CreatedBy = access.StaffUserId, CreatedAt = now,
+            });
+            doc.WrittenOff += amount;
+            doc.UpdatedAt = now;
+            access.Audit(c.OrgId, doc.StoreId, "finance.supplier.debt.close", "stock_document", doc.Id, new { doc.Number, Remaining = amount }, new { Remaining = 0, Reason = reason });
             await unitOfWork.SaveChangesAsync(ct);
             return true;
         }, ct);
@@ -283,9 +400,9 @@ public class FinanceDebtsService(
         var payments = (await repo.SupplierPaymentsAsync(c.StoreIds, null, null, ct)).Where(p => p.SupplierId == supplierId && p.Status == SupplierPaymentStatus.Registered).ToList();
         var opening = docs.Where(d => d.Date < c.FromUtc).Sum(d => d.Total) - payments.Where(p => p.CreatedAt < c.FromUtc).Sum(p => p.Amount);
         var rows = docs.Where(d => d.Date >= c.FromUtc && d.Date < c.ToUtc)
-            .Select(d => (d.Date, Kind: "receipt", d.Number, Description: d.SupplierInvoiceNumber, Debit: d.Total, Credit: 0m))
+            .Select(d => (d.Date, Kind: d.Type == StockDocumentType.OpeningDebt ? "opening" : "receipt", d.Number, Description: d.SupplierInvoiceNumber ?? d.Comment, Debit: d.Total, Credit: 0m))
             .Concat(payments.Where(p => p.CreatedAt >= c.FromUtc && p.CreatedAt < c.ToUtc)
-                .Select(p => (Date: p.CreatedAt, Kind: "payment", Number: p.Reference ?? "", Description: (string?)$"{p.Method}", Debit: 0m, Credit: p.Amount)))
+                .Select(p => (Date: p.CreatedAt, Kind: p.IsWriteOff ? "writeoff" : "payment", Number: p.Reference ?? "", Description: p.IsWriteOff ? p.Comment : (string?)$"{p.Method}", Debit: 0m, Credit: p.Amount)))
             .OrderBy(x => x.Date).ToList();
         var balance = opening;
         var list = rows.Select(x => { balance += x.Debit - x.Credit; return new ReconciliationRowDto(x.Date, x.Kind, x.Number, x.Description, x.Debit, x.Credit, balance); }).ToList();
@@ -295,6 +412,19 @@ public class FinanceDebtsService(
     }
 
     // ---------- Көмекші ----------
+
+    /// <summary>Қолмен енгізілген қарыздың күні: бүгін болса — қазіргі сәт, бұрынғы күн болса — сол күннің түсі (дүкен уақыт белдеуі). Болашақ — қате.</summary>
+    private (DateTime Utc, DateOnly Date) ManualDate(FinanceCtx c, DateOnly? raw)
+    {
+        var date = raw ?? c.Today;
+        if (date > c.Today) throw new ValidationException(Messages.DebtDateInFuture(Lang), "date");
+        if (date == c.Today) return (c.NowUtc, date);
+        var local = DateTime.SpecifyKind(date.ToDateTime(new TimeOnly(12, 0)), DateTimeKind.Unspecified);
+        return (TimeZoneInfo.ConvertTimeToUtc(local, c.Zone), date);
+    }
+
+    private string CloseReason(CloseDebtRequest r) =>
+        CatalogAccess.Optional(r.Reason, 500) is { Length: >= 3 } reason ? reason : throw new ValidationException(Messages.DebtCloseReasonRequired(Lang), "reason");
 
     private Dictionary<Guid, decimal> Allocations(IEnumerable<(Guid Id, decimal Amount)>? raw)
     {

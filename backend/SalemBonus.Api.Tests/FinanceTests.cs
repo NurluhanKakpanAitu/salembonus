@@ -187,6 +187,122 @@ public class FinanceTests(ApiFixture api)
         Assert.Contains(rows, r => r!["customerId"]!.GetValue<Guid>() == customer && r["total"]!.GetValue<decimal>() == 3000m);
     }
 
+    // ---------- Дәптердегі қарыз: қолмен енгізу, «Закрыть» — ақшасыз, тарихта ----------
+
+    [Fact]
+    public async Task Notebook_customer_debt_can_be_added_paid_and_closed_without_touching_money()
+    {
+        var pos = await api.NewDeviceAsync();
+        var customer = (await pos.CreateCustomerAsync())["id"]!.GetValue<Guid>();
+        var account = await NewAccountAsync(pos, opening: 0, type: "Cash");
+        var totalBefore = (await AccountsAsync(pos))["total"]!.GetValue<decimal>();
+        var revenueBefore = await PnlRowAsync(pos, "revenue");
+
+        // Тексеру: сома > 0, болашақ күн жоқ, мерзім күннен ерте емес, себепсіз жабу жоқ.
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/customer-debts", new { customerId = customer, amount = 0m })).Status);
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/customer-debts",
+            new { customerId = customer, amount = 100m, date = ApiFixture.StoreToday.AddDays(1) })).Status);
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/customer-debts",
+            new { customerId = customer, amount = 100m, date = ApiFixture.StoreToday.AddDays(-5), dueDate = ApiFixture.StoreToday.AddDays(-6) })).Status);
+
+        var card = (await pos.Post(pos.Owner, $"{F}/customer-debts", new
+        {
+            customerId = customer, amount = 7000m, date = ApiFixture.StoreToday.AddDays(-20), dueDate = ApiFixture.StoreToday.AddDays(10), comment = "Тетрадь, стр. 4",
+        })).Ok;
+        Assert.Equal(7000m, card["total"]!.GetValue<decimal>());
+        var debt = Assert.Single(card["documents"]!.AsArray())!;
+        Assert.Null(debt["saleId"]?.GetValue<Guid?>());
+        Assert.Equal("Тетрадь, стр. 4", debt["comment"]!.GetValue<string>());
+        var debtId = debt["debtId"]!.GetValue<Guid>();
+        Assert.Equal(totalBefore, (await AccountsAsync(pos))["total"]!.GetValue<decimal>()); // ақша да, выручка да өзгермейді
+        Assert.Equal(revenueBefore, await PnlRowAsync(pos, "revenue"));
+        var rows = (await pos.Get(pos.Owner, $"{F}/customer-debts")).Ok["rows"]!.AsArray();
+        Assert.Contains(rows, r => r!["customerId"]!.GetValue<Guid>() == customer && r["total"]!.GetValue<decimal>() == 7000m);
+
+        // Бір бөлігі ақшамен — шотқа түседі; қалғаны «Закрыть» — ақшасыз.
+        (await pos.Post(pos.Owner, $"{F}/customer-debts/payments", new { customerId = customer, accountId = account, method = "Cash", allocations = new[] { new { debtId, amount = 2000m } } })).EnsureOk();
+        Assert.Equal(2000m, await BalanceAsync(pos, account));
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/customer-debts/documents/{debtId}/close", new { reason = "" })).Status);
+        var closed = (await pos.Post(pos.Owner, $"{F}/customer-debts/documents/{debtId}/close", new { reason = "Отдал наличными по тетради" })).Ok;
+        Assert.Equal(0m, closed["total"]!.GetValue<decimal>());
+        Assert.Equal("Paid", closed["documents"]![0]!["status"]!.GetValue<string>());
+        Assert.Equal(2000m, await BalanceAsync(pos, account)); // жабу — шотқа ақша түспейді
+        Assert.Equal(revenueBefore, await PnlRowAsync(pos, "revenue"));
+        var writeOff = closed["payments"]!.AsArray().Single(p => p!["isWriteOff"]!.GetValue<bool>())!;
+        Assert.Equal(5000m, writeOff["amount"]!.GetValue<decimal>());
+        Assert.Equal("Отдал наличными по тетради", writeOff["comment"]!.GetValue<string>());
+        Assert.Null(writeOff["method"]?.GetValue<string>());
+        Assert.Null(writeOff["operationId"]?.GetValue<Guid?>());
+
+        // Жабылғанды қайта жабу — қате; кассир (finance.operate жоқ) — жабық.
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/customer-debts/documents/{debtId}/close", new { reason = "Ещё раз" })).Status);
+        Assert.Equal(HttpStatusCode.Forbidden, (await pos.Post(pos.Cashier, $"{F}/customer-debts", new { customerId = customer, amount = 100m })).Status);
+    }
+
+    [Fact]
+    public async Task Notebook_supplier_debt_is_a_debt_not_a_purchase_and_can_be_paid_and_closed()
+    {
+        var pos = await api.NewDeviceAsync();
+        var supplier = await CreateSupplierAsync(pos);
+        var account = await NewAccountAsync(pos, opening: 10000);
+        var totalBefore = (await AccountsAsync(pos))["total"]!.GetValue<decimal>();
+
+        var card = (await pos.Post(pos.Owner, $"{F}/supplier-debts", new
+        {
+            supplierId = supplier, amount = 12000m, date = ApiFixture.StoreToday.AddDays(-30), dueDate = ApiFixture.StoreToday.AddDays(5),
+            documentNumber = "Накл. 15", comment = "Из тетради",
+        })).Ok;
+        Assert.Equal(12000m, card["debt"]!.GetValue<decimal>());
+        var doc = Assert.Single(card["documents"]!.AsArray())!;
+        Assert.Equal("opening", doc["kind"]!.GetValue<string>());
+        Assert.StartsWith("ДЛГ-", doc["number"]!.GetValue<string>());
+        var docId = doc["documentId"]!.GetValue<Guid>();
+        Assert.Equal(totalBefore, (await AccountsAsync(pos))["total"]!.GetValue<decimal>());
+
+        // Приёмкалар тізімінде жоқ, закупка емес; бірақ жеткізуші қарызында бар (склад пен финанс).
+        var receipts = (await pos.Get(pos.Owner, $"{Inv}/receipts?supplierId={supplier}&pageSize=50")).Ok["items"]!.AsArray();
+        Assert.Empty(receipts);
+        var listed = (await pos.Get(pos.Owner, $"{F}/supplier-debts?{Period()}")).Ok["rows"]!.AsArray().Single(r => r!["supplierId"]!.GetValue<Guid>() == supplier)!;
+        Assert.Equal(12000m, listed["debt"]!.GetValue<decimal>());
+        Assert.Equal(0m, listed["purchases"]!.GetValue<decimal>());
+        var inventoryCard = (await pos.Get(pos.Owner, $"{Inv}/suppliers/{supplier}")).Ok;
+        Assert.Equal(12000m, inventoryCard["supplier"]!["debt"]!.GetValue<decimal>());
+        Assert.Equal(0, inventoryCard["supplier"]!["receiptCount"]!.GetValue<int>());
+
+        // Ақшамен 4000 — шоттан шығады; қалған 8000 «Закрыть» — шот өзгермейді, «оплачено»-ға кірмейді.
+        (await pos.Post(pos.Owner, $"{F}/supplier-debts/payments", new { supplierId = supplier, accountId = account, method = "Transfer", allocations = new[] { new { documentId = docId, amount = 4000m } } })).EnsureOk();
+        Assert.Equal(6000m, await BalanceAsync(pos, account));
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/supplier-debts/documents/{docId}/close", new { reason = " " })).Status);
+        var closed = (await pos.Post(pos.Owner, $"{F}/supplier-debts/documents/{docId}/close", new { reason = "Рассчитались товаром" })).Ok;
+        Assert.Equal(0m, closed["debt"]!.GetValue<decimal>());
+        Assert.Equal(6000m, await BalanceAsync(pos, account));
+        var closedDoc = closed["documents"]![0]!;
+        Assert.Equal(4000m, closedDoc["paid"]!.GetValue<decimal>());
+        Assert.Equal(8000m, closedDoc["writtenOff"]!.GetValue<decimal>());
+        var writeOff = closed["payments"]!.AsArray().Single(p => p!["isWriteOff"]!.GetValue<bool>())!;
+        Assert.Equal(8000m, writeOff["amount"]!.GetValue<decimal>());
+        Assert.Equal("Рассчитались товаром", writeOff["comment"]!.GetValue<string>());
+        Assert.Null(writeOff["accountName"]?.GetValue<string>());
+        var row = (await pos.Get(pos.Owner, $"{F}/supplier-debts?segment=all&{Period()}")).Ok["rows"]!.AsArray().Single(r => r!["supplierId"]!.GetValue<Guid>() == supplier)!;
+        Assert.Equal(4000m, row["paid"]!.GetValue<decimal>()); // оплачено — тек ақша
+        Assert.Equal(0m, row["debt"]!.GetValue<decimal>());
+        var inventoryPayments = (await pos.Get(pos.Owner, $"{Inv}/suppliers/{supplier}")).Ok["payments"]!.AsArray();
+        Assert.Contains(inventoryPayments, p => p!["method"]!.GetValue<string>() == "WriteOff" && p["amount"]!.GetValue<decimal>() == 8000m);
+        Assert.Equal(0m, (await pos.Get(pos.Owner, $"{Inv}/suppliers/{supplier}")).Ok["supplier"]!["debt"]!.GetValue<decimal>());
+
+        // Салыстыру актісі: бастапқы қарыз дебетте, төлем мен жабу кредитте.
+        var rec = (await pos.Get(pos.Owner, $"{F}/supplier-debts/{supplier}/reconciliation?{Period()}")).Ok;
+        Assert.Equal(12000m, rec["debit"]!.GetValue<decimal>());
+        Assert.Equal(12000m, rec["credit"]!.GetValue<decimal>());
+        Assert.Contains(rec["rows"]!.AsArray(), r => r!["kind"]!.GetValue<string>() == "writeoff");
+
+        // Склад жақтан жабуды сторнолау — қарыз қайтады, шот өзгермейді.
+        var paymentId = writeOff["id"]!.GetValue<Guid>();
+        Assert.Equal(HttpStatusCode.NoContent, (await pos.Post(pos.Owner, $"{Inv}/payments/{paymentId}/reverse", new { reason = "Ошибка" })).Status);
+        Assert.Equal(8000m, (await pos.Get(pos.Owner, $"{F}/supplier-debts/{supplier}")).Ok["debt"]!.GetValue<decimal>());
+        Assert.Equal(6000m, await BalanceAsync(pos, account));
+    }
+
     // ---------- FIN-005, FIN-006, FIN-008: аударым, инкассация, овердрафт, қайталанбау ----------
 
     [Fact]

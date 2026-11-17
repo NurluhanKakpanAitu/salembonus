@@ -244,10 +244,10 @@ export function DebtsPane({ card, storeIds }: { card: ClientCard; storeIds?: str
             {d.payments.map((p) => (
               <li key={p.id} className="flex items-center gap-3 px-3 py-2 text-[13px]">
                 <span className="min-w-0 flex-1">
-                  <span className="block">{dateTime(p.createdAt)} · №{p.saleNumber ?? '—'}</span>
-                  <span className="block truncate text-[12px] text-ink-3">{p.isReturn ? t('cli.prof.byReturn') : p.method ? t(`pay.${p.method}` as TranslationKey) : ''} · {p.staffName}{p.operationNumber ? ` · ${p.operationNumber}` : ''}</span>
+                  <span className="block">{dateTime(p.createdAt)} · {p.saleNumber ? `№${p.saleNumber}` : t('fin.debt.manual')}</span>
+                  <span className="block truncate text-[12px] text-ink-3">{p.isWriteOff ? `${t('fin.debt.closedNoMoney')}${p.comment ? `: ${p.comment}` : ''}` : p.isReturn ? t('cli.prof.byReturn') : p.method ? t(`pay.${p.method}` as TranslationKey) : ''} · {p.staffName}{p.operationNumber ? ` · ${p.operationNumber}` : ''}</span>
                 </span>
-                <span className="font-semibold text-success">{tenge(p.amount)}</span>
+                <span className={`font-semibold ${p.isWriteOff ? 'text-ink-2' : 'text-success'}`}>{tenge(p.amount)}</span>
               </li>
             ))}
           </ul>

@@ -55,9 +55,18 @@ export const financeApi = {
   customerDebts: (p: Record<string, string | number | undefined>) => api<CustomerDebts>(`${base}/customer-debts${qs(p)}`),
   customerDebt: (customerId: string, storeIds?: string) => api<CustomerDebtCard>(`${base}/customer-debts/${customerId}${qs({ storeIds })}`),
   customerPayment: (r: CustomerPaymentRequest) => api<CustomerDebtCard>(`${base}/customer-debts/payments`, { method: 'POST', body: JSON.stringify(r) }),
+  /** Дәптердегі қарызды қолмен енгізу (сатылымсыз) және «Закрыть долг» (ақшасыз, себебімен). */
+  addCustomerDebt: (r: { customerId: string; amount: number; date: string | null; dueDate: string | null; comment: string | null }) =>
+    api<CustomerDebtCard>(`${base}/customer-debts`, { method: 'POST', body: JSON.stringify(r) }),
+  closeCustomerDebt: (debtId: string, reason: string) =>
+    api<CustomerDebtCard>(`${base}/customer-debts/documents/${debtId}/close`, { method: 'POST', body: JSON.stringify({ reason }) }),
   supplierDebts: (p: Record<string, string | number | undefined>) => api<SupplierDebts>(`${base}/supplier-debts${qs(p)}`),
   supplierDebt: (supplierId: string, storeIds?: string) => api<SupplierDebtCard>(`${base}/supplier-debts/${supplierId}${qs({ storeIds })}`),
   supplierPayment: (r: SupplierPaymentRequest) => api<SupplierDebtCard>(`${base}/supplier-debts/payments`, { method: 'POST', body: JSON.stringify(r) }),
+  addSupplierDebt: (r: { supplierId: string; amount: number; date: string | null; dueDate: string | null; documentNumber: string | null; comment: string | null }) =>
+    api<SupplierDebtCard>(`${base}/supplier-debts`, { method: 'POST', body: JSON.stringify(r) }),
+  closeSupplierDebt: (documentId: string, reason: string) =>
+    api<SupplierDebtCard>(`${base}/supplier-debts/documents/${documentId}/close`, { method: 'POST', body: JSON.stringify({ reason }) }),
   setDueDate: (documentId: string, dueDate: string | null) => api<void>(`${base}/supplier-debts/documents/${documentId}/due-date`, { method: 'PUT', body: JSON.stringify({ dueDate }) }),
   reconciliation: (supplierId: string, storeIds: string | undefined, from?: string, to?: string) =>
     api<Reconciliation>(`${base}/supplier-debts/${supplierId}/reconciliation${qs({ storeIds, from, to })}`),

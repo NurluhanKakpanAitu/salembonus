@@ -134,7 +134,9 @@ public class SalesHistoryService(
         if (sale.BonusRedeemed > 0) events.Add(new SaleEventDto(sale.CreatedAt, "bonus.redeemed", cashier, sale.BonusRedeemed, null, null, null));
         if (sale.BonusAccrued > 0) events.Add(new SaleEventDto(sale.CreatedAt, "bonus.accrued", cashier, sale.BonusAccrued, null, null, null));
         foreach (var p in repayments.Where(p => !p.IsReturn))
-            events.Add(new SaleEventDto(p.CreatedAt, "debt.repaid", Name(p.StaffUserId), p.Amount, p.Method?.ToString(), p.TransferRecipient, null));
+            events.Add(p.IsWriteOff
+                ? new SaleEventDto(p.CreatedAt, "debt.closed", Name(p.StaffUserId), p.Amount, null, p.Comment, null)
+                : new SaleEventDto(p.CreatedAt, "debt.repaid", Name(p.StaffUserId), p.Amount, p.Method?.ToString(), p.TransferRecipient, null));
         foreach (var r in returns)
         {
             var who = Name(r.StaffUserId);

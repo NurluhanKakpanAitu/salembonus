@@ -21,7 +21,11 @@ public record AnalyticsBalance(Guid WarehouseId, Guid ProductId, decimal Quantit
 public record AnalyticsMovement(DateTime CreatedAt, Guid WarehouseId, Guid ProductId, StockMovementType Type, decimal Quantity);
 
 public record AnalyticsDocument(Guid Id, Guid StoreId, Guid WarehouseId, StockDocumentType Type, StockDocumentStatus Status, DateTime Date, DateTime? PostedAt,
-    Guid? SupplierId, decimal Total, decimal Paid, int Lines);
+    Guid? SupplierId, decimal Total, decimal Paid, int Lines, decimal WrittenOff = 0)
+{
+    /// <summary>Жеткізушіге қалған қарыз: «Закрыть долг» (WrittenOff) төлем емес, бірақ қарызды азайтады.</summary>
+    public decimal Remaining => Total - Paid - WrittenOff;
+}
 
 public record AnalyticsSupplierPayment(DateTime CreatedAt, DateOnly Date, Guid SupplierId, Guid? DocumentId, decimal Amount, PaymentMethod Method);
 

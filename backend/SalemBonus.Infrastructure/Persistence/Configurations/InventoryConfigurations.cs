@@ -105,6 +105,7 @@ public class StockDocumentConfiguration : IEntityTypeConfiguration<StockDocument
         b.Property(x => x.ReversalReason).HasMaxLength(500);
         b.Property(x => x.Total).HasPrecision(18, 2);
         b.Property(x => x.Paid).HasPrecision(18, 2);
+        b.Property(x => x.WrittenOff).HasPrecision(18, 2);
         b.Ignore(x => x.Remaining);
         b.HasIndex(x => new { x.OrganizationId, x.Type, x.Seq }).IsUnique();
         b.HasIndex(x => new { x.StoreId, x.Type, x.Date });

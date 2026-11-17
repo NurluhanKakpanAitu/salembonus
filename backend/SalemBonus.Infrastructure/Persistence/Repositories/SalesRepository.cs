@@ -245,7 +245,7 @@ public class SalesRepository(AppDbContext db) : ISalesRepository
 
     public async Task<IReadOnlyList<DebtPayment>> ListDebtPaymentsInRangeAsync(Guid storeId, DateTime fromUtc, DateTime toUtc, Guid? staffId, CancellationToken ct = default) =>
         await db.DebtPayments.AsNoTracking()
-            .Where(p => !p.IsReturn && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc && (staffId == null || p.StaffUserId == staffId)
+            .Where(p => !p.IsReturn && !p.IsWriteOff && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc && (staffId == null || p.StaffUserId == staffId)
                         && db.Debts.Any(d => d.Id == p.DebtId && d.StoreId == storeId))
             .ToListAsync(ct);
 

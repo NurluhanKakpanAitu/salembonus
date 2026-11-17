@@ -27,7 +27,7 @@ public record TransferFilter(
 
 public record WarehouseTotals(int ProductKinds, decimal TotalUnits);
 
-public record SupplierTotals(int ReceiptCount, decimal TotalReceipts, decimal TotalPaid);
+public record SupplierTotals(int ReceiptCount, decimal TotalReceipts, decimal TotalPaid, decimal Debt);
 
 /// <summary>Қоймалар, қалдық, қозғалыс, құжаттар, жеткізушілер мен дүкен бағалары.</summary>
 public interface IInventoryRepository

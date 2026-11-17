@@ -438,9 +438,9 @@ public partial class AnalyticsService(
         var posted = all.Where(d => d.Type == StockDocumentType.Receipt && d.Status == StockDocumentStatus.Posted).ToList();
         var period = posted.Where(d => d.Date >= c.FromUtc && d.Date < c.ToUtc).ToList();
         var payments = await repo.SupplierPaymentsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct);
-        var withSupplier = posted.Where(d => d.SupplierId != null).ToList();
+        var withSupplier = all.Where(d => d.Type is StockDocumentType.Receipt or StockDocumentType.OpeningDebt && d.Status == StockDocumentStatus.Posted && d.SupplierId != null).ToList();
         return new SuppliersBlockDto(period.Sum(d => d.Total), period.Count, payments.Sum(p => p.Amount),
-            withSupplier.Sum(d => d.Total - d.Paid), withSupplier.Count(d => d.Total - d.Paid > 0));
+            withSupplier.Sum(d => d.Remaining), withSupplier.Count(d => d.Remaining > 0));
     }
 
     /// <summary>Нақты ақша қозғалысы (§19, §25): поступления — қарыздан басқа төлемдер мен қарыз өтеуі; выплаты — қайтарылған ақша мен жеткізушіге төлем.</summary>

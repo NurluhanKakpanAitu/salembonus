@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Download, Eye, HandCoins } from 'lucide-react'
+import { CircleCheck, Download, Eye, HandCoins, Plus } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -17,18 +17,20 @@ import { tenge } from '../../lib/money'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { BlockError, Segmented, Skeleton } from '../stats/statsUi'
 import { DebtBadge, reportError, useFinanceMeta, useFinancePermissions, type FinanceFilters } from './financeUi'
+import { AddCustomerDebtModal, CloseDebtModal } from './DebtForms'
 
 type Segment = 'all' | 'open' | 'overdue' | 'paid'
 
 /**
- * «Долги клиентов» (ТЗ «Финансы» §11): қарыз тек проведённый сатылымнан; қолмен сома енгізілмейді.
+ * «Долги клиентов» (ТЗ «Финансы» §11): қарыз сатылымнан не дәптерден қолмен («Добавить долг»); «Закрыть» — ақшасыз жабу, себебімен тарихта.
  * Карточка: құжаттар, төлемдер; «Принять оплату» — бөлу нақты (FIFO жоқ), артық төлем жоқ; өтеу — ақша кіреді, қарыз азаяды, түсім емес.
  */
 export function CustomerDebtsTab({ storeIds }: { filters: FinanceFilters; storeIds?: string }) {
   const t = useT()
   const [params, setParams] = useSearchParams()
-  const { canExport } = useFinancePermissions()
+  const { canExport, canOperate } = useFinancePermissions()
   const [exporting, setExporting] = useState(false)
+  const [adding, setAdding] = useState(false)
   const g = (k: string) => params.get(k) ?? ''
   const search = useDebounced(g('q'), 300)
   const segment = (g('seg') || 'open') as Segment
@@ -56,6 +58,7 @@ export function CustomerDebtsTab({ storeIds }: { filters: FinanceFilters; storeI
         <SearchInput value={g('q')} onChange={(v) => set({ q: v })} placeholder={t('fin.cd.search')} className="h-10! w-64" />
         <Segmented value={segment} options={(['open', 'overdue', 'paid', 'all'] as Segment[]).map((s) => ({ key: s, label: t(`fin.cd.seg.${s}` as TranslationKey) }))} onChange={(s) => set({ seg: s })} />
         <span className="ml-auto" />
+        {canOperate && <Button className="h-10! px-3!" icon={<Plus size={16} />} onClick={() => setAdding(true)}>{t('fin.debt.add')}</Button>}
         {canExport && <span className="flex gap-1"><Button variant="secondary" className="h-10! px-3!" icon={<Download size={16} />} disabled={exporting} onClick={() => void exportFile('xlsx')}>Excel</Button><Button variant="secondary" className="h-10! px-3!" disabled={exporting} onClick={() => void exportFile('csv')}>CSV</Button></span>}
       </div>
       <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
@@ -85,6 +88,7 @@ export function CustomerDebtsTab({ storeIds }: { filters: FinanceFilters; storeI
       </div>
       {d && <Pager page={p.page} pageSize={p.pageSize} total={d.rowsTotal} onPage={(pg) => set({ page: String(pg) }, true)} onPageSize={(s) => set({ size: String(s) })} />}
       {customerId && <CustomerCardModal customerId={customerId} storeIds={storeIds} pay={g('pay') === '1'} onClose={() => set({ customer: null, pay: null }, true)} onChanged={() => void q.refetch()} />}
+      {adding && <AddCustomerDebtModal onClose={() => setAdding(false)} onDone={(id) => { setAdding(false); void q.refetch(); set({ customer: id, seg: null }, true) }} />}
     </div>
   )
 }
@@ -94,6 +98,7 @@ function CustomerCardModal({ customerId, storeIds, pay, onClose, onChanged }: { 
   const t = useT()
   const [tab, setTab] = useState<'docs' | 'payments'>('docs')
   const [paying, setPaying] = useState(pay)
+  const [closing, setClosing] = useState<{ id: string; label: string; remaining: number } | null>(null)
   const meta = useFinanceMeta(storeIds)
   const q = useQuery({ queryKey: ['finance', 'customer-debt', customerId, storeIds], queryFn: () => financeApi.customerDebt(customerId, storeIds) })
   const c = q.data
@@ -115,16 +120,20 @@ function CustomerCardModal({ customerId, storeIds, pay, onClose, onChanged }: { 
           <Segmented value={tab} options={[{ key: 'docs', label: `${t('fin.documents')} (${c.documents.length})` }, { key: 'payments', label: `${t('fin.payments')} (${c.payments.length})` }]} onChange={setTab} />
           {tab === 'docs' ? (
             <table className="w-full text-[14px]">
-              <thead className="bg-field/60"><tr><th className={th}>{t('fin.cd.doc')}</th><th className={th}>{t('fin.col.date')}</th><th className={th}>{t('fin.dueDate')}</th><th className={`${th} text-right`}>{t('fin.col.amount')}</th><th className={`${th} text-right`}>{t('fin.paid')}</th><th className={`${th} text-right`}>{t('fin.remaining')}</th><th className={th}></th></tr></thead>
+              <thead className="bg-field/60"><tr><th className={th}>{t('fin.cd.doc')}</th><th className={th}>{t('fin.col.date')}</th><th className={th}>{t('fin.dueDate')}</th><th className={`${th} text-right`}>{t('fin.col.amount')}</th><th className={`${th} text-right`}>{t('fin.paid')}</th><th className={`${th} text-right`}>{t('fin.remaining')}</th><th className={th}></th><th className={th}></th></tr></thead>
               <tbody>{c.documents.map((x) => (
                 <tr key={x.debtId} className="border-t border-line">
-                  <td className={td}>{x.saleId ? <Link to={`/sales?sale=${x.saleId}`} className="font-medium text-brand hover:underline">№{x.saleNumber}</Link> : '—'}{x.comment && <span className="block text-[12px] text-ink-3">{x.comment}</span>}</td>
+                  <td className={td}>{x.saleId ? <Link to={`/sales?sale=${x.saleId}`} className="font-medium text-brand hover:underline">№{x.saleNumber}</Link> : <span className="font-medium">{t('fin.debt.manual')}</span>}{x.comment && <span className="block text-[12px] text-ink-3">{x.comment}</span>}</td>
                   <td className={`${td} text-ink-2`}>{dateTime(x.createdAt)}</td>
                   <td className={`${td} ${x.overdue ? 'font-semibold text-danger' : 'text-ink-2'}`}>{dateOnly(x.dueDate)}</td>
-                  <td className={`${td} text-right tabular-nums`}>{tenge(x.amount)}</td>
-                  <td className={`${td} text-right tabular-nums text-ink-2`}>{tenge(x.paid)}</td>
-                  <td className={`${td} text-right font-semibold tabular-nums`}>{tenge(x.remaining)}</td>
+                  <td className={`${td} whitespace-nowrap text-right tabular-nums`}>{tenge(x.amount)}</td>
+                  <td className={`${td} whitespace-nowrap text-right tabular-nums text-ink-2`}>{tenge(x.paid)}</td>
+                  <td className={`${td} whitespace-nowrap text-right font-semibold tabular-nums`}>{tenge(x.remaining)}</td>
                   <td className={td}><DebtBadge status={x.remaining <= 0 ? 'Paid' : x.overdue ? 'Overdue' : x.paid > 0 ? 'Partial' : 'Open'} /></td>
+                  <td className={`${td} text-right`}>{canOperate && x.remaining > 0 && (
+                    <Button variant="secondary" className="h-8! px-2.5! text-[12px]!" icon={<CircleCheck size={14} />}
+                      onClick={() => setClosing({ id: x.debtId, label: x.saleNumber ? `№${x.saleNumber}` : t('fin.debt.manual'), remaining: x.remaining })}>{t('fin.debt.close')}</Button>
+                  )}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -134,9 +143,11 @@ function CustomerCardModal({ customerId, storeIds, pay, onClose, onChanged }: { 
               <tbody>{c.payments.length === 0 ? <EmptyRow colSpan={7} text="—" /> : c.payments.map((x) => (
                 <tr key={x.id} className="border-t border-line">
                   <td className={`${td} text-ink-2`}>{dateTime(x.createdAt)}</td>
-                  <td className={td}>{x.saleNumber ? `№${x.saleNumber}` : '—'}</td>
-                  <td className={`${td} text-right font-semibold tabular-nums text-success`}>+{tenge(x.amount)}</td>
-                  <td className={`${td} text-ink-2`}>{x.isReturn ? t('fin.cd.byReturn') : x.method ? t(`pay.${x.method}` as TranslationKey) : '—'}</td>
+                  <td className={td}>{x.saleNumber ? `№${x.saleNumber}` : t('fin.debt.manual')}</td>
+                  <td className={`${td} text-right font-semibold tabular-nums ${x.isWriteOff ? 'text-ink-2' : 'text-success'}`}>{x.isWriteOff ? '' : '+'}{tenge(x.amount)}</td>
+                  <td className={`${td} text-ink-2`}>{x.isWriteOff
+                    ? <><span className="font-semibold text-ink">{t('fin.debt.closedNoMoney')}</span>{x.comment && <span className="block text-[12px]">{x.comment}</span>}</>
+                    : x.isReturn ? t('fin.cd.byReturn') : x.method ? t(`pay.${x.method}` as TranslationKey) : '—'}</td>
                   <td className={`${td} text-right tabular-nums text-ink-2`}>{tenge(x.remainingAfter)}</td>
                   <td className={`${td} text-ink-2`}>{x.staffName}</td>
                   <td className={td}>{x.operationId ? <Link to={`/finance/transactions?op=${x.operationId}`} className="text-brand hover:underline">{x.operationNumber}</Link> : '—'}</td>
@@ -147,6 +158,8 @@ function CustomerCardModal({ customerId, storeIds, pay, onClose, onChanged }: { 
         </div>
       )}
       {paying && c && <CustomerPaymentModal card={c} accounts={meta.data?.accounts ?? []} onClose={() => setPaying(false)} onDone={() => { setPaying(false); void q.refetch(); onChanged() }} />}
+      {closing && <CloseDebtModal label={closing.label} remaining={closing.remaining} onClose={() => setClosing(null)}
+        onSubmit={async (reason) => { await financeApi.closeCustomerDebt(closing.id, reason); toast(t('fin.debt.closed')); setClosing(null); void q.refetch(); onChanged() }} />}
     </Modal>
   )
 }
@@ -188,7 +201,7 @@ export function CustomerPaymentModal({ card, accounts, onClose, onDone }: { card
           <div className="flex items-center justify-between border-b border-line px-3 py-2 text-[13px] font-semibold text-ink-2"><span>{t('fin.cd.allocation')}</span><button type="button" className="text-brand hover:underline" onClick={fillAll}>{t('fin.payAll')}</button></div>
           {open.map((x) => (
             <div key={x.debtId} className="flex items-center gap-3 border-b border-line px-3 py-2 text-[14px] last:border-0">
-              <span className="min-w-0 flex-1">№{x.saleNumber ?? '—'} · {dateOnly(x.dueDate)}<span className={`ml-2 text-[12px] ${x.overdue ? 'text-danger' : 'text-ink-3'}`}>{t('fin.remaining')}: {tenge(x.remaining)}</span></span>
+              <span className="min-w-0 flex-1">{x.saleNumber ? `№${x.saleNumber}` : t('fin.debt.manual')} · {dateOnly(x.dueDate)}<span className={`ml-2 text-[12px] ${x.overdue ? 'text-danger' : 'text-ink-3'}`}>{t('fin.remaining')}: {tenge(x.remaining)}</span></span>
               <Input inputMode="decimal" className="h-9! w-32 text-right" value={alloc[x.debtId] ?? ''} onChange={(e) => setAlloc((a) => ({ ...a, [x.debtId]: e.target.value }))} error={(Number((alloc[x.debtId] ?? '').replace(',', '.')) || 0) > x.remaining} placeholder="0" />
             </div>
           ))}

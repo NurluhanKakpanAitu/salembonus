@@ -145,6 +145,7 @@ public class DebtPaymentConfiguration : IEntityTypeConfiguration<DebtPayment>
         b.Property(x => x.Amount).HasPrecision(18, 2);
         b.Property(x => x.RemainingAfter).HasPrecision(18, 2);
         b.Property(x => x.Method).HasConversion<string>().HasMaxLength(16);
+        b.Property(x => x.Comment).HasMaxLength(500);
         b.Property(x => x.TransferRecipient).HasMaxLength(200);
         b.HasIndex(x => new { x.DebtId, x.CreatedAt });
     }

@@ -267,12 +267,14 @@ public partial class AnalyticsService
 
     private async Task<AnalyticsTabDto> SuppliersTabAsync(Ctx c, AnalyticsQuery q, bool all, CancellationToken ct)
     {
-        var allDocs = (await repo.DocumentsAsync(c.StoreIds, null, null, ct))
-            .Where(d => d.Type == StockDocumentType.Receipt && d.Status == StockDocumentStatus.Posted && (q.SupplierId is null || d.SupplierId == q.SupplierId)).ToList();
+        // Қарызға дәптерден енгізілген бастапқы қарыз да кіреді, ал сатып алуға (закупка) — тек приёмка.
+        var debtDocs = (await repo.DocumentsAsync(c.StoreIds, null, null, ct))
+            .Where(d => d.Type is StockDocumentType.Receipt or StockDocumentType.OpeningDebt && d.Status == StockDocumentStatus.Posted && (q.SupplierId is null || d.SupplierId == q.SupplierId)).ToList();
+        var allDocs = debtDocs.Where(d => d.Type == StockDocumentType.Receipt).ToList();
         var period = allDocs.Where(d => d.Date >= c.FromUtc && d.Date < c.ToUtc).ToList();
         var payments = (await repo.SupplierPaymentsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct)).Where(p => q.SupplierId is null || p.SupplierId == q.SupplierId).ToList();
         var names = await repo.SupplierNamesAsync(c.OrgId, ct);
-        var debt = allDocs.Where(d => d.SupplierId != null).Sum(d => d.Total - d.Paid);
+        var debt = debtDocs.Where(d => d.SupplierId != null).Sum(d => d.Remaining);
 
         var kpis = new List<KpiDto>
         {
@@ -297,7 +299,7 @@ public partial class AnalyticsService
                 (string?)(g.Key is { } id ? names.GetValueOrDefault(id) : null), g.Sum(d => d.Total), (int?)g.Count()))
             .OrderByDescending(x => x.Item3).Take(10));
 
-        var ids = allDocs.Select(d => d.SupplierId).Concat(payments.Select(p => (Guid?)p.SupplierId)).Distinct();
+        var ids = debtDocs.Select(d => d.SupplierId).Concat(payments.Select(p => (Guid?)p.SupplierId)).Distinct();
         var rows = ids.Select(id =>
         {
             var docsOf = allDocs.Where(d => d.SupplierId == id).ToList();
@@ -307,7 +309,7 @@ public partial class AnalyticsService
                 ["supplierId"] = id, ["supplier"] = id is { } x ? names.GetValueOrDefault(x) : null,
                 ["documents"] = inPeriod.Count, ["purchases"] = inPeriod.Sum(d => d.Total),
                 ["paid"] = payments.Where(p => p.SupplierId == id).Sum(p => p.Amount),
-                ["debt"] = id is null ? null : docsOf.Sum(d => d.Total - d.Paid),
+                ["debt"] = id is null ? null : debtDocs.Where(d => d.SupplierId == id).Sum(d => d.Remaining),
                 ["lastReceipt"] = docsOf.Count == 0 ? null : docsOf.Max(d => d.Date),
             };
         }).Where(r => (int)r["documents"]! > 0 || (decimal)r["paid"]! > 0 || r["debt"] is decimal dd && dd > 0).ToList();
@@ -332,7 +334,7 @@ public partial class AnalyticsService
         var (flow, repaid, supplier) = await CashFlowAsync(c, sales, returns, ct);
         var (_, customerDebt) = await repo.OpenDebtsAsync(c.StoreIds, ct);
         var supplierDebt = (await repo.DocumentsAsync(c.StoreIds, null, null, ct))
-            .Where(d => d.Type == StockDocumentType.Receipt && d.Status == StockDocumentStatus.Posted && d.SupplierId != null).Sum(d => d.Total - d.Paid);
+            .Where(d => d.Type is StockDocumentType.Receipt or StockDocumentType.OpeningDebt && d.Status == StockDocumentStatus.Posted && d.SupplierId != null).Sum(d => d.Remaining);
         var debtIssued = sales.SelectMany(s => s.Payments).Where(p => p.Method == PaymentMethod.Debt).Sum(p => p.Amount);
 
         var kpis = new List<KpiDto>

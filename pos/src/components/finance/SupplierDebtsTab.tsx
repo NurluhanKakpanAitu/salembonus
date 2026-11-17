@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
-import { CalendarClock, Download, Eye, FileCheck, Paperclip, Printer, Truck } from 'lucide-react'
+import { CalendarClock, CircleCheck, Download, Eye, FileCheck, Paperclip, Plus, Printer, Truck } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Field, Input, Select, Textarea } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -18,18 +18,20 @@ import { uploadImage } from '../../lib/upload'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { BlockError, Segmented, Skeleton } from '../stats/statsUi'
 import { DebtBadge, reportError, useFinanceMeta, useFinancePermissions, type FinanceFilters } from './financeUi'
+import { AddSupplierDebtModal, CloseDebtModal } from './DebtForms'
 
 type Segment = 'all' | 'open' | 'overdue' | 'dueSoon' | 'paid'
 
 /**
- * «Долги поставщикам» (ТЗ «Финансы» §12): қарыз = проведённый приёмкалар − проведённый төлемдер; төлем бір не бірнеше накладнаяға бөлінеді;
+ * «Долги поставщикам» (ТЗ «Финансы» §12): қарыз = проведённый приёмкалар мен дәптерден енгізілген қарыздар − төлемдер − ақшасыз жабылғаны; төлем бір не бірнеше накладнаяға бөлінеді;
  * инкассация — төлем емес. Карточка: накладнаялар (Складқа сілтеме), төлемдер, акт сверки; «Оплатить поставщику».
  */
 export function SupplierDebtsTab({ filters, storeIds }: { filters: FinanceFilters; storeIds?: string }) {
   const t = useT()
   const [params, setParams] = useSearchParams()
-  const { canExport } = useFinancePermissions()
+  const { canExport, canOperate } = useFinancePermissions()
   const [exporting, setExporting] = useState(false)
+  const [adding, setAdding] = useState(false)
   const g = (k: string) => params.get(k) ?? ''
   const search = useDebounced(g('q'), 300)
   const segment = (g('seg') || 'open') as Segment
@@ -57,6 +59,7 @@ export function SupplierDebtsTab({ filters, storeIds }: { filters: FinanceFilter
         <SearchInput value={g('q')} onChange={(v) => set({ q: v })} placeholder={t('fin.sd.search')} className="h-10! w-64" />
         <Segmented value={segment} options={(['open', 'overdue', 'dueSoon', 'paid', 'all'] as Segment[]).map((s) => ({ key: s, label: t(`fin.sd.seg.${s}` as TranslationKey) }))} onChange={(s) => set({ seg: s })} />
         <span className="ml-auto" />
+        {canOperate && <Button className="h-10! px-3!" icon={<Plus size={16} />} onClick={() => setAdding(true)}>{t('fin.debt.add')}</Button>}
         {canExport && <span className="flex gap-1"><Button variant="secondary" className="h-10! px-3!" icon={<Download size={16} />} disabled={exporting} onClick={() => void exportFile('xlsx')}>Excel</Button><Button variant="secondary" className="h-10! px-3!" disabled={exporting} onClick={() => void exportFile('csv')}>CSV</Button></span>}
       </div>
       <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
@@ -88,6 +91,7 @@ export function SupplierDebtsTab({ filters, storeIds }: { filters: FinanceFilter
       </div>
       {d && <Pager page={p.page} pageSize={p.pageSize} total={d.rowsTotal} onPage={(pg) => set({ page: String(pg) }, true)} onPageSize={(s) => set({ size: String(s) })} />}
       {supplierId && <SupplierCardModal supplierId={supplierId} storeIds={storeIds} filters={filters} pay={g('pay') === '1'} act={g('act') === '1'} onClose={() => set({ supplier: null, pay: null, act: null }, true)} onChanged={() => void q.refetch()} />}
+      {adding && <AddSupplierDebtModal onClose={() => setAdding(false)} onDone={(id) => { setAdding(false); void q.refetch(); set({ supplier: id, seg: null }, true) }} />}
     </div>
   )
 }
@@ -100,6 +104,8 @@ function SupplierCardModal({ supplierId, storeIds, filters, pay, act, onClose, o
   const [tab, setTab] = useState<'docs' | 'payments'>('docs')
   const [paying, setPaying] = useState(pay)
   const [actOpen, setActOpen] = useState(act)
+  const [closing, setClosing] = useState<{ id: string; label: string; remaining: number } | null>(null)
+  const [adding, setAdding] = useState(false)
   const meta = useFinanceMeta(storeIds)
   const { canOperate } = useFinancePermissions()
   const q = useQuery({ queryKey: ['finance', 'supplier-debt', supplierId, storeIds], queryFn: () => financeApi.supplierDebt(supplierId, storeIds) })
@@ -123,15 +129,20 @@ function SupplierCardModal({ supplierId, storeIds, filters, pay, act, onClose, o
             <Link to={`/warehouse/receipts/new?supplierId=${supplierId}`} className="inline-flex h-9 items-center gap-1 rounded-xl border border-line px-3 text-[13px] font-semibold hover:border-brand">{t('fin.sd.newReceipt')}</Link>
             <Button variant="secondary" className="h-9! px-3! text-[13px]!" icon={<FileCheck size={15} />} onClick={() => setActOpen(true)}>{t('fin.sd.reconciliation')}</Button>
             <span className="ml-auto" />
+            {canOperate && <Button variant="secondary" className="h-9! px-3! text-[13px]!" icon={<Plus size={15} />} onClick={() => setAdding(true)}>{t('fin.debt.add')}</Button>}
             {canOperate && c.debt > 0 && <Button className="h-9! px-3! text-[13px]!" icon={<Truck size={15} />} onClick={() => setPaying(true)}>{t('fin.sd.pay')}</Button>}
           </div>
           <Segmented value={tab} options={[{ key: 'docs', label: `${t('fin.sd.receipts')} (${c.documents.length})` }, { key: 'payments', label: `${t('fin.payments')} (${c.payments.length})` }]} onChange={setTab} />
           {tab === 'docs' ? (
             <table className="w-full text-[14px]">
-              <thead className="bg-field/60"><tr><th className={th}>{t('fin.sd.number')}</th><th className={th}>{t('fin.col.date')}</th><th className={`${th} text-right`}>{t('fin.col.amount')}</th><th className={`${th} text-right`}>{t('fin.paid')}</th><th className={`${th} text-right`}>{t('fin.remaining')}</th><th className={th}>{t('fin.dueDate')}</th></tr></thead>
-              <tbody>{c.documents.length === 0 ? <EmptyRow colSpan={6} text="—" /> : c.documents.map((x) => (
+              <thead className="bg-field/60"><tr><th className={th}>{t('fin.sd.number')}</th><th className={th}>{t('fin.col.date')}</th><th className={`${th} text-right`}>{t('fin.col.amount')}</th><th className={`${th} text-right`}>{t('fin.paid')}</th><th className={`${th} text-right`}>{t('fin.remaining')}</th><th className={th}>{t('fin.dueDate')}</th><th className={th}></th></tr></thead>
+              <tbody>{c.documents.length === 0 ? <EmptyRow colSpan={7} text="—" /> : c.documents.map((x) => (
                 <tr key={x.documentId} className="border-t border-line">
-                  <td className={td}><Link to={`/warehouse/receipts/${x.documentId}`} className="font-medium text-brand hover:underline">{x.number}</Link>{x.invoiceNumber && <span className="block text-[12px] text-ink-3">{x.invoiceNumber}</span>}</td>
+                  <td className={td}>{x.kind === 'opening'
+                    ? <span className="font-medium">{x.number}<span className="ml-1.5 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">{t('fin.debt.manual')}</span></span>
+                    : <Link to={`/warehouse/receipts/${x.documentId}`} className="font-medium text-brand hover:underline">{x.number}</Link>}
+                    {x.invoiceNumber && <span className="block text-[12px] text-ink-3">{x.invoiceNumber}</span>}
+                    {x.kind === 'opening' && x.comment && <span className="block text-[12px] text-ink-3">{x.comment}</span>}</td>
                   <td className={`${td} text-ink-2`}>{dateOnly(x.date)}</td>
                   <td className={`${td} text-right tabular-nums`}>{tenge(x.total)}</td>
                   <td className={`${td} text-right tabular-nums text-ink-2`}>{tenge(x.paid)}</td>
@@ -142,6 +153,10 @@ function SupplierCardModal({ supplierId, storeIds, filters, pay, act, onClose, o
                         className={`h-9 rounded-lg border px-2 text-[13px] ${x.overdue ? 'border-danger text-danger' : 'border-line'}`} aria-label={t('fin.dueDate')} />
                     ) : <span className={x.overdue ? 'text-danger' : 'text-ink-2'}>{x.dueDate ? dateOnly(x.dueDate) : '—'}</span>}
                   </td>
+                  <td className={`${td} text-right`}>{canOperate && x.remaining > 0 && (
+                    <Button variant="secondary" className="h-8! px-2.5! text-[12px]!" icon={<CircleCheck size={14} />}
+                      onClick={() => setClosing({ id: x.documentId, label: x.number, remaining: x.remaining })}>{t('fin.debt.close')}</Button>
+                  )}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -152,8 +167,10 @@ function SupplierCardModal({ supplierId, storeIds, filters, pay, act, onClose, o
                 <tr key={x.id} className={`border-t border-line ${x.status === 'Reversed' ? 'text-ink-3 line-through' : ''}`}>
                   <td className={`${td} text-ink-2`}>{dateTime(x.createdAt)}</td>
                   <td className={td}>{x.documentNumber ?? '—'}</td>
-                  <td className={`${td} text-right font-semibold tabular-nums ${x.status === 'Reversed' ? '' : 'text-danger'}`}>−{tenge(x.amount)}</td>
-                  <td className={`${td} text-ink-2`}>{t(`pay.${x.method}` as TranslationKey)}</td>
+                  <td className={`${td} text-right font-semibold tabular-nums ${x.status === 'Reversed' || x.isWriteOff ? '' : 'text-danger'}`}>{x.isWriteOff ? '' : '−'}{tenge(x.amount)}</td>
+                  <td className={`${td} text-ink-2`}>{x.isWriteOff
+                    ? <><span className="font-semibold text-ink">{t('fin.debt.closedNoMoney')}</span>{x.comment && <span className="block text-[12px]">{x.comment}</span>}</>
+                    : t(`pay.${x.method}` as TranslationKey)}</td>
                   <td className={`${td} text-ink-2`}>{x.accountName ?? '—'}</td>
                   <td className={`${td} text-ink-2`}>{x.reference ?? '—'}</td>
                   <td className={td}>{t(`fin.payStatus.${x.status}` as TranslationKey)}</td>
@@ -165,6 +182,9 @@ function SupplierCardModal({ supplierId, storeIds, filters, pay, act, onClose, o
         </div>
       )}
       {paying && c && <SupplierPaymentModal card={c} accounts={meta.data?.accounts ?? []} onClose={() => setPaying(false)} onDone={() => { setPaying(false); void q.refetch(); onChanged() }} />}
+      {closing && <CloseDebtModal label={closing.label} remaining={closing.remaining} onClose={() => setClosing(null)}
+        onSubmit={async (reason) => { await financeApi.closeSupplierDebt(closing.id, reason); toast(t('fin.debt.closed')); setClosing(null); void q.refetch(); onChanged() }} />}
+      {adding && <AddSupplierDebtModal supplierId={supplierId} onClose={() => setAdding(false)} onDone={() => { setAdding(false); void q.refetch(); onChanged() }} />}
       {actOpen && <ReconciliationModal supplierId={supplierId} storeIds={storeIds} filters={filters} onClose={() => setActOpen(false)} />}
     </Modal>
   )

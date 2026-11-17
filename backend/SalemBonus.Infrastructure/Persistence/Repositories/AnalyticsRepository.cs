@@ -21,7 +21,7 @@ public class AnalyticsRepository(AppDbContext db) : IAnalyticsRepository
     public async Task<IReadOnlyList<AnalyticsDebtPayment>> DebtPaymentsAsync(IReadOnlyCollection<Guid> storeIds, DateTime fromUtc, DateTime toUtc, CancellationToken ct = default) =>
         await (from p in db.DebtPayments
                join d in db.Debts on p.DebtId equals d.Id
-               where storeIds.Contains(d.StoreId) && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc
+               where storeIds.Contains(d.StoreId) && !p.IsWriteOff && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc
                select new AnalyticsDebtPayment(p.CreatedAt, p.Amount, p.Method, p.IsReturn, p.StaffUserId, p.RegisterId)).ToListAsync(ct);
 
     public async Task<(int Count, decimal Remaining)> OpenDebtsAsync(IReadOnlyCollection<Guid> storeIds, CancellationToken ct = default)
@@ -140,14 +140,14 @@ public class AnalyticsRepository(AppDbContext db) : IAnalyticsRepository
         var q = db.StockDocuments.AsNoTracking().Where(d => storeIds.Contains(d.StoreId));
         if (fromUtc is { } from) q = q.Where(d => d.Date >= from);
         if (toUtc is { } to) q = q.Where(d => d.Date < to);
-        return await q.Select(d => new AnalyticsDocument(d.Id, d.StoreId, d.WarehouseId, d.Type, d.Status, d.Date, d.PostedAt, d.SupplierId, d.Total, d.Paid, d.Lines.Count))
+        return await q.Select(d => new AnalyticsDocument(d.Id, d.StoreId, d.WarehouseId, d.Type, d.Status, d.Date, d.PostedAt, d.SupplierId, d.Total, d.Paid, d.Lines.Count, d.WrittenOff))
             .ToListAsync(ct);
     }
 
     public async Task<IReadOnlyList<AnalyticsSupplierPayment>> SupplierPaymentsAsync(IReadOnlyCollection<Guid> storeIds, DateTime fromUtc, DateTime toUtc, CancellationToken ct = default) =>
         await db.SupplierPayments.AsNoTracking()
-            .Where(p => storeIds.Contains(p.StoreId) && p.Status == SupplierPaymentStatus.Registered && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc)
-            .Select(p => new AnalyticsSupplierPayment(p.CreatedAt, p.Date, p.SupplierId, p.DocumentId, p.Amount, p.Method)).ToListAsync(ct);
+            .Where(p => storeIds.Contains(p.StoreId) && p.Status == SupplierPaymentStatus.Registered && p.Method != null && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc)
+            .Select(p => new AnalyticsSupplierPayment(p.CreatedAt, p.Date, p.SupplierId, p.DocumentId, p.Amount, p.Method!.Value)).ToListAsync(ct);
 
     public async Task<Dictionary<Guid, string>> SupplierNamesAsync(Guid orgId, CancellationToken ct = default) =>
         await db.Suppliers.AsNoTracking().Where(s => s.OrganizationId == orgId).ToDictionaryAsync(s => s.Id, s => s.Name, ct);

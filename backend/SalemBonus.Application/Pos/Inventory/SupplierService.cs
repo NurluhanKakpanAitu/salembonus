@@ -35,7 +35,7 @@ public class SupplierService(IInventoryRepository repo, StockDocumentService doc
         return new SupplierCardDto(ToDto(s, totals),
             docs.Select(d => documents.ToListItemFor(d, ws, sup, staff)).ToList(),
             payments.Select(p => new SupplierPaymentDto(p.Id, p.SupplierId, s.Name, p.DocumentId,
-                p.DocumentId is { } did ? numbers.GetValueOrDefault(did) : null, p.Amount, p.Method.ToString(), p.Reference, p.Date, p.Comment,
+                p.DocumentId is { } did ? numbers.GetValueOrDefault(did) : null, p.Amount, p.Method?.ToString() ?? "WriteOff", p.Reference, p.Date, p.Comment,
                 p.Status.ToString(), staff.GetValueOrDefault(p.CreatedBy) ?? "", p.CreatedAt, p.ReversalReason)).ToList());
     }
 
@@ -90,7 +90,7 @@ public class SupplierService(IInventoryRepository repo, StockDocumentService doc
 
     private static SupplierDto ToDto(Supplier s, SupplierTotals? t) => new(
         s.Id, s.Name, s.Type.ToString(), s.TaxId, s.Phone, s.Email, s.Address, s.Comment, s.Status.ToString(),
-        t?.ReceiptCount ?? 0, t?.TotalReceipts ?? 0, t?.TotalPaid ?? 0, (t?.TotalReceipts ?? 0) - (t?.TotalPaid ?? 0), s.CreatedAt);
+        t?.ReceiptCount ?? 0, t?.TotalReceipts ?? 0, t?.TotalPaid ?? 0, t?.Debt ?? 0, s.CreatedAt);
 
     private static object Snapshot(Supplier s) => new { s.Name, Type = s.Type.ToString(), s.TaxId, s.Phone, s.Email, s.Address, s.Comment };
 }

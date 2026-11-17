@@ -212,7 +212,7 @@ export function SupplierCard() {
             {data.payments.map((p) => (
               <div key={p.id} className={`flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 ${p.status === 'Reversed' ? 'opacity-60' : ''}`}>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-semibold">{tenge(p.amount)} <span className="font-normal text-ink-3">· {t(`pay.${p.method}` as TranslationKey)}</span></div>
+                  <div className="text-[14px] font-semibold">{tenge(p.amount)} <span className="font-normal text-ink-3">· {p.method === 'WriteOff' ? t('fin.debt.closedNoMoney') : t(`pay.${p.method}` as TranslationKey)}</span></div>
                   <div className="truncate text-[12px] text-ink-3">{dateOnly(p.date)}{p.documentNumber ? ` · ${p.documentNumber}` : ''}{p.reference ? ` · №${p.reference}` : ''} · {p.createdByName}</div>
                   {p.status === 'Reversed' && <div className="text-[12px] text-danger">{t('inv.pay.reversed')}: {p.reversalReason}</div>}
                 </div>

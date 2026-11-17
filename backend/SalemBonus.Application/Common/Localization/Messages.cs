@@ -562,6 +562,13 @@ public static class Messages
 
     public static string DebtNotFound(AppLanguage l) => Pick(l, "Қарыз табылмады", "Долг не найден");
 
+    public static string DebtCloseReasonRequired(AppLanguage l) => Pick(l,
+        "Қарыз неге жабылатынын жазыңыз (мысалы: дәптер бойынша өтелген)", "Укажите, почему долг закрывается (например: оплачен по тетради)");
+
+    public static string DebtDateInFuture(AppLanguage l) => Pick(l, "Қарыз күні болашақта болмайды", "Дата долга не может быть в будущем");
+
+    public static string DebtDueBeforeDate(AppLanguage l) => Pick(l, "Төлеу мерзімі қарыз күнінен ерте болмайды", "Срок оплаты не может быть раньше даты долга");
+
     public static string DebtAlreadyPaid(AppLanguage l) => Pick(l, "Қарыз толық өтелген", "Долг уже погашен");
 
     public static string DebtRepayTooMuch(AppLanguage l, decimal remaining) => Pick(l,

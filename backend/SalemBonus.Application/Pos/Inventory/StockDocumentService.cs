@@ -117,7 +117,7 @@ public class StockDocumentService(
         var warehouseId = doc.WarehouseId;
         await ApplyReceiptAsync(orgId, m, doc, r with { WarehouseId = warehouseId }, ct);
         if (doc.Lines.Count == 0) throw new ValidationException(Messages.DocumentLinesRequired(Lang), "lines");
-        if (doc.Total < doc.Paid) throw new ValidationException(Messages.ReceiptEditBelowPaid(Lang, doc.Paid), "lines");
+        if (doc.Total < doc.Paid + doc.WrittenOff) throw new ValidationException(Messages.ReceiptEditBelowPaid(Lang, doc.Paid + doc.WrittenOff), "lines");
 
         var ids = doc.Lines.Select(l => l.ProductId).Concat(oldQty.Keys).Distinct().ToList();
         var catalogProducts = (await repo.ProductsAsync(orgId, ids, ct)).ToDictionary(p => p.Id);
@@ -453,7 +453,8 @@ public class StockDocumentService(
         var reason = CatalogAccess.Optional(request.Reason, 500) ?? throw new ValidationException(Messages.ReversalReasonRequired(Lang), "reason");
         if (payment.DocumentId is { } did && await repo.GetDocumentForUpdateAsync(orgId, did, ct) is { } doc)
         {
-            doc.Paid = Math.Max(0, doc.Paid - payment.Amount);
+            if (payment.IsWriteOff) doc.WrittenOff = Math.Max(0, doc.WrittenOff - payment.Amount);
+            else doc.Paid = Math.Max(0, doc.Paid - payment.Amount);
             doc.UpdatedAt = DateTime.UtcNow;
         }
         payment.Status = SupplierPaymentStatus.Reversed;
@@ -524,7 +525,7 @@ public class StockDocumentService(
             l.Staff.GetValueOrDefault(d.CreatedBy) ?? "", d.CreatedAt, d.PostedAt, d.PostedBy is { } pb ? l.Staff.GetValueOrDefault(pb) : null,
             d.ReversedAt, d.ReversalReason, lines,
             payments.Select(p => new SupplierPaymentDto(p.Id, p.SupplierId, l.Suppliers.GetValueOrDefault(p.SupplierId)?.Name ?? "", p.DocumentId,
-                d.Number, p.Amount, p.Method.ToString(), p.Reference, p.Date, p.Comment, p.Status.ToString(),
+                d.Number, p.Amount, p.Method?.ToString() ?? "WriteOff", p.Reference, p.Date, p.Comment, p.Status.ToString(),
                 payStaff.GetValueOrDefault(p.CreatedBy) ?? "", p.CreatedAt, p.ReversalReason)).ToList(), d.PaymentDueDate);
     }
 

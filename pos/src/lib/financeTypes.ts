@@ -88,7 +88,7 @@ export interface ProductProfit { total: number; page: number; pageSize: number; 
 
 export interface CustomerDebtRow { customerId: string; name: string; phone: string | null; total: number; overdue: number; nextDue: string | null; documents: number; status: DebtStatus }
 export interface CustomerDebtDoc { debtId: string; saleId: string | null; saleNumber: number | null; createdAt: string; dueDate: string; amount: number; paid: number; remaining: number; status: string; overdue: boolean; comment: string | null }
-export interface CustomerDebtPayment { id: string; createdAt: string; debtId: string; saleNumber: number | null; amount: number; method: string | null; isReturn: boolean; remainingAfter: number; staffName: string; operationId: string | null; operationNumber: string | null }
+export interface CustomerDebtPayment { id: string; createdAt: string; debtId: string; saleNumber: number | null; amount: number; method: string | null; isReturn: boolean; remainingAfter: number; staffName: string; operationId: string | null; operationNumber: string | null; isWriteOff?: boolean; comment?: string | null }
 export interface CustomerDebts { customers: number; total: number; overdue: number; dueSoon: number; rows: CustomerDebtRow[]; rowsTotal: number }
 export interface CustomerDebtCard { customerId: string; name: string; phone: string | null; total: number; overdue: number; nextDue: string | null; documents: CustomerDebtDoc[]; payments: CustomerDebtPayment[] }
 export interface CustomerPaymentRequest {
@@ -97,8 +97,8 @@ export interface CustomerPaymentRequest {
 }
 
 export interface SupplierDebtRow { supplierId: string; name: string; phone: string | null; lastReceipt: string | null; purchases: number; paid: number; debt: number; overdue: number; nextDue: string | null; documents: number; status: DebtStatus }
-export interface SupplierDebtDoc { documentId: string; number: string; date: string; invoiceNumber: string | null; total: number; paid: number; remaining: number; dueDate: string | null; overdue: boolean; lines: number }
-export interface SupplierPaymentRow { id: string; createdAt: string; date: string; documentId: string | null; documentNumber: string | null; amount: number; method: string; reference: string | null; status: string; staffName: string; operationId: string | null; operationNumber: string | null; accountName: string | null }
+export interface SupplierDebtDoc { documentId: string; number: string; date: string; invoiceNumber: string | null; total: number; paid: number; remaining: number; dueDate: string | null; overdue: boolean; lines: number; kind?: 'receipt' | 'opening'; writtenOff?: number; comment?: string | null }
+export interface SupplierPaymentRow { id: string; createdAt: string; date: string; documentId: string | null; documentNumber: string | null; amount: number; method: string; reference: string | null; status: string; staffName: string; operationId: string | null; operationNumber: string | null; accountName: string | null; isWriteOff?: boolean; comment?: string | null }
 export interface SupplierDebts { total: number; overdue: number; dueSoon: number; documents: number; documentsAll: number; rows: SupplierDebtRow[]; rowsTotal: number }
 export interface SupplierDebtCard { supplierId: string; name: string; phone: string | null; taxId: string | null; address: string | null; debt: number; overdue: number; openDocuments: number; nextDue: string | null; documents: SupplierDebtDoc[]; payments: SupplierPaymentRow[] }
 export interface SupplierPaymentRequest {

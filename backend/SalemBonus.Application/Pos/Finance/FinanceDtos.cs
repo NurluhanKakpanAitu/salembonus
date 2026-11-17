@@ -125,7 +125,7 @@ public record CustomerDebtDocDto(Guid DebtId, Guid? SaleId, long? SaleNumber, Da
     string Status, bool Overdue, string? Comment);
 
 public record CustomerDebtPaymentDto(Guid Id, DateTime CreatedAt, Guid DebtId, long? SaleNumber, decimal Amount, string? Method, bool IsReturn, decimal RemainingAfter,
-    string StaffName, Guid? OperationId, string? OperationNumber);
+    string StaffName, Guid? OperationId, string? OperationNumber, bool IsWriteOff = false, string? Comment = null);
 
 public record CustomerDebtsDto(int Customers, decimal Total, decimal Overdue, decimal DueSoon, IReadOnlyList<CustomerDebtRowDto> Rows, int RowsTotal);
 
@@ -137,16 +137,22 @@ public record DebtAllocationRequest(Guid DebtId, decimal Amount);
 public record CustomerPaymentRequest(Guid? CustomerId, Guid? AccountId, string? Method, DateTime? Date, string? Comment, string? DocumentNumber,
     IReadOnlyList<DebtAllocationRequest>? Allocations, Guid? ClientRequestId);
 
+/// <summary>Дәптердегі қарызды қолмен енгізу: клиент, сома, қашан пайда болды, қашанға дейін, түсініктеме.</summary>
+public record ManualCustomerDebtRequest(Guid? CustomerId, decimal Amount, DateOnly? Date, DateOnly? DueDate, string? Comment, Guid? ClientRequestId);
+
+/// <summary>«Закрыть долг»: ақшасыз жабу, себеп міндетті (тарихқа жазылады).</summary>
+public record CloseDebtRequest(string? Reason);
+
 // ---------- Жеткізуші қарызы (§12) ----------
 
 public record SupplierDebtRowDto(Guid SupplierId, string Name, string? Phone, DateTime? LastReceipt, decimal Purchases, decimal Paid, decimal Debt, decimal Overdue,
     DateOnly? NextDue, int Documents, string Status);
 
 public record SupplierDebtDocDto(Guid DocumentId, string Number, DateTime Date, string? InvoiceNumber, decimal Total, decimal Paid, decimal Remaining,
-    DateOnly? DueDate, bool Overdue, int Lines);
+    DateOnly? DueDate, bool Overdue, int Lines, string Kind = "receipt", decimal WrittenOff = 0, string? Comment = null);
 
 public record SupplierPaymentRowDto(Guid Id, DateTime CreatedAt, DateOnly Date, Guid? DocumentId, string? DocumentNumber, decimal Amount, string Method,
-    string? Reference, string Status, string StaffName, Guid? OperationId, string? OperationNumber, string? AccountName);
+    string? Reference, string Status, string StaffName, Guid? OperationId, string? OperationNumber, string? AccountName, bool IsWriteOff = false, string? Comment = null);
 
 public record SupplierDebtsDto(decimal Total, decimal Overdue, decimal DueSoon, int Documents, int DocumentsAll, IReadOnlyList<SupplierDebtRowDto> Rows, int RowsTotal);
 
@@ -157,6 +163,9 @@ public record DocumentAllocationRequest(Guid DocumentId, decimal Amount);
 
 public record SupplierPaymentRequest(Guid? SupplierId, Guid? AccountId, string? Method, DateTime? Date, string? Reference, string? Comment, string? AttachmentUrl,
     IReadOnlyList<DocumentAllocationRequest>? Allocations, Guid? ClientRequestId);
+
+/// <summary>Жеткізушіге дәптердегі қарызды қолмен енгізу (бастапқы қарыз құжаты, тауарсыз).</summary>
+public record ManualSupplierDebtRequest(Guid? SupplierId, decimal Amount, DateOnly? Date, DateOnly? DueDate, string? DocumentNumber, string? Comment, Guid? ClientRequestId);
 
 public record SetDueDateRequest(DateOnly? DueDate);
 

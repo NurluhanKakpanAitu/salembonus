@@ -156,7 +156,7 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
                     </div>
                     {d.payments.map((p, i) => (
                       <div key={i} className="mt-0.5 flex justify-between pl-3 text-[12px] text-ink-2">
-                        <span>{dateTime(p.createdAt)} · {p.isReturn ? t('debt.byReturn') : p.method ? t(`pay.${p.method}`) : ''} · {p.cashierName}</span>
+                        <span>{dateTime(p.createdAt)} · {p.isWriteOff ? `${t('fin.debt.closedNoMoney')}${p.comment ? `: ${p.comment}` : ''}` : p.isReturn ? t('debt.byReturn') : p.method ? t(`pay.${p.method}`) : ''} · {p.cashierName}</span>
                         <span>{tenge(p.amount)} → {t('debt.left', { sum: tenge(p.remainingAfter) })}</span>
                       </div>
                     ))}

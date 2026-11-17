@@ -281,5 +281,5 @@ public class DebtService(ISalesRepository sales, CashierService cashier, Finance
         names.GetValueOrDefault(d.StaffUserId) ?? string.Empty,
         d.Payments.OrderByDescending(p => p.CreatedAt).Select(p => new DebtPaymentDto(
             p.Amount, p.Method?.ToString(), p.IsReturn, p.TransferRecipient, p.RemainingAfter, p.CreatedAt,
-            names.GetValueOrDefault(p.StaffUserId) ?? string.Empty)).ToList());
+            names.GetValueOrDefault(p.StaffUserId) ?? string.Empty, p.IsWriteOff, p.Comment)).ToList());
 }

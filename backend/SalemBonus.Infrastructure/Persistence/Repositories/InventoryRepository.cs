@@ -227,7 +227,7 @@ public class InventoryRepository(AppDbContext db) : IInventoryRepository
     }
 
     public async Task<IReadOnlyList<StockDocument>> ListSupplierDocumentsAsync(Guid orgId, Guid supplierId, CancellationToken ct = default) =>
-        await db.StockDocuments.AsNoTracking().Include(d => d.Lines).Where(d => d.OrganizationId == orgId && d.SupplierId == supplierId)
+        await db.StockDocuments.AsNoTracking().Include(d => d.Lines).Where(d => d.OrganizationId == orgId && d.SupplierId == supplierId && d.Type != StockDocumentType.OpeningDebt)
             .OrderByDescending(d => d.Seq).Take(200).AsSplitQuery().ToListAsync(ct);
 
     public void AddDocument(StockDocument document) => db.StockDocuments.Add(document);
@@ -294,10 +294,17 @@ public class InventoryRepository(AppDbContext db) : IInventoryRepository
     public async Task<Dictionary<Guid, SupplierTotals>> SupplierTotalsAsync(Guid orgId, CancellationToken ct = default)
     {
         var receipts = await db.StockDocuments.AsNoTracking()
-            .Where(d => d.OrganizationId == orgId && d.Type == StockDocumentType.Receipt && d.SupplierId != null && d.Status == StockDocumentStatus.Posted)
+            .Where(d => d.OrganizationId == orgId && (d.Type == StockDocumentType.Receipt || d.Type == StockDocumentType.OpeningDebt) && d.SupplierId != null && d.Status == StockDocumentStatus.Posted)
             .GroupBy(d => d.SupplierId!.Value)
-            .Select(g => new { g.Key, Count = g.Count(), Total = g.Sum(d => d.Total), Paid = g.Sum(d => d.Paid) }).ToListAsync(ct);
-        return receipts.ToDictionary(r => r.Key, r => new SupplierTotals(r.Count, r.Total, r.Paid));
+            .Select(g => new
+            {
+                g.Key,
+                Count = g.Count(d => d.Type == StockDocumentType.Receipt),
+                Total = g.Where(d => d.Type == StockDocumentType.Receipt).Sum(d => d.Total),
+                Paid = g.Sum(d => d.Paid),
+                Debt = g.Sum(d => d.Total - d.Paid - d.WrittenOff),
+            }).ToListAsync(ct);
+        return receipts.ToDictionary(r => r.Key, r => new SupplierTotals(r.Count, r.Total, r.Paid, r.Debt));
     }
 
     public Task<bool> SupplierHasOpenDocumentsAsync(Guid supplierId, CancellationToken ct = default) =>

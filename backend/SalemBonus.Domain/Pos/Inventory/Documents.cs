@@ -34,6 +34,8 @@ public enum StockDocumentType
     Receipt,
     /// <summary>Списание: себеппен шығыс.</summary>
     WriteOff,
+    /// <summary>Жеткізушіге бастапқы қарыз (дәптерден қолмен енгізілген): жолсыз, қалдыққа тимейді, тек қарыз ретінде есептеледі.</summary>
+    OpeningDebt,
 }
 
 public enum StockDocumentStatus
@@ -93,8 +95,10 @@ public class StockDocument
 
     /// <summary>Құжат сомасы — закупочная бағамен (ТЗ §7.5, §13).</summary>
     public decimal Total { get; set; }
-    /// <summary>Тіркелген төлемдер (тек приёмка). Долг = Total − Paid.</summary>
+    /// <summary>Тіркелген төлемдер (тек приёмка). Долг = Total − Paid − WrittenOff.</summary>
     public decimal Paid { get; set; }
+    /// <summary>«Закрыть долг»: ақшасыз жабылған бөлігі (төлем емес). Долг = Total − Paid − WrittenOff.</summary>
+    public decimal WrittenOff { get; set; }
     /// <summary>Жеткізушіге төлеу мерзімі (ТЗ «Финансы» §12): өтсе — просрочка; бос — мерзімсіз.</summary>
     public DateOnly? PaymentDueDate { get; set; }
 
@@ -107,7 +111,7 @@ public class StockDocument
     public Guid? ReversedBy { get; set; }
     public string? ReversalReason { get; set; }
 
-    public decimal Remaining => Total - Paid;
+    public decimal Remaining => Total - Paid - WrittenOff;
 
     public List<StockDocumentLine> Lines { get; set; } = [];
 }
@@ -198,7 +202,10 @@ public class SupplierPayment
     /// <summary>Қай приёмкаға; бос — жалпы қарызға.</summary>
     public Guid? DocumentId { get; set; }
     public decimal Amount { get; set; }
-    public PaymentMethod Method { get; set; }
+    /// <summary>Ақшамен төлем әдісі; «Закрыть долг» (<see cref="IsWriteOff"/>) — null.</summary>
+    public PaymentMethod? Method { get; set; }
+    /// <summary>Қарыз ақшасыз жабылды: шоттарға, ақша ағынына, «оплачено» есебіне тимейді.</summary>
+    public bool IsWriteOff { get; set; }
     /// <summary>Төлем тапсырмасының нөмірі т.б.</summary>
     public string? Reference { get; set; }
     public DateOnly Date { get; set; }
