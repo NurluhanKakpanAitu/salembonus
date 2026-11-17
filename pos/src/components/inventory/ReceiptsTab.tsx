@@ -89,12 +89,14 @@ export function ReceiptsTab() {
               <th className={th}>{t('inv.mov.warehouse')}</th>
               <th className={`${th} text-right`}>{t('inv.doc.lines')}</th>
               <th className={`${th} text-right`}>{t('inv.doc.total')}</th>
+              <th className={`${th} text-right`}>{t('inv.doc.paid')}</th>
+              <th className={`${th} text-right`}>{t('inv.doc.remaining')}</th>
               <th className={th}>{t('catalog.col.status')}</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <EmptyRow colSpan={7} text={t('common.loading')} />}
-            {!isLoading && items.length === 0 && <EmptyRow colSpan={7} text={t('inv.receipts.empty')} />}
+            {isLoading && <EmptyRow colSpan={9} text={t('common.loading')} />}
+            {!isLoading && items.length === 0 && <EmptyRow colSpan={9} text={t('inv.receipts.empty')} />}
             {items.map((r) => (
               <tr key={r.id} className="cursor-pointer border-t border-line hover:bg-field/40" onClick={() => navigate(`/warehouse/receipts/${r.id}`)}>
                 <td className={`${td} font-semibold text-brand`}>{r.number}{r.isQuick && <span className="ml-1.5 rounded bg-field px-1 text-[10px] font-semibold text-ink-3">{t('inv.receipts.quickTag')}</span>}</td>
@@ -103,8 +105,13 @@ export function ReceiptsTab() {
                 <td className={td}>{r.warehouseName}</td>
                 <td className={`${td} text-right`}>{r.lineCount} <span className="text-ink-3">/ {num(r.totalQuantity)}</span></td>
                 <td className={`${td} text-right font-semibold`}>{tenge(r.total)}</td>
+                <td className={`${td} text-right`}>{tenge(r.paid)}</td>
+                <td className={`${td} text-right ${r.status === 'Posted' && r.remaining > 0 ? 'font-semibold text-danger' : ''}`}>{r.supplierId ? tenge(r.remaining) : '—'}</td>
                 <td className={td}>
                   <DocStatus status={r.status} kind="doc" />
+                  {r.status === 'Posted' && r.supplierId && r.remaining > 0 && (
+                    <span className="ml-1 rounded-lg bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{r.paid > 0 ? t('inv.pay.partial') : t('inv.pay.unpaid')}</span>
+                  )}
                 </td>
               </tr>
             ))}

@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   ArrowLeftRight, Banknote, Cake, Calculator, ChartColumn, Crown, FileText, Gift, HandCoins, History, Landmark, LayoutDashboard, ListOrdered, Megaphone, Package,
-  PieChart, ScrollText, Settings, ShoppingCart, Timer, TrendingUp, UserCog, Users, Wallet, Warehouse, Activity, FileUp, Layers, SlidersHorizontal,
+  PieChart, ScrollText, Settings, ShoppingCart, Timer, TrendingUp, Truck, UserCog, Users, Wallet, Warehouse, Activity, FileUp, Layers, SlidersHorizontal,
   Store, Building2, Monitor, CreditCard, Bell, ShieldCheck, BadgeCheck,
 } from 'lucide-react'
 import type { TranslationKey } from '../lib/i18n'
@@ -29,6 +29,7 @@ export const FINANCE_SECTIONS: SubNavItem[] = [
   { path: 'accounts', label: 'fin.section.accounts', icon: Landmark },
   { path: 'product-profit', label: 'fin.section.product-profit', icon: Banknote },
   { path: 'customer-debts', label: 'fin.section.customer-debts', icon: HandCoins },
+  { path: 'supplier-debts', label: 'fin.section.supplier-debts', icon: Truck },
   { path: 'documents', label: 'fin.section.documents', icon: FileText },
 ]
 

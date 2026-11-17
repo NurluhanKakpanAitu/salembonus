@@ -40,15 +40,11 @@ test('cart line price goes only up, each line can get its own discount, posted r
     await page.goBack()
     await expect(page.getByRole('button', { name: 'Редактировать' })).toBeVisible()
     await expect(page.getByRole('button', { name: /оплат/i })).toHaveCount(0)
-    // Жеткізушіге төлем жүйеде мүлде жоқ: приёмкада «Оплачено/Остаток долга» жоқ, тізімде — бағандар жоқ, финанста — «Долги поставщикам» жоқ.
-    await expect(page.getByText(/Остаток долга|Оплачено/)).toHaveCount(0)
+    // Приёмкада төлем жоқ, бірақ жеткізуші қарызы есептеледі: тізімде «Остаток долга», финанста «Долги поставщикам» (төлем — сонда).
     await page.goto('/warehouse/receipts')
-    await expect(page.getByRole('columnheader', { name: 'Поставщик' })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: /Оплачено|Остаток долга/ })).toHaveCount(0)
+    await expect(page.getByRole('columnheader', { name: 'Остаток долга' })).toBeVisible()
     await page.goto('/finance')
-    await expect(page.getByRole('link', { name: 'Долги клиентов' }).first()).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Долги поставщикам' })).toHaveCount(0)
-    await expect(page.getByText('Должны мы')).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Долги поставщикам' }).first()).toBeVisible()
     await page.goto(`/warehouse/receipts/${data.receiptId}`)
     await page.getByRole('button', { name: 'Редактировать' }).click()
     await expect(page.getByRole('button', { name: 'Сохранить изменения' })).toBeVisible()

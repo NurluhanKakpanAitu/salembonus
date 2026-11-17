@@ -11,7 +11,7 @@ const PAGES = [
   '/statistics', '/statistics/sales', '/statistics/products', '/statistics/inventory', '/statistics/suppliers', '/statistics/finance', '/statistics/bonus',
   '/statistics/customers', '/statistics/employees', '/statistics/registers',
   '/finance', '/finance/pnl', '/finance/cash-flow', '/finance/income-expense', '/finance/transactions', '/finance/accounts', '/finance/product-profit',
-  '/finance/customer-debts', '/finance/documents', '/finance/documents?view=reports',
+  '/finance/customer-debts', '/finance/supplier-debts', '/finance/documents', '/finance/documents?view=reports',
   '/bonus', '/bonus/statuses', '/bonus/expiry', '/bonus/birthday', '/bonus/campaigns', '/bonus/statistics', '/bonus/history', '/bonus/rules',
   '/clients', '/clients/overview', '/clients/segments', '/clients/debts', '/clients/activity', '/clients/birthdays', '/clients/exchange', '/clients/settings',
   '/staff', '/staff?new=1',

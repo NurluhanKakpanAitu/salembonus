@@ -145,7 +145,7 @@ function reportHtml({ title, overview: o, trend, tabData, tab, picked, storeName
   if (picked.summary) {
     const rows: string[][] = [
       [t('stats.inv.withStock'), num(o.inventory.withStock)], [t('stats.inv.withoutStock'), num(o.inventory.withoutStock)], [t('stats.inv.belowMin'), num(o.inventory.belowMin)],
-      [t('stats.sup.purchases'), tenge(o.suppliers.purchases)],
+      [t('stats.sup.purchases'), tenge(o.suppliers.purchases)], [t('stats.sup.paid'), tenge(o.suppliers.paid)], [t('stats.sup.debt'), tenge(o.suppliers.debt)],
     ]
     if (o.finance) rows.push([t('stats.fin.inflow'), tenge(o.finance.inflow)], [t('stats.fin.outflow'), tenge(o.finance.outflow)], [t('stats.fin.net'), tenge(o.finance.netFlow)])
     parts.push(`<h2>${esc(t('stats.pdf.block.summary'))}</h2>` + table([t('stats.col.metric'), t('stats.col.value')], rows, [1]))

@@ -270,21 +270,34 @@ public partial class AnalyticsService
         var allDocs = (await repo.DocumentsAsync(c.StoreIds, null, null, ct))
             .Where(d => d.Type == StockDocumentType.Receipt && d.Status == StockDocumentStatus.Posted && (q.SupplierId is null || d.SupplierId == q.SupplierId)).ToList();
         var period = allDocs.Where(d => d.Date >= c.FromUtc && d.Date < c.ToUtc).ToList();
+        var payments = (await repo.SupplierPaymentsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct)).Where(p => q.SupplierId is null || p.SupplierId == q.SupplierId).ToList();
         var names = await repo.SupplierNamesAsync(c.OrgId, ct);
+        var debt = allDocs.Where(d => d.SupplierId != null).Sum(d => d.Total - d.Paid);
 
         var kpis = new List<KpiDto>
         {
             Kpi("purchases", period.Sum(d => d.Total), null, numerator: period.Count),
             Kpi("receiptDocs", period.Count, null),
+            Kpi("supplierPaid", payments.Sum(p => p.Amount), null, numerator: payments.Count),
+            Kpi("supplierDebt", debt, null, note: "asOfNow"),
             Kpi("activeSuppliers", period.Where(d => d.SupplierId != null).Select(d => d.SupplierId).Distinct().Count(), null),
         };
-        var purchases = Zeros(c);
+        var purchases = Zeros(c); var paid = Zeros(c);
         foreach (var d in period) { var i = c.BucketOf(d.Date); if (i >= 0) purchases[i] += d.Total; }
+        foreach (var p in payments) { var i = c.BucketOf(p.CreatedAt); if (i >= 0) paid[i] += p.Amount; }
+
+        var supplied = period.Where(d => d.SupplierId != null).ToList();
+        var status = Shares(new[]
+        {
+            ("paid", (string?)null, (decimal)supplied.Count(d => d.Paid >= d.Total), (int?)null),
+            ("partial", null, supplied.Count(d => d.Paid > 0 && d.Paid < d.Total), null),
+            ("unpaid", null, supplied.Count(d => d.Paid == 0 && d.Total > 0), null),
+        });
         var top = Shares(period.GroupBy(d => d.SupplierId).Select(g => (g.Key?.ToString() ?? "none",
                 (string?)(g.Key is { } id ? names.GetValueOrDefault(id) : null), g.Sum(d => d.Total), (int?)g.Count()))
             .OrderByDescending(x => x.Item3).Take(10));
 
-        var ids = allDocs.Select(d => d.SupplierId).Distinct();
+        var ids = allDocs.Select(d => d.SupplierId).Concat(payments.Select(p => (Guid?)p.SupplierId)).Distinct();
         var rows = ids.Select(id =>
         {
             var docsOf = allDocs.Where(d => d.SupplierId == id).ToList();
@@ -293,17 +306,21 @@ public partial class AnalyticsService
             {
                 ["supplierId"] = id, ["supplier"] = id is { } x ? names.GetValueOrDefault(x) : null,
                 ["documents"] = inPeriod.Count, ["purchases"] = inPeriod.Sum(d => d.Total),
+                ["paid"] = payments.Where(p => p.SupplierId == id).Sum(p => p.Amount),
+                ["debt"] = id is null ? null : docsOf.Sum(d => d.Total - d.Paid),
                 ["lastReceipt"] = docsOf.Count == 0 ? null : docsOf.Max(d => d.Date),
             };
-        }).Where(r => (int)r["documents"]! > 0).ToList();
+        }).Where(r => (int)r["documents"]! > 0 || (decimal)r["paid"]! > 0 || r["debt"] is decimal dd && dd > 0).ToList();
         var columns = new[]
         {
-            Col("supplier", "text", link: "/warehouse/suppliers/{supplierId}"), Col("documents", "int"), Col("purchases", "money"), Col("lastReceipt", "datetime"),
+            Col("supplier", "text", link: "/warehouse/suppliers/{supplierId}"), Col("documents", "int"), Col("purchases", "money"),
+            Col("paid", "money"), Col("debt", "money"), Col("lastReceipt", "datetime"),
         };
         return new AnalyticsTabDto(c.Meta(), kpis, c.Buckets,
-            [new SeriesDto("purchases", "money", "bar", purchases)],
-            [Breakdown("topSuppliers", "money", top)],
-            Table(columns, rows, q, "purchases", true, all), []);
+            [new SeriesDto("purchases", "money", "bar", purchases), new SeriesDto("supplierPaid", "money", "line", paid)],
+            [Breakdown("paymentStatus", "count", status), Breakdown("topSuppliers", "money", top)],
+            Table(columns, rows, q, "purchases", true, all),
+            ["purchasesVsDebt"]);
     }
 
     // ---------- Финансы (§19) ----------
@@ -314,6 +331,8 @@ public partial class AnalyticsService
         var returns = await repo.ReturnsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct);
         var (flow, repaid, supplier) = await CashFlowAsync(c, sales, returns, ct);
         var (_, customerDebt) = await repo.OpenDebtsAsync(c.StoreIds, ct);
+        var supplierDebt = (await repo.DocumentsAsync(c.StoreIds, null, null, ct))
+            .Where(d => d.Type == StockDocumentType.Receipt && d.Status == StockDocumentStatus.Posted && d.SupplierId != null).Sum(d => d.Total - d.Paid);
         var debtIssued = sales.SelectMany(s => s.Payments).Where(p => p.Method == PaymentMethod.Debt).Sum(p => p.Amount);
 
         var kpis = new List<KpiDto>
@@ -323,6 +342,7 @@ public partial class AnalyticsService
             Kpi("netFlow", flow.Inflow - flow.Outflow, null),
             Kpi("debtIssued", debtIssued, null),
             Kpi("customerDebt", customerDebt, null, note: "asOfNow"),
+            Kpi("supplierDebt", supplierDebt, null, note: "asOfNow"),
             Unavailable("expenses", "noExpensesModule"),
         };
 
