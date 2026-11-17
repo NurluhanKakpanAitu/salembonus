@@ -96,6 +96,11 @@ async function checkOpener(page: Page, lang: 'ru' | 'kk', o: Opener) {
     return
   }
   await expect(button, `${where}: кнопка не найдена`).toBeVisible()
+  if (o.item) {
+    // RowMenu айналдыру оқиғасында жабылады: батырманы алдын ала көрсетіп, айналдыру оқиғалары бітуін күтеміз.
+    await button.scrollIntoViewIfNeeded()
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))))
+  }
   await button.click()
   if (o.item) {
     // Мәзір айналдырғанда жабылады (RowMenu): элементті айналдырмай, тікелей click оқиғасын жібереміз.
