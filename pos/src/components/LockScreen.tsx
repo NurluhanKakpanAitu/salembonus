@@ -44,7 +44,7 @@ export function LockScreen() {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center bg-[radial-gradient(120%_90%_at_30%_20%,#0d3a8f_0%,#071a3d_45%,#040c1f_100%)] px-6 text-white">
+    <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-[radial-gradient(120%_90%_at_30%_20%,#0d3a8f_0%,#071a3d_45%,#040c1f_100%)] px-6 text-white">
       <div className="absolute left-6 top-6"><Logo size={26} /></div>
 
       <span className="flex size-14 items-center justify-center rounded-2xl bg-white/10"><Lock size={26} /></span>

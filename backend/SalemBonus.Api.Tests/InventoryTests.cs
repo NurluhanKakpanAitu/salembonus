@@ -234,6 +234,12 @@ public class InventoryTests(ApiFixture api)
         Assert.Equal(-2m, movement["quantity"]!.GetValue<decimal>());
         Assert.Equal(3m, movement["balanceAfter"]!.GetValue<decimal>());
         Assert.StartsWith("Damage", movement["comment"]!.GetValue<string>());
+
+        // Сторно: себепсіз болмайды; себеппен — тауар қоймаға қайтады, құжат «Сторнирован».
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{Inv}/documents/{doc["id"]}/reverse", new { reason = "  " })).Status);
+        var reversed = (await pos.Post(pos.Owner, $"{Inv}/documents/{doc["id"]}/reverse", new { reason = "Нашли товар" })).Ok;
+        Assert.Equal("Reversed", reversed["status"]!.GetValue<string>());
+        Assert.Equal(5m, await pos.StockAsync(product));
     }
 
     // ---------- Перемещение (§10) ----------

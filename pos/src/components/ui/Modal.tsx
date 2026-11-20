@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 /** Ортадағы модалды терезе: Escape мен фонды басу жабады. */
@@ -14,8 +15,10 @@ export function Modal({ title, onClose, children, width = 440 }: {
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-2 sm:p-4" onMouseDown={onClose}>
+  // body-ге portal: модал беттің <form>-ы ішінде тұрса, ішкі форма ішкі болып қалады (HTML-де рұқсат жоқ) —
+  // батырма беттің формасын жіберіп, бет қайта жүктеледі. submit оқиғасы React ағашы бойынша сыртқы формаға да жетпейді.
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 p-2 sm:p-4" onMouseDown={onClose} onSubmit={(e) => e.stopPropagation()}>
       <div
         role="dialog"
         aria-modal="true"
@@ -32,6 +35,7 @@ export function Modal({ title, onClose, children, width = 440 }: {
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
