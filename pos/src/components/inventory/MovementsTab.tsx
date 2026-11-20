@@ -107,7 +107,7 @@ export function MovementsTab() {
                 <td className={`${td} text-right font-semibold ${m.quantity >= 0 ? 'text-success' : 'text-danger'}`}>{m.quantity > 0 ? '+' : ''}{num(m.quantity)}</td>
                 <td className={`${td} text-right font-semibold`}>{num(m.balanceAfter)}</td>
                 <td className={`${td} text-[13px] text-ink-2`}>{m.staffName ?? '—'}</td>
-                <td className={`${td} max-w-64 truncate text-[13px] text-ink-2`} title={comment(m) ?? undefined}>{comment(m) ?? '—'}</td>
+                <td className={`${td} min-w-48 max-w-80 whitespace-normal break-words text-[13px] leading-snug text-ink-2`}>{comment(m) ?? '—'}</td>
               </tr>
             ))}
           </tbody>
