@@ -9,7 +9,7 @@ public record AnalyticsProduct(Guid Id, string Name, string? Article, Guid? Node
 
 public record AnalyticsBonusTx(DateTime CreatedAt, BonusTransactionType Type, int Amount, Guid? ReceiptId, Guid StoreId);
 
-public record AnalyticsDebtPayment(DateTime CreatedAt, decimal Amount, PaymentMethod? Method, bool IsReturn, Guid StaffUserId, Guid? RegisterId);
+public record AnalyticsDebtPayment(DateTime CreatedAt, decimal Amount, PaymentMethod? Method, bool IsReturn, Guid StaffUserId, Guid? RegisterId, bool IsBonus = false);
 
 /// <summary>Клиенттің ұйым бойынша бүкіл тарихы (ТЗ «Статистика» §13: «жаңа» — компанияда алғаш сатып алған).</summary>
 public record AnalyticsCustomerHistory(Guid CustomerId, DateTime FirstAt, DateTime LastAt, int Purchases, decimal Amount);

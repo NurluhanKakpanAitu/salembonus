@@ -122,15 +122,18 @@ public record ProductProfitDto(int Total, int Page, int PageSize, decimal NetRev
 public record CustomerDebtRowDto(Guid CustomerId, string Name, string? Phone, decimal Total, decimal Overdue, DateOnly? NextDue, int Documents, string Status);
 
 public record CustomerDebtDocDto(Guid DebtId, Guid? SaleId, long? SaleNumber, DateTime CreatedAt, DateOnly DueDate, decimal Amount, decimal Paid, decimal Remaining,
-    string Status, bool Overdue, string? Comment);
+    string Status, bool Overdue, string? Comment, Guid StoreId = default, int BonusLimit = 0);
+
+/// <summary>Клиенттің дүкендегі бонус балансы және бонуспен төлеудің шегі (қарыздың %-ы), қарызды бонуспен өтеу үшін.</summary>
+public record CustomerBonusBalanceDto(Guid StoreId, int Balance, decimal MaxPercent);
 
 public record CustomerDebtPaymentDto(Guid Id, DateTime CreatedAt, Guid DebtId, long? SaleNumber, decimal Amount, string? Method, bool IsReturn, decimal RemainingAfter,
-    string StaffName, Guid? OperationId, string? OperationNumber, bool IsWriteOff = false, string? Comment = null);
+    string StaffName, Guid? OperationId, string? OperationNumber, bool IsWriteOff = false, string? Comment = null, bool IsBonus = false);
 
 public record CustomerDebtsDto(int Customers, decimal Total, decimal Overdue, decimal DueSoon, IReadOnlyList<CustomerDebtRowDto> Rows, int RowsTotal);
 
 public record CustomerDebtCardDto(Guid CustomerId, string Name, string? Phone, decimal Total, decimal Overdue, DateOnly? NextDue,
-    IReadOnlyList<CustomerDebtDocDto> Documents, IReadOnlyList<CustomerDebtPaymentDto> Payments);
+    IReadOnlyList<CustomerDebtDocDto> Documents, IReadOnlyList<CustomerDebtPaymentDto> Payments, IReadOnlyList<CustomerBonusBalanceDto>? Bonus = null);
 
 public record DebtAllocationRequest(Guid DebtId, decimal Amount);
 

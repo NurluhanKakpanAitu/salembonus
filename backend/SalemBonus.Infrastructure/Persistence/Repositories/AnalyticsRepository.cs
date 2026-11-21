@@ -22,7 +22,7 @@ public class AnalyticsRepository(AppDbContext db) : IAnalyticsRepository
         await (from p in db.DebtPayments
                join d in db.Debts on p.DebtId equals d.Id
                where storeIds.Contains(d.StoreId) && !p.IsWriteOff && p.CreatedAt >= fromUtc && p.CreatedAt < toUtc
-               select new AnalyticsDebtPayment(p.CreatedAt, p.Amount, p.Method, p.IsReturn, p.StaffUserId, p.RegisterId)).ToListAsync(ct);
+               select new AnalyticsDebtPayment(p.CreatedAt, p.Amount, p.Method, p.IsReturn, p.StaffUserId, p.RegisterId, p.IsBonus)).ToListAsync(ct);
 
     public async Task<(int Count, decimal Remaining)> OpenDebtsAsync(IReadOnlyCollection<Guid> storeIds, CancellationToken ct = default)
     {

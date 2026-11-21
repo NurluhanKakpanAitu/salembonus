@@ -41,7 +41,7 @@ public record ClientProductRow(Guid ProductId, string Name, decimal Quantity, de
 
 public record ClientFinanceRow(Guid Id, string Number, DateTime Date, string Type, string Status, decimal Amount, string Description, Guid StoreId);
 
-public record ClientDebtPaymentRow(Guid Id, Guid DebtId, Guid StoreId, long? SaleNumber, DateTime CreatedAt, decimal Amount, PaymentMethod? Method, bool IsReturn, Guid StaffUserId);
+public record ClientDebtPaymentRow(Guid Id, Guid DebtId, Guid StoreId, long? SaleNumber, DateTime CreatedAt, decimal Amount, PaymentMethod? Method, bool IsReturn, Guid StaffUserId, bool IsWriteOff = false, bool IsBonus = false);
 
 public record ClientAuditRow(Guid Id, DateTime CreatedAt, Guid? StaffUserId, string Action, string? OldValues, string? NewValues);
 

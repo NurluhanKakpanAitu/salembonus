@@ -12,8 +12,8 @@ import { EmptyRow, Pager, StatCard, td, th, useDebounced } from '../inventory/in
 import { ApiError } from '../../lib/api'
 import { dateOnly, dateTime } from '../../lib/dates'
 import { financeApi, financeKeys } from '../../lib/financeApi'
-import { PAY_METHODS, type CustomerDebtCard, type FinanceAccount, type PayMethod } from '../../lib/financeTypes'
-import { tenge } from '../../lib/money'
+import { PAY_METHODS, type CustomerDebtCard, type CustomerDebtDoc, type FinanceAccount, type PayMethod } from '../../lib/financeTypes'
+import { num, tenge } from '../../lib/money'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { BlockError, Segmented, Skeleton } from '../stats/statsUi'
 import { DebtBadge, reportError, useFinanceMeta, useFinancePermissions, type FinanceFilters } from './financeUi'
@@ -147,7 +147,7 @@ function CustomerCardModal({ customerId, storeIds, pay, onClose, onChanged }: { 
                   <td className={`${td} text-right font-semibold tabular-nums ${x.isWriteOff ? 'text-ink-2' : 'text-success'}`}>{x.isWriteOff ? '' : '+'}{tenge(x.amount)}</td>
                   <td className={`${td} text-ink-2`}>{x.isWriteOff
                     ? <><span className="font-semibold text-ink">{t('fin.debt.closedNoMoney')}</span>{x.comment && <span className="block text-[12px]">{x.comment}</span>}</>
-                    : x.isReturn ? t('fin.cd.byReturn') : x.method ? t(`pay.${x.method}` as TranslationKey) : '—'}</td>
+                    : x.isBonus ? t('debt.byBonus') : x.isReturn ? t('fin.cd.byReturn') : x.method ? t(`pay.${x.method}` as TranslationKey) : '—'}</td>
                   <td className={`${td} text-right tabular-nums text-ink-2`}>{tenge(x.remainingAfter)}</td>
                   <td className={`${td} text-ink-2`}>{x.staffName}</td>
                   <td className={td}>{x.operationId ? <Link to={`/finance/transactions?op=${x.operationId}`} className="text-brand hover:underline">{x.operationNumber}</Link> : '—'}</td>
@@ -169,28 +169,43 @@ export function CustomerPaymentModal({ card, accounts, onClose, onDone }: { card
   const t = useT()
   const open = useMemo(() => card.documents.filter((x) => x.remaining > 0), [card])
   const [alloc, setAlloc] = useState<Record<string, string>>(() => Object.fromEntries(open.map((x) => [x.debtId, ''])))
-  const [method, setMethod] = useState<PayMethod>('Cash')
+  const [method, setMethod] = useState<PayMethod | 'Bonus'>('Cash')
+  const bonusByStore = useMemo(() => new Map((card.bonus ?? []).map((b) => [b.storeId, b])), [card])
+  const hasBonus = (card.bonus ?? []).some((b) => b.balance > 0)
+  const isBonus = method === 'Bonus'
+  const valueOf = (id: string) => Number((alloc[id] ?? '').replace(',', '.')) || 0
+  // Бонуспен: әр қарызға — дүкен шегі (қарыздың %-ы, бұрын бонуспен төленгені шегерілген), бір дүкеннің қарыздарына — баланстан артық емес.
+  const maxOf = (x: CustomerDebtDoc) => (isBonus ? Math.min(x.bonusLimit ?? 0, Math.floor(x.remaining)) : x.remaining)
+  const storeOver = isBonus && [...bonusByStore.values()].some((b) => open.filter((x) => x.storeId === b.storeId).reduce((s, x) => s + valueOf(x.debtId), 0) > b.balance)
   const [accountId, setAccountId] = useState('')
   const [comment, setComment] = useState('')
   const [documentNumber, setDocumentNumber] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const requestId = useRef(crypto.randomUUID())
-  const sum = open.reduce((s, x) => s + (Number((alloc[x.debtId] ?? '').replace(',', '.')) || 0), 0)
-  const over = open.some((x) => (Number((alloc[x.debtId] ?? '').replace(',', '.')) || 0) > x.remaining)
-  const defaultAccount = accounts.find((a) => a.isActive && a.methods.includes(method))
-  const fillAll = () => setAlloc(Object.fromEntries(open.map((x) => [x.debtId, String(x.remaining)])))
+  const sum = open.reduce((s, x) => s + valueOf(x.debtId), 0)
+  const over = storeOver || open.some((x) => valueOf(x.debtId) > maxOf(x) || (isBonus && !Number.isInteger(valueOf(x.debtId))))
+  const defaultAccount = isBonus ? undefined : accounts.find((a) => a.isActive && a.methods.includes(method as PayMethod))
+  const fillAll = () => {
+    const left = new Map([...bonusByStore.values()].map((b) => [b.storeId, b.balance]))
+    setAlloc(Object.fromEntries(open.map((x) => {
+      if (!isBonus) return [x.debtId, String(x.remaining)]
+      const take = Math.max(0, Math.min(maxOf(x), left.get(x.storeId ?? '') ?? 0))
+      left.set(x.storeId ?? '', (left.get(x.storeId ?? '') ?? 0) - take)
+      return [x.debtId, take > 0 ? String(take) : '']
+    })))
+  }
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!(sum > 0) || over) return
     setBusy(true)
     try {
       await financeApi.customerPayment({
-        customerId: card.customerId, accountId: accountId || null, method, comment: comment.trim() || null, documentNumber: documentNumber.trim() || null,
+        customerId: card.customerId, accountId: isBonus ? null : accountId || null, method, comment: comment.trim() || null, documentNumber: documentNumber.trim() || null,
         allocations: open.filter((x) => Number((alloc[x.debtId] ?? '').replace(',', '.')) > 0).map((x) => ({ debtId: x.debtId, amount: Number(alloc[x.debtId].replace(',', '.')) })),
         clientRequestId: requestId.current,
       })
-      toast(t('fin.cd.accepted', { amount: tenge(sum) }))
+      toast(isBonus ? t('fin.cd.acceptedBonus', { amount: num(sum) }) : t('fin.cd.accepted', { amount: tenge(sum) }))
       onDone()
     } catch (err) { setError(err instanceof ApiError ? err.message : t('fin.failed')); reportError(err, t('fin.failed')) } finally { setBusy(false) }
   }
@@ -201,32 +216,39 @@ export function CustomerPaymentModal({ card, accounts, onClose, onDone }: { card
           <div className="flex items-center justify-between border-b border-line px-3 py-2 text-[13px] font-semibold text-ink-2"><span>{t('fin.cd.allocation')}</span><button type="button" className="text-brand hover:underline" onClick={fillAll}>{t('fin.payAll')}</button></div>
           {open.map((x) => (
             <div key={x.debtId} className="flex items-center gap-3 border-b border-line px-3 py-2 text-[14px] last:border-0">
-              <span className="min-w-0 flex-1">{x.saleNumber ? `№${x.saleNumber}` : t('fin.debt.manual')} · {dateOnly(x.dueDate)}<span className={`ml-2 text-[12px] ${x.overdue ? 'text-danger' : 'text-ink-3'}`}>{t('fin.remaining')}: {tenge(x.remaining)}</span></span>
-              <Input inputMode="decimal" className="h-9! w-32 text-right" value={alloc[x.debtId] ?? ''} onChange={(e) => setAlloc((a) => ({ ...a, [x.debtId]: e.target.value }))} error={(Number((alloc[x.debtId] ?? '').replace(',', '.')) || 0) > x.remaining} placeholder="0" />
+              <span className="min-w-0 flex-1">{x.saleNumber ? `№${x.saleNumber}` : t('fin.debt.manual')} · {dateOnly(x.dueDate)}<span className={`ml-2 text-[12px] ${x.overdue ? 'text-danger' : 'text-ink-3'}`}>{t('fin.remaining')}: {tenge(x.remaining)}</span>{isBonus && <span className="ml-2 text-[12px] text-brand">{t('fin.cd.bonusUpTo', { n: num(maxOf(x)) })}</span>}</span>
+              <Input inputMode="decimal" className="h-9! w-32 text-right" value={alloc[x.debtId] ?? ''} onChange={(e) => setAlloc((a) => ({ ...a, [x.debtId]: e.target.value }))} aria-label={x.saleNumber ? `№${x.saleNumber}` : t('fin.debt.manual')} error={valueOf(x.debtId) > maxOf(x)} placeholder="0" />
             </div>
           ))}
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label={t('fin.method')} required>
-            <Select value={method} onChange={(e) => setMethod(e.target.value as PayMethod)}>{PAY_METHODS.map((m) => <option key={m} value={m}>{t(`pay.${m}` as TranslationKey)}</option>)}</Select>
+            <Select value={method} onChange={(e) => { setMethod(e.target.value as PayMethod | 'Bonus'); setAlloc(Object.fromEntries(open.map((x) => [x.debtId, '']))) }}>
+              {PAY_METHODS.map((m) => <option key={m} value={m}>{t(`pay.${m}` as TranslationKey)}</option>)}
+              {hasBonus && <option value="Bonus">{t('pay.Bonus')}</option>}
+            </Select>
           </Field>
+          {isBonus ? (
+            <p className="self-end rounded-xl bg-brand-soft px-3 py-2 text-[13px] text-ink-2">{t('fin.cd.bonusBalance', { n: num((card.bonus ?? []).reduce((s, b) => s + b.balance, 0)) })}</p>
+          ) : (
           <Field label={t('fin.toAccount')} hint={!accountId && defaultAccount ? `${t('fin.byMethod')}: ${defaultAccount.name}` : undefined}>
             <Select value={accountId} onChange={(e) => setAccountId(e.target.value)}>
               <option value="">{t('fin.byMethod')}</option>
               {accounts.filter((a) => a.isActive).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
             </Select>
           </Field>
+          )}
           <Field label={t('fin.col.document')}><Input value={documentNumber} maxLength={64} onChange={(e) => setDocumentNumber(e.target.value)} /></Field>
           <Field label={t('fin.comment')}><Textarea value={comment} maxLength={500} onChange={(e) => setComment(e.target.value)} className="min-h-11! h-11" /></Field>
         </div>
         {error && <p className="text-[13px] text-danger">{error}</p>}
         <div className="flex items-center gap-3 border-t border-line pt-4">
-          <span className="text-[15px]">{t('fin.cd.paymentSum')}: <b>{tenge(sum)}</b>{over && <span className="ml-2 text-[13px] text-danger">{t('fin.err.allocationTooMuch')}</span>}</span>
+          <span className="text-[15px]">{t('fin.cd.paymentSum')}: <b>{isBonus ? `${num(sum)} Б` : tenge(sum)}</b>{over && <span className="ml-2 text-[13px] text-danger">{isBonus ? t('fin.cd.bonusTooMuch') : t('fin.err.allocationTooMuch')}</span>}</span>
           <span className="ml-auto" />
           <Button type="button" variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
           <Button type="submit" loading={busy} disabled={!(sum > 0) || over}>{t('fin.cd.acceptBtn')}</Button>
         </div>
-        <p className="text-[12px] text-ink-3">{t('fin.cd.hint')}</p>
+        <p className="text-[12px] text-ink-3">{isBonus ? t('fin.cd.bonusHint') : t('fin.cd.hint')}</p>
       </form>
     </Modal>
   )

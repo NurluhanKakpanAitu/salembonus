@@ -207,7 +207,7 @@ public class ReturnService(
 }
 
 /// <summary>Қарыздар (ТЗ «Касса» §11.6–11.12): клиенттің қарыздары және бөліп не толық өтеу.</summary>
-public class DebtService(ISalesRepository sales, CashierService cashier, Finance.FinanceLedger finance, StoreNotifier notifier, CatalogAccess access, IUnitOfWork unitOfWork)
+public class DebtService(ISalesRepository sales, CashierService cashier, Finance.FinanceLedger finance, StoreNotifier notifier, DebtBonusPayer bonusPayer, CatalogAccess access, IUnitOfWork unitOfWork)
 {
     private AppLanguage Lang => access.Lang;
 
@@ -232,6 +232,7 @@ public class DebtService(ISalesRepository sales, CashierService cashier, Finance
         var amount = Math.Round(request.Amount, 2);
         if (amount <= 0) throw new ValidationException(Messages.PaymentAmountInvalid(Lang), "amount");
         if (amount > debt.Remaining) throw new ValidationException(Messages.DebtRepayTooMuch(Lang, debt.Remaining), "amount");
+        if (string.Equals(request.Method, "Bonus", StringComparison.OrdinalIgnoreCase)) return await RepayWithBonusAsync(debt, amount, registerId, m.StoreId, orgId, ct);
         var method = Enum.TryParse<PaymentMethod>(request.Method, ignoreCase: true, out var pm)
                      && pm is PaymentMethod.Cash or PaymentMethod.Card or PaymentMethod.Qr or PaymentMethod.Transfer
             ? pm : throw new ValidationException(Messages.PaymentMethodInvalid(Lang), "method");
@@ -276,10 +277,30 @@ public class DebtService(ISalesRepository sales, CashierService cashier, Finance
         return ToDto(fresh, staffNames);
     }
 
+    /// <summary>Бонуспен өтеу: бонус шегеріледі, қарыз азаяды; ақша шоттарына, кассаға, выручкаға тимейді.</summary>
+    private async Task<DebtDto> RepayWithBonusAsync(Debt debt, decimal amount, Guid? registerId, Guid storeId, Guid orgId, CancellationToken ct)
+    {
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            // Транзакция ішінде қайта бұғаттаймыз: қатар екі өтеу қалдықтан асып кетпеуі үшін.
+            debt = await sales.GetDebtForUpdateAsync(storeId, debt.Id, ct) ?? throw new NotFoundException(Messages.DebtNotFound(Lang));
+            if (debt.Status == DebtStatus.Paid) throw new ValidationException(Messages.DebtAlreadyPaid(Lang), "amount");
+            if (amount > debt.Remaining) throw new ValidationException(Messages.DebtRepayTooMuch(Lang, debt.Remaining), "amount");
+            var payment = await bonusPayer.PayAsync(debt, amount, registerId, null, DateTime.UtcNow, ct);
+            sales.AddDebtPayment(payment);
+            access.Audit(orgId, storeId, "debt.repay", "debt", debt.Id, null, new { debt.SaleNumber, Amount = payment.Amount, Method = "Bonus", Remaining = debt.Remaining });
+            await unitOfWork.SaveChangesAsync(ct);
+            return payment;
+        }, ct);
+        var fresh = await sales.GetDebtForUpdateAsync(storeId, debt.Id, ct);
+        var staffNames = await sales.StaffNamesAsync(fresh!.Payments.Select(p => p.StaffUserId).Append(fresh.StaffUserId).Distinct().ToList(), ct);
+        return ToDto(fresh, staffNames);
+    }
+
     private static DebtDto ToDto(Debt d, IReadOnlyDictionary<Guid, string> names) => new(
         d.Id, d.SaleId, d.SaleNumber, d.Amount, d.Paid, d.Remaining, d.DueDate, d.Comment, d.Status.ToString(), d.CreatedAt,
         names.GetValueOrDefault(d.StaffUserId) ?? string.Empty,
         d.Payments.OrderByDescending(p => p.CreatedAt).Select(p => new DebtPaymentDto(
             p.Amount, p.Method?.ToString(), p.IsReturn, p.TransferRecipient, p.RemainingAfter, p.CreatedAt,
-            names.GetValueOrDefault(p.StaffUserId) ?? string.Empty, p.IsWriteOff, p.Comment)).ToList());
+            names.GetValueOrDefault(p.StaffUserId) ?? string.Empty, p.IsWriteOff, p.Comment, p.IsBonus)).ToList());
 }

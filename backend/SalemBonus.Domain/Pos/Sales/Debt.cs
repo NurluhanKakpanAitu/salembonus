@@ -43,6 +43,8 @@ public class DebtPayment
     public bool IsReturn { get; set; }
     /// <summary>«Закрыть долг»: қарыз ақшасыз жабылды (дәптерде өтелген, кешірілген т.б.). Method — null, ақша шоттарына, выручкаға, кассаға тимейді.</summary>
     public bool IsWriteOff { get; set; }
+    /// <summary>Клиенттің бонустарымен өтелді (1 Б = 1 ₸): Method — null, ақша шоттарына, кассаға тимейді; P&amp;L-де «Оплачено бонусами».</summary>
+    public bool IsBonus { get; set; }
     /// <summary>Жабу себебі (міндетті) не өтеуге түсініктеме.</summary>
     public string? Comment { get; set; }
     public string? TransferRecipient { get; set; }

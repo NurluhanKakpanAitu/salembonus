@@ -187,6 +187,65 @@ public class FinanceTests(ApiFixture api)
         Assert.Contains(rows, r => r!["customerId"]!.GetValue<Guid>() == customer && r["total"]!.GetValue<decimal>() == 3000m);
     }
 
+    // ---------- Қарызды бонуспен өтеу: бонус шегеріледі, ақша шоттарына тимейді, P&L-де «Оплачено бонусами» ----------
+
+    [Fact]
+    public async Task Debt_can_be_paid_with_bonuses_within_the_store_limit_without_touching_money()
+    {
+        const string B = "/api/pos/v1/bonus";
+        var pos = await api.NewDeviceAsync();
+        var product = await pos.CreateProductAsync(price: 5000, stock: 3);
+        var customer = (await pos.CreateCustomerAsync())["id"]!.GetValue<Guid>();
+        async Task<int> Bonus() => (await pos.Get(pos.Owner, $"{B}/customers/{customer}")).Ok["customer"]!["balance"]!.GetValue<int>();
+        Task<ApiResult> Accrue(int amount) => pos.Post(pos.Owner, $"{B}/operations/accrue", new { customerId = customer, amount, reason = "Компенсация", unlimited = true });
+        var netBefore = await PnlRowAsync(pos, "netRevenue");
+        var bonusRowBefore = await PnlRowAsync(pos, "bonusRedeemed");
+        var debtId = (await pos.SellAsync(pos.Owner, [Pos.Line(product, 1)], [Debt(5000)], customerId: customer)).Ok["debt"]!["id"]!.GetValue<Guid>();
+        (await Accrue(1000)).EnsureOk();
+        var account = await NewAccountAsync(pos, opening: 0, type: "Cash");
+
+        // Касса: шек — қарыздың 30%-ы (1500) мен баланс (1000); бүтін сома ғана.
+        string Pay(decimal amount) => $"/api/pos/v1/debts/{debtId}/payments";
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, Pay(0), new { amount = 1001m, method = "Bonus" })).Status);
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, Pay(0), new { amount = 300.5m, method = "Bonus" })).Status);
+        var repaid = (await pos.Post(pos.Owner, Pay(0), new { amount = 600m, method = "Bonus" })).Ok;
+        Assert.Equal(4400m, repaid["remaining"]!.GetValue<decimal>());
+        var row = repaid["payments"]![0]!;
+        Assert.True(row["isBonus"]!.GetValue<bool>());
+        Assert.Null(row["method"]?.GetValue<string>());
+        Assert.Equal(400, await Bonus());
+        Assert.Equal(0m, await BalanceAsync(pos, account));
+        Assert.Equal(netBefore + 5000m - 600m, await PnlRowAsync(pos, "netRevenue")); // ақша келмеді — бонус жеңілдік сияқты
+        Assert.Equal(bonusRowBefore - 600m, await PnlRowAsync(pos, "bonusRedeemed"));
+
+        // Финанс: карточкада баланс пен қарыз бойынша шек; баланстан артық — тыйым; төлем қаржы операциясынсыз.
+        var card = (await pos.Get(pos.Owner, $"{F}/customer-debts/{customer}")).Ok;
+        Assert.Equal(400, card["bonus"]![0]!["balance"]!.GetValue<int>());
+        Assert.Equal(900, card["documents"]![0]!["bonusLimit"]!.GetValue<int>()); // 1500 − 600
+        object Body(decimal amount, Guid? key = null) => new { customerId = customer, method = "Bonus", allocations = new[] { new { debtId, amount } }, clientRequestId = key };
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{F}/customer-debts/payments", Body(500))).Status);
+        var key = Guid.NewGuid();
+        var after = (await pos.Post(pos.Owner, $"{F}/customer-debts/payments", Body(400, key))).Ok;
+        (await pos.Post(pos.Owner, $"{F}/customer-debts/payments", Body(400, key))).EnsureOk(); // қайталанған сұраныс — екінші рет шегерілмейді
+        Assert.Equal(4000m, after["total"]!.GetValue<decimal>());
+        Assert.Equal(0, await Bonus());
+        var finRow = after["payments"]!.AsArray().First(p => p!["amount"]!.GetValue<decimal>() == 400m)!;
+        Assert.True(finRow["isBonus"]!.GetValue<bool>());
+        Assert.Null(finRow["operationId"]?.GetValue<Guid>());
+
+        // Шек жалпы: бұрын бонуспен төленгені (1000) шегеріледі — 1500-ден 500 қалды.
+        (await Accrue(2000)).EnsureOk();
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, Pay(0), new { amount = 600m, method = "Bonus" })).Status);
+        Assert.Equal(3500m, (await pos.Post(pos.Owner, Pay(0), new { amount = 500m, method = "Bonus" })).Dec("remaining"));
+
+        // Бонус журналы: «Погашение долга» деп шығады, бонус модулінен қайтарылмайды (қарыз ашылмай қалар еді).
+        var redemption = (await pos.Get(pos.Owner, $"{B}/operations?customerId={customer}&pageSize=100")).Ok["items"]!.AsArray()
+            .First(o => o!["source"]!.GetValue<string>() == "debt")!;
+        Assert.StartsWith("Погашение долга", redemption["basis"]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.BadRequest, (await pos.Post(pos.Owner, $"{B}/operations/{redemption["id"]}/return", new { amount = 100, reason = "Ошибка" })).Status);
+        Assert.Equal(0m, await BalanceAsync(pos, account));
+    }
+
     // ---------- Дәптердегі қарыз: қолмен енгізу, «Закрыть» — ақшасыз, тарихта ----------
 
     [Fact]

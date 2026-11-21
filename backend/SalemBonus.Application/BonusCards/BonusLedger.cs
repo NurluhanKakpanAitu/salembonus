@@ -46,12 +46,13 @@ public class BonusLedger(
 
     /// <summary>Бонус шегеру: баланс азаяды, ең ескі партиялар бірінші жұмсалады. Карта бұғатталған — қолжетімдіден артық шегерілмейді.</summary>
     public async Task<Guid> RedeemAsync(BonusCard card, Customer customer, Store store, int amount, decimal purchase,
-        string? comment, Guid receiptId, DateTime now, CancellationToken ct, string source = "sale")
+        string? comment, Guid? receiptId, DateTime now, CancellationToken ct, string source = "sale", Guid? key = null)
     {
         if (amount > card.Balance) throw new ValidationException(Messages.BonusInsufficient(Lang, card.Balance), "bonus");
         card.Balance -= amount;
         await ConsumeLotsAsync(card.Id, amount, ct);
         var tx = NewTx(card, BonusTransactionType.Redemption, -amount, purchase, comment, now, receiptId, source);
+        tx.IdempotencyKey = key;
         transactions.Add(tx);
         notifications.Add(NewNotification(customer.Id, store, NotificationType.BonusRedeemed,
             "Бонус жұмсалды",
@@ -66,7 +67,7 @@ public class BonusLedger(
     /// шарттар бойынша көтеріледі (артқа санап бонус есептелмейді). Партияның мерзімі — бағдарламаның жану ережесі бойынша.
     /// </summary>
     public async Task<AccrualResult> AccrueAsync(BonusCard card, Customer customer, Store store, decimal paid, decimal purchase,
-        string? comment, Guid receiptId, DateTime now, CancellationToken ct, string source = "sale")
+        string? comment, Guid? receiptId, DateTime now, CancellationToken ct, string source = "sale")
     {
         var percent = await program.PercentForAsync(card, store, ct);
         var accrued = BonusRules.CalculateAccrual(paid, percent);

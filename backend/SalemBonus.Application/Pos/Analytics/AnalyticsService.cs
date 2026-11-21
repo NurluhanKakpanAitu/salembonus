@@ -453,7 +453,7 @@ public partial class AnalyticsService(
     internal async Task<(CashFlow Flow, IReadOnlyList<AnalyticsDebtPayment> Repaid, IReadOnlyList<AnalyticsSupplierPayment> SupplierPayments)> CashFlowAsync(
         Ctx c, IReadOnlyList<Sale> sales, IReadOnlyList<SaleReturn> returns, CancellationToken ct)
     {
-        var repaid = (await repo.DebtPaymentsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct)).Where(p => !p.IsReturn).ToList();
+        var repaid = (await repo.DebtPaymentsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct)).Where(p => !p.IsReturn && !p.IsBonus).ToList();
         var supplier = await repo.SupplierPaymentsAsync(c.StoreIds, c.FromUtc, c.ToUtc, ct);
         var flow = new CashFlow(
             sales.SelectMany(s => s.Payments).Where(p => p.Method != PaymentMethod.Debt).Sum(p => p.Amount),

@@ -87,12 +87,12 @@ export interface ProductProfitRow {
 export interface ProductProfit { total: number; page: number; pageSize: number; netRevenue: number; cost: number | null; profit: number | null; margin: number | null; costComplete: boolean; withoutCost: number; rows: ProductProfitRow[] }
 
 export interface CustomerDebtRow { customerId: string; name: string; phone: string | null; total: number; overdue: number; nextDue: string | null; documents: number; status: DebtStatus }
-export interface CustomerDebtDoc { debtId: string; saleId: string | null; saleNumber: number | null; createdAt: string; dueDate: string; amount: number; paid: number; remaining: number; status: string; overdue: boolean; comment: string | null }
-export interface CustomerDebtPayment { id: string; createdAt: string; debtId: string; saleNumber: number | null; amount: number; method: string | null; isReturn: boolean; remainingAfter: number; staffName: string; operationId: string | null; operationNumber: string | null; isWriteOff?: boolean; comment?: string | null }
+export interface CustomerDebtDoc { debtId: string; saleId: string | null; saleNumber: number | null; createdAt: string; dueDate: string; amount: number; paid: number; remaining: number; status: string; overdue: boolean; comment: string | null; storeId?: string; bonusLimit?: number }
+export interface CustomerDebtPayment { id: string; createdAt: string; debtId: string; saleNumber: number | null; amount: number; method: string | null; isReturn: boolean; remainingAfter: number; staffName: string; operationId: string | null; operationNumber: string | null; isWriteOff?: boolean; isBonus?: boolean; comment?: string | null }
 export interface CustomerDebts { customers: number; total: number; overdue: number; dueSoon: number; rows: CustomerDebtRow[]; rowsTotal: number }
-export interface CustomerDebtCard { customerId: string; name: string; phone: string | null; total: number; overdue: number; nextDue: string | null; documents: CustomerDebtDoc[]; payments: CustomerDebtPayment[] }
+export interface CustomerDebtCard { customerId: string; name: string; phone: string | null; total: number; overdue: number; nextDue: string | null; documents: CustomerDebtDoc[]; payments: CustomerDebtPayment[]; bonus?: { storeId: string; balance: number; maxPercent: number }[] }
 export interface CustomerPaymentRequest {
-  customerId: string; accountId: string | null; method: PayMethod; date?: string | null; comment?: string | null; documentNumber?: string | null
+  customerId: string; accountId: string | null; method: PayMethod | 'Bonus'; date?: string | null; comment?: string | null; documentNumber?: string | null
   allocations: { debtId: string; amount: number }[]; clientRequestId: string
 }
 

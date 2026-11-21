@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Banknote, CreditCard, Landmark, Loader2, QrCode, Receipt as ReceiptIcon, ShoppingCart, Undo2, UserRound, Wallet } from 'lucide-react'
+import { Banknote, CreditCard, Gift, Landmark, Loader2, QrCode, Receipt as ReceiptIcon, ShoppingCart, Undo2, UserRound, Wallet } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Select } from '../ui/Field'
 import { Modal } from '../ui/Modal'
@@ -156,7 +156,7 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
                     </div>
                     {d.payments.map((p, i) => (
                       <div key={i} className="mt-0.5 flex justify-between pl-3 text-[12px] text-ink-2">
-                        <span>{dateTime(p.createdAt)} · {p.isWriteOff ? `${t('fin.debt.closedNoMoney')}${p.comment ? `: ${p.comment}` : ''}` : p.isReturn ? t('debt.byReturn') : p.method ? t(`pay.${p.method}`) : ''} · {p.cashierName}</span>
+                        <span>{dateTime(p.createdAt)} · {p.isWriteOff ? `${t('fin.debt.closedNoMoney')}${p.comment ? `: ${p.comment}` : ''}` : p.isBonus ? t('debt.byBonus') : p.isReturn ? t('debt.byReturn') : p.method ? t(`pay.${p.method}`) : ''} · {p.cashierName}</span>
                         <span>{tenge(p.amount)} → {t('debt.left', { sum: tenge(p.remainingAfter) })}</span>
                       </div>
                     ))}
@@ -169,7 +169,7 @@ export function CustomerCardModal({ ctx, customer, onClose }: { ctx: CashierCont
       )}
 
       {repaying && (
-        <RepayModal ctx={ctx} debt={repaying} customerName={c.fullName || c.phone} onClose={() => setRepaying(null)}
+        <RepayModal ctx={ctx} debt={repaying} customerName={c.fullName || c.phone} bonusBalance={c.balance} onClose={() => setRepaying(null)}
           onDone={async (d) => {
             setRepaying(null)
             toast(d.status === 'Paid' ? t('debt.closed') : t('debt.repaid', { sum: tenge(d.remaining) }))
@@ -221,32 +221,48 @@ function Stat({ label, value, tone, icon, hint }: { label: string; value: string
   )
 }
 
-const METHODS: { m: Exclude<PaymentMethod, 'Debt'>; icon: typeof Banknote }[] = [
-  { m: 'Cash', icon: Banknote }, { m: 'Card', icon: CreditCard }, { m: 'Qr', icon: QrCode }, { m: 'Transfer', icon: Landmark },
+type RepayMethod = Exclude<PaymentMethod, 'Debt'> | 'Bonus'
+const METHODS: { m: RepayMethod; icon: typeof Banknote }[] = [
+  { m: 'Cash', icon: Banknote }, { m: 'Card', icon: CreditCard }, { m: 'Qr', icon: QrCode }, { m: 'Transfer', icon: Landmark }, { m: 'Bonus', icon: Gift },
 ]
 
+/** Бонуспен ең көбі (сервердегідей): қарыздың maxRedeemPercent-і минус бұрын бонуспен төленгені, қалдық пен баланстан артық емес. */
+export function debtBonusMax(debt: Debt, balance: number, percent: number) {
+  const paidByBonus = debt.payments.filter((p) => p.isBonus).reduce((s, p) => s + p.amount, 0)
+  const byPercent = Math.floor(debt.amount * percent / 100 - paidByBonus)
+  return Math.max(0, Math.min(byPercent, Math.floor(debt.remaining), balance))
+}
+
 /** Қарызды өтеу (ТЗ §11.7–11.11): бөлшек не толық, түрі таңдалады, күні мен кассирі автоматты. */
-function RepayModal({ ctx, debt, customerName, onClose, onDone }: {
+function RepayModal({ ctx, debt, customerName, bonusBalance, onClose, onDone }: {
   ctx: CashierContext
   debt: Debt
   customerName: string
+  bonusBalance: number
   onClose: () => void
   onDone: (d: Debt) => void
 }) {
   const t = useT()
   const [amount, setAmount] = useState(String(debt.remaining))
-  const [method, setMethod] = useState<Exclude<PaymentMethod, 'Debt'>>('Cash')
+  const [method, setMethod] = useState<RepayMethod>('Cash')
   const [recipient, setRecipient] = useState(ctx.transferRecipients[0]?.id ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const value = round2(Number(amount.replace(',', '.').replace(/\s/g, '')) || 0)
-  const available = METHODS.filter((x) => x.m !== 'Transfer' || ctx.transferRecipients.length > 0)
+  const bonusMax = debtBonusMax(debt, bonusBalance, ctx.maxRedeemPercent)
+  const available = METHODS.filter((x) => (x.m !== 'Transfer' || ctx.transferRecipients.length > 0) && (x.m !== 'Bonus' || bonusBalance > 0))
+  const limit = method === 'Bonus' ? bonusMax : debt.remaining
+  const pick = (m: RepayMethod) => {
+    setMethod(m)
+    if (m === 'Bonus') setAmount(String(bonusMax))
+    else if (method === 'Bonus') setAmount(String(debt.remaining))
+  }
 
   const submit = async () => {
     setBusy(true)
     setError(null)
     try {
-      onDone(await cashierApi.repayDebt(debt.id, { amount: value, method, transferRecipientId: method === 'Transfer' ? recipient : null }))
+      onDone(await cashierApi.repayDebt(debt.id, { amount: value, method: method as PaymentMethod, transferRecipientId: method === 'Transfer' ? recipient : null }))
     } catch (err) {
       setError(err instanceof ApiError ? err.message : String(err))
     } finally {
@@ -267,7 +283,7 @@ function RepayModal({ ctx, debt, customerName, onClose, onDone }: {
           <div className="flex gap-2">
             <input value={amount} inputMode="decimal" onChange={(e) => setAmount(e.target.value)}
               className="h-12 min-w-0 flex-1 rounded-xl border-2 border-line px-3 text-right text-[20px] font-bold text-ink outline-none focus:border-brand" />
-            <Button variant="secondary" className="h-12!" onClick={() => setAmount(String(debt.remaining))}>{t('pos.all')}</Button>
+            <Button variant="secondary" className="h-12!" onClick={() => setAmount(String(limit))}>{t('pos.all')}</Button>
           </div>
         </label>
         {value > 0 && value < debt.remaining && (
@@ -275,12 +291,17 @@ function RepayModal({ ctx, debt, customerName, onClose, onDone }: {
         )}
         <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${available.length}, minmax(0, 1fr))` }}>
           {available.map(({ m, icon: Icon }) => (
-            <button key={m} type="button" onClick={() => setMethod(m)}
+            <button key={m} type="button" onClick={() => pick(m)}
               className={`flex flex-col items-center gap-1 rounded-xl border-2 py-2.5 text-[13px] font-medium ${method === m ? 'border-brand bg-brand-soft text-brand' : 'border-line'}`}>
               <Icon size={19} /> {t(`pay.${m}`)}
             </button>
           ))}
         </div>
+        {method === 'Bonus' && (
+          <p className={`rounded-xl px-4 py-3 text-[13px] ${bonusMax > 0 ? 'bg-brand-soft text-ink-2' : 'bg-danger-soft text-danger'}`}>
+            {bonusMax > 0 ? t('debt.bonusAvailable', { balance: num(bonusBalance), max: num(bonusMax), percent: num(ctx.maxRedeemPercent) }) : t('debt.bonusNone')}
+          </p>
+        )}
         {method === 'Transfer' && (
           <Select value={recipient} onChange={(e) => setRecipient(e.target.value)} aria-label={t('pay.Transfer')}>
             {ctx.transferRecipients.map((r) => <option key={r.id} value={r.id}>{r.bankName} · {r.account} · {r.holderName}</option>)}
@@ -289,7 +310,7 @@ function RepayModal({ ctx, debt, customerName, onClose, onDone }: {
         {error && <p className="rounded-xl bg-danger-soft px-4 py-3 text-danger">{error}</p>}
         <div className="grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button loading={busy} disabled={value <= 0 || value > debt.remaining} onClick={() => void submit()}>{t('debt.repay')}</Button>
+          <Button loading={busy} disabled={value <= 0 || value > limit || (method === 'Bonus' && !Number.isInteger(value))} onClick={() => void submit()}>{t('debt.repay')}</Button>
         </div>
       </div>
     </Modal>

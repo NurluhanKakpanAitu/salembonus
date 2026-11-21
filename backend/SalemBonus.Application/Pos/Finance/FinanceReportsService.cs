@@ -207,10 +207,12 @@ public class FinanceReportsService(
                 : o.Type == FinanceOperationType.Income ? PnlClass.OtherIncome : PnlClass.OtherExpense, o.Amount))
             .Where(o => o.Class != PnlClass.NotInPnl).ToList();
         var gross = sales.Sum(s => s.Subtotal);
-        var discounts = sales.Sum(s => s.DiscountAmount);
-        var bonus = sales.Sum(s => s.BonusRedeemed);
+        // Қарыз кейін бонуспен өтелсе — бұл да «Оплачено бонусами» (жеңілдіктің ішінде): таза выручка сол сомаға азаяды, ақша келмеді.
+        var debtBonus = (await analytics.DebtPaymentsAsync(c.StoreIds, fromUtc, toUtc, ct)).Where(p => p.IsBonus).Sum(p => p.Amount);
+        var discounts = sales.Sum(s => s.DiscountAmount) + debtBonus;
+        var bonus = sales.Sum(s => s.BonusRedeemed) + debtBonus;
         var ret = returns.Sum(r => r.Amount);
-        return new PnlPeriod(gross, discounts, bonus, ret, sales.Sum(s => s.Total) - ret, cogs, complete, pnlOps);
+        return new PnlPeriod(gross, discounts, bonus, ret, sales.Sum(s => s.Total) - ret - debtBonus, cogs, complete, pnlOps);
     }
 
     /// <summary>COGS — сатылған сәттегі кіріс бағасы (UnitCost); қайтарылған жолдың құны бастапқы сатылым жолынан (§3, §17).</summary>

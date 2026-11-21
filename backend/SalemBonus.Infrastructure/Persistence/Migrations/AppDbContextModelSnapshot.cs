@@ -3361,6 +3361,9 @@ namespace SalemBonus.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("DebtId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsBonus")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsReturn")
                         .HasColumnType("boolean");
 

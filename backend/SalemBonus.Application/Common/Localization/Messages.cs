@@ -571,6 +571,12 @@ public static class Messages
 
     public static string DebtAlreadyPaid(AppLanguage l) => Pick(l, "Қарыз толық өтелген", "Долг уже погашен");
 
+    public static string DebtBonusWhole(AppLanguage l) => Pick(l,
+        "Бонуспен бүтін сома ғана төленеді (1 Б = 1 ₸)", "Бонусами оплачивается только целая сумма (1 Б = 1 ₸)");
+    public static string DebtBonusTooMuch(AppLanguage l, int max, decimal percent) => Pick(l,
+        $"Бонуспен ең көбі {max:N0} Б төлеуге болады (қарыздың {percent:0.##}%-ы, клиенттің балансынан артық емес)",
+        $"Бонусами можно оплатить не больше {max:N0} Б ({percent:0.##}% долга и не больше баланса клиента)");
+
     public static string DebtRepayTooMuch(AppLanguage l, decimal remaining) => Pick(l,
         $"Қалдықтан артық: қарыздың қалғаны {remaining:0.##} ₸", $"Больше остатка долга: осталось {remaining:0.##} ₸");
 
@@ -673,6 +679,8 @@ public static class Messages
     public static string BonusLotSpent(AppLanguage l, int available) => Pick(l,
         $"Бонустың бір бөлігі жұмсалған — сторноға тек {available:N0} қолжетімді. Қолмен шегеруді қолданыңыз", $"Часть бонусов уже использована — для сторно доступно только {available:N0}. Используйте ручное списание");
     public static string BonusNotRedemption(AppLanguage l) => Pick(l, "Қайтаруға тек шегеру операциясын таңдаңыз", "Для возврата выберите операцию списания");
+    public static string BonusDebtNotReturnable(AppLanguage l) => Pick(l,
+        "Қарызды өтеуге жұмсалған бонус мұнда қайтарылмайды: қарыз ашылмай қалады", "Бонусы, оплатившие долг, здесь не возвращаются: долг при этом не откроется");
     public static string BonusReturnTooMuch(AppLanguage l, int max) => Pick(l,
         $"Қайтаруға болатыны {max:N0}-нан аспайды (бастапқы шегеру минус бұрын қайтарылғаны)", $"Можно вернуть не больше {max:N0} (исходное списание за вычетом уже возвращённого)");
     public static string BonusSettingsValueInvalid(AppLanguage l) => Pick(l, "Мерзім 1-ден 120 айға (3650 күнге) дейін", "Срок — от 1 до 120 месяцев (3650 дней)");

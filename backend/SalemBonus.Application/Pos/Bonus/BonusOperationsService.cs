@@ -148,6 +148,7 @@ public class BonusOperationsService(
             var card = await repo.CardByIdForUpdateAsync(original.BonusCardId, ct);
             if (card is null || card.StoreId != c.Store.Id) throw new NotFoundException(Messages.BonusOperationNotFound(Lang));
             if (original.Type != BonusTransactionType.Redemption) throw new ValidationException(Messages.BonusNotRedemption(Lang));
+            if (original.Source == "debt") throw new ValidationException(Messages.BonusDebtNotReturnable(Lang));
             var max = Math.Max(0, -original.Amount - await repo.RestoredForRedemptionAsync(original, ct));
             if (r.Amount < 1) throw new ValidationException(Messages.BonusAmountInvalid(Lang), "amount");
             if (r.Amount > max) throw new ValidationException(Messages.BonusReturnTooMuch(Lang, max), "amount");

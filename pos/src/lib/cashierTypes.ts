@@ -144,7 +144,7 @@ export interface Debt {
   status: DebtStatus
   createdAt: string
   cashierName: string
-  payments: { amount: number; method: PaymentMethod | null; isReturn: boolean; isWriteOff?: boolean; comment?: string | null; transferRecipient: string | null;
+  payments: { amount: number; method: PaymentMethod | null; isReturn: boolean; isWriteOff?: boolean; isBonus?: boolean; comment?: string | null; transferRecipient: string | null;
     remainingAfter: number; createdAt: string; cashierName: string }[]
 }
 

@@ -388,7 +388,7 @@ public class ClientRepository(AppDbContext db) : IClientRepository
                join d in db.Debts.AsNoTracking() on p.DebtId equals d.Id
                where d.CustomerId == customerId && storeIds.Contains(d.StoreId)
                orderby p.CreatedAt descending
-               select new ClientDebtPaymentRow(p.Id, p.DebtId, d.StoreId, d.SaleNumber, p.CreatedAt, p.Amount, p.Method, p.IsReturn, p.StaffUserId)).ToListAsync(ct);
+               select new ClientDebtPaymentRow(p.Id, p.DebtId, d.StoreId, d.SaleNumber, p.CreatedAt, p.Amount, p.Method, p.IsReturn, p.StaffUserId, p.IsWriteOff, p.IsBonus)).ToListAsync(ct);
 
     // ---------- Жазбалар, хабарлар, тарих ----------
 

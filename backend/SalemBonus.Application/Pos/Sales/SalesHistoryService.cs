@@ -136,7 +136,7 @@ public class SalesHistoryService(
         foreach (var p in repayments.Where(p => !p.IsReturn))
             events.Add(p.IsWriteOff
                 ? new SaleEventDto(p.CreatedAt, "debt.closed", Name(p.StaffUserId), p.Amount, null, p.Comment, null)
-                : new SaleEventDto(p.CreatedAt, "debt.repaid", Name(p.StaffUserId), p.Amount, p.Method?.ToString(), p.TransferRecipient, null));
+                : new SaleEventDto(p.CreatedAt, "debt.repaid", Name(p.StaffUserId), p.Amount, p.IsBonus ? "Bonus" : p.Method?.ToString(), p.TransferRecipient, null));
         foreach (var r in returns)
         {
             var who = Name(r.StaffUserId);

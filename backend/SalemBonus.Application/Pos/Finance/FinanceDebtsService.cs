@@ -22,6 +22,8 @@ public class FinanceDebtsService(
     Inventory.WarehouseService warehouses,
     FinanceOperationsService operations,
     FinanceLedger ledger,
+    Sales.DebtBonusPayer bonusPayer,
+    IBonusRepository bonusRepo,
     CatalogAccess access,
     IUnitOfWork unitOfWork)
 {
@@ -88,14 +90,18 @@ public class FinanceDebtsService(
         var staff = await repo.StaffNamesAsync(payments.Select(p => p.StaffUserId).Distinct().ToList(), ct);
         var ops = await repo.OperationsBySourceAsync(payments.Select(p => p.Id).ToList(), ct);
         var numbers = debts.ToDictionary(d => d.Id, d => d.SaleNumber);
+        var bonusInfo = new Dictionary<Guid, (int Balance, decimal MaxPercent)>();
+        foreach (var storeId in debts.Where(d => d.Status == DebtStatus.Open).Select(d => d.StoreId).Distinct())
+            bonusInfo[storeId] = await bonusPayer.InfoAsync(customerId, storeId, ct);
         var open = debts.Where(d => d.Status == DebtStatus.Open).ToList();
         return new CustomerDebtCardDto(customerId, string.IsNullOrWhiteSpace(name) ? "—" : name, Phone(phone, canContacts),
             open.Sum(d => d.Remaining), open.Where(d => d.DueDate < today).Sum(d => d.Remaining), open.Count == 0 ? null : open.Min(d => d.DueDate),
             debts.Select(d => new CustomerDebtDocDto(d.Id, d.SaleId, d.SaleNumber, d.CreatedAt, d.DueDate, d.Amount, d.Paid, d.Remaining,
-                d.Status == DebtStatus.Paid ? "Paid" : d.DueDate < today ? "Overdue" : d.Paid > 0 ? "Partial" : "Open", d.Status == DebtStatus.Open && d.DueDate < today, d.Comment)).ToList(),
+                d.Status == DebtStatus.Paid ? "Paid" : d.DueDate < today ? "Overdue" : d.Paid > 0 ? "Partial" : "Open", d.Status == DebtStatus.Open && d.DueDate < today, d.Comment, d.StoreId, d.Status == DebtStatus.Open ? Sales.DebtBonusPayer.Limit(d, bonusInfo.GetValueOrDefault(d.StoreId).MaxPercent) : 0)).ToList(),
             payments.Select(p => new CustomerDebtPaymentDto(p.Id, p.CreatedAt, p.DebtId, numbers.GetValueOrDefault(p.DebtId), p.Amount, p.Method?.ToString(), p.IsReturn,
                 p.RemainingAfter, staff.GetValueOrDefault(p.StaffUserId) ?? "", ops.GetValueOrDefault(p.Id).Id is { } oid && oid != Guid.Empty ? oid : null,
-                ops.GetValueOrDefault(p.Id).Number, p.IsWriteOff, p.Comment)).ToList());
+                ops.GetValueOrDefault(p.Id).Number, p.IsWriteOff, p.Comment, p.IsBonus)).ToList(),
+            bonusInfo.Select(b => new CustomerBonusBalanceDto(b.Key, b.Value.Balance, b.Value.MaxPercent)).ToList());
     }
 
     /// <summary>«Принять оплату» (§11.1): бөлулер бойынша, FIFO жоқ; әр қарызға өз төлемі мен өз қаржы операциясы.</summary>
@@ -105,6 +111,7 @@ public class FinanceDebtsService(
         if (r.CustomerId is not { } customerId) throw new ValidationException(Messages.FinanceCounterpartyRequired(Lang), "customerId");
         if (r.ClientRequestId is { } key && await repo.FindByClientRequestAsync(c.OrgId, key, ct) is not null) return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
         var allocations = Allocations(r.Allocations?.Select(a => (a.DebtId, a.Amount)));
+        if (string.Equals(r.Method, "Bonus", StringComparison.OrdinalIgnoreCase)) return await CustomerBonusPaymentAsync(c, customerId, allocations, r, ct);
         var method = ParseMethod(r.Method);
         var account = await AccountAsync(c, r.AccountId, method, ct);
         var date = r.Date is { } d ? DateTime.SpecifyKind(d, DateTimeKind.Utc) : DateTime.UtcNow;
@@ -135,6 +142,33 @@ public class FinanceDebtsService(
                     SourceOperationId: payment.Id, ClientRequestId: first ? r.ClientRequestId : null), ct);
                 first = false;
                 access.Audit(c.OrgId, debt.StoreId, "finance.customer.payment", "debt", debt.Id, null, new { Amount = amount, Method = method.ToString(), Account = account.Name, Remaining = debt.Remaining });
+            }
+            await unitOfWork.SaveChangesAsync(ct);
+            return true;
+        }, ct);
+        return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
+    }
+
+    /// <summary>Бонуспен өтеу (1 Б = 1 ₸): әр қарыз өз дүкенінің бонус картасынан, сатылымдағы шекпен; ақша шоттарына тимейді, қаржы операциясы жоқ.</summary>
+    private async Task<CustomerDebtCardDto> CustomerBonusPaymentAsync(FinanceCtx c, Guid customerId, IReadOnlyDictionary<Guid, decimal> allocations, CustomerPaymentRequest r, CancellationToken ct)
+    {
+        if (r.ClientRequestId is { } key && await bonusRepo.ByIdempotencyKeyAsync(key, ct) is not null) return await BuildCustomerCardAsync(c.StoreIds, c.Today, c.CanContacts, customerId, ct);
+        var comment = CatalogAccess.Optional(r.Comment, 500);
+        await unitOfWork.InTransactionAsync(async () =>
+        {
+            var debts = (await repo.DebtsForUpdateAsync(allocations.Keys.ToList(), ct)).ToDictionary(x => x.Id);
+            var first = true;
+            var now = DateTime.UtcNow;
+            foreach (var (debtId, amount) in allocations)
+            {
+                var debt = debts.GetValueOrDefault(debtId) ?? throw new ValidationException(Messages.DebtNotFound(Lang), "allocations");
+                if (debt.CustomerId != customerId || !c.StoreIds.Contains(debt.StoreId)) throw new ValidationException(Messages.DebtNotFound(Lang), "allocations");
+                if (debt.Status != DebtStatus.Open) throw new ValidationException(Messages.DebtAlreadyPaid(Lang), "allocations");
+                if (amount > debt.Remaining) throw new ValidationException(Messages.FinanceAllocationTooMuch(Lang, debt.Remaining), "allocations");
+                var payment = await bonusPayer.PayAsync(debt, amount, null, comment, now, ct, first ? r.ClientRequestId : null);
+                sales.AddDebtPayment(payment);
+                first = false;
+                access.Audit(c.OrgId, debt.StoreId, "finance.customer.payment", "debt", debt.Id, null, new { Amount = amount, Method = "Bonus", Remaining = debt.Remaining });
             }
             await unitOfWork.SaveChangesAsync(ct);
             return true;
