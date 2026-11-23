@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CalendarDays, Check, ChevronDown, KeyRound, Lock, LockKeyhole, LogOut, Menu, Store, UsersRound, X } from 'lucide-react'
-import { activeStore, applyMe, setActiveStore, useAuth } from '../lib/auth'
+import { activeStore, applyMe, refreshSession, setActiveStore, useAuth } from '../lib/auth'
 import { leaveKiosk, terminalToken } from '../lib/kiosk'
 import { setLocked, useRegister } from '../lib/register'
 import { canSee, NAV } from './nav'
@@ -67,14 +67,28 @@ export function Topbar({ title, onMenu, kiosk = false }: { title: string; onMenu
     }
   }
 
+  /** Кабинетте көретін бөлімі бар қызметкер (иесі, әкімші, менеджер) — тек кассир емес. */
+  const hasCabinet = NAV.some((item) => item.path !== '/cashier' && canSee(item, store))
+
   /**
-   * «Закрыть кассу»: кабинеттен кірген иесі/әкімші кассаны жауып, кабинетке қайтады. Тек cookie-сеансында
-   * (терминал токені жоқ) және кабинетте көретін бөлімі болса — PIN-мен кірген кассирге көрінбейді.
-   * Касса кабинеттен жаңа вкладкада ашылған болса, вкладка жабылады (кабинет вкладкасы қалады);
-   * жабылмаса (бет тікелей ашылған) — сол вкладкада кабинетке өтеді.
+   * «Закрыть кассу»: кабинетте бөлімі бар қызметкер кассаны жауып, кабинетке қайтады.
+   * Кабинеттен (cookie-сеансы) кірген болса: касса жаңа вкладкада ашылған болса — вкладка жабылады, әйтпесе сол вкладкада кабинет.
+   * PIN-мен (терминал сеансы) кірген болса: терминал сеансы жабылады; браузерде кабинет сеансы бар болса — бірден кабинет,
+   * жоқ болса — кабинеттің құпиясөз формасы (касса құрылғысында да).
    */
-  const canCloseRegister = kiosk && !terminalToken() && NAV.some((item) => item.path !== '/cashier' && canSee(item, store))
-  const closeRegister = () => {
+  const canCloseRegister = kiosk && hasCabinet
+  const toCabinet = async () => {
+    leaveKiosk()
+    qc.clear()
+    if (await refreshSession()) navigate(`/${useAuth.getState().me?.startPage ?? 'statistics'}`, { replace: true })
+    else navigate('/login?cabinet=1', { replace: true })
+  }
+  const closeRegister = async () => {
+    if (terminalToken()) {
+      await endSession()
+      await toCabinet()
+      return
+    }
     leaveKiosk()
     window.close()
     window.setTimeout(() => {
@@ -82,10 +96,19 @@ export function Topbar({ title, onMenu, kiosk = false }: { title: string; onMenu
     }, 150)
   }
 
+  /**
+   * «Выйти». Кассир (кабинетсіз) — касса вкладкасы PIN экранында қалады. Иесі/әкімші кассадан шықса — касса режимі жабылып,
+   * кабинеттің кіру беті ашылады (касса құрылғысында да құпиясөз формасы), PIN экранында тұрып қалмайды.
+   */
   const logout = async () => {
     profileMenu.setOpen(false)
     await endSession()
     qc.clear()
+    if (kiosk && hasCabinet) {
+      leaveKiosk()
+      navigate('/login?cabinet=1', { replace: true })
+      return
+    }
     navigate('/login', { replace: true })
   }
 
