@@ -28,6 +28,9 @@ public class BonusController(
     [HttpGet("meta")]
     public async Task<ActionResult<BonusMetaDto>> Meta(CancellationToken ct) => Ok(await statuses.MetaAsync(ct));
 
+    [HttpPut("redeem")]
+    public async Task<ActionResult<BonusMetaDto>> SaveRedeem([FromBody] SaveRedeemRequest r, CancellationToken ct) => Ok(await statuses.SaveRedeemAsync(r, ct));
+
     // ---------- Шолу мен статистика ----------
 
     [HttpGet("overview")]

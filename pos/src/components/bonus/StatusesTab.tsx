@@ -18,7 +18,57 @@ import { num, tenge } from '../../lib/money'
 import { useT, type TranslationKey } from '../../lib/i18n'
 import { BlockError, Skeleton } from '../stats/statsUi'
 import { CustomerPanel } from './CustomerPanel'
-import { Pill, Points, reportError, STATUS_ICON, StatusBadge, useBonusPermissions, useParamSetter } from './bonusUi'
+import { Pill, Points, reportError, STATUS_ICON, StatusBadge, useBonusMeta, useBonusPermissions, useParamSetter } from './bonusUi'
+
+/**
+ * Бонуспен төлеу шегі: чектің (және қарыздың) ең көбі қанша пайызы бонуспен жабылады. 100% — толық төлеуге болады.
+ * Касса мен қарыз төлеу осы мәнді серверден алады; мұнда тек дүкен баптауы.
+ */
+function RedeemSetting() {
+  const t = useT()
+  const qc = useQueryClient()
+  const perms = useBonusPermissions()
+  const meta = useBonusMeta()
+  const current = meta.data?.maxRedeemPercent
+  const [value, setValue] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const shown = value ?? (current != null ? String(current) : '')
+  const parsed = Number(shown.replace(',', '.'))
+  const valid = shown.trim() !== '' && Number.isFinite(parsed) && parsed >= 0 && parsed <= 100
+  const dirty = valid && parsed !== current
+
+  const save = async (percent: number) => {
+    setBusy(true)
+    try {
+      const m = await bonusApi.saveRedeem(percent)
+      qc.setQueryData(bonusKeys.meta, m)
+      void qc.invalidateQueries({ queryKey: bonusKeys.all })
+      setValue(null)
+      toast(t('bon.redeem.saved', { p: num(m.maxRedeemPercent) }))
+    } catch (err) { reportError(err, t('bon.failed')) } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-surface p-4">
+      <div className="min-w-0 flex-1 basis-64">
+        <div className="text-[15px] font-semibold">{t('bon.redeem.title')}</div>
+        <p className="mt-0.5 text-[13px] text-ink-2">{t('bon.redeem.hint')}</p>
+      </div>
+      {meta.isLoading ? <Skeleton className="h-10 w-48" /> : perms.manage ? (
+        <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (dirty) void save(parsed) }}>
+          <Field label={t('bon.redeem.label')} error={shown.trim() !== '' && !valid ? t('bon.redeem.invalid') : undefined}>
+            <div className="relative w-28">
+              <Input inputMode="decimal" className="pr-8 text-right" value={shown} onChange={(e) => setValue(e.target.value)} aria-label={t('bon.redeem.label')} />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-3">%</span>
+            </div>
+          </Field>
+          <Button type="button" variant="secondary" disabled={busy || current === 100} onClick={() => void save(100)}>100%</Button>
+          <Button type="submit" loading={busy} disabled={!dirty}>{t('common.save')}</Button>
+        </form>
+      ) : <div className="text-[20px] font-bold">{current != null ? `${num(current)}%` : '—'}</div>}
+    </div>
+  )
+}
 
 /**
  * «Статусы клиентов» (ТЗ «Бонусы» §3): деңгейлер, өту шарты, кезең, пайыз, клиент саны (басқанда — тізім), белсенділік.
@@ -60,6 +110,7 @@ export function StatusesTab() {
   if (q.isError) return <BlockError message={(q.error as Error).message} onRetry={() => void q.refetch()} />
   return (
     <div className="flex flex-col gap-3">
+      <RedeemSetting />
       <div className="flex flex-wrap items-center gap-2">
         <p className="mr-auto text-[13px] text-ink-2">{t('bon.st.hint')}</p>
         <Button variant="secondary" className="h-10! px-3!" icon={<Users size={16} />} onClick={() => set({ customers: '1' }, true)}>{t('bon.st.allCustomers')}</Button>

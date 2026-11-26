@@ -684,6 +684,7 @@ public static class Messages
     public static string BonusReturnTooMuch(AppLanguage l, int max) => Pick(l,
         $"Қайтаруға болатыны {max:N0}-нан аспайды (бастапқы шегеру минус бұрын қайтарылғаны)", $"Можно вернуть не больше {max:N0} (исходное списание за вычетом уже возвращённого)");
     public static string BonusSettingsValueInvalid(AppLanguage l) => Pick(l, "Мерзім 1-ден 120 айға (3650 күнге) дейін", "Срок — от 1 до 120 месяцев (3650 дней)");
+    public static string BonusRedeemPercentInvalid(AppLanguage l) => Pick(l, "Бонуспен төлеу үлесі 0-ден 100%-ға дейін", "Доля оплаты бонусами — от 0 до 100%");
     public static string BonusWarnDaysInvalid(AppLanguage l) => Pick(l, "Ескерту күндері 1-ден 90-ға дейін", "Дни предупреждения — от 1 до 90");
     public static string BonusChannelUnavailable(AppLanguage l) => Pick(l,
         "Арна қосылмаған: тек SalemBonus қосымшасы қолжетімді", "Канал не подключён: доступно только приложение SalemBonus");

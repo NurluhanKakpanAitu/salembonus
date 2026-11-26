@@ -12,6 +12,9 @@ public record BonusChannelDto(string Key, bool Available, string? Note);
 public record BonusMetaDto(Guid StoreId, string StoreName, string TimeZone, IReadOnlyList<BonusStatusDto> Statuses, BonusPermissionsDto Can,
     IReadOnlyList<BonusChannelDto> Channels, decimal MaxRedeemPercent, bool ExpiryEnabled, bool BirthdayEnabled);
 
+/// <summary>Чектің (және қарыздың) ең көбі қанша пайызын бонуспен төлеуге болады: 0–100.</summary>
+public record SaveRedeemRequest(decimal Percent);
+
 // ---------- Мәртебелер (§3) ----------
 
 public record BonusStatusDto(Guid Id, string Name, string Icon, string Color, string Rule, decimal? ThresholdAmount, int? ThresholdCount, string Period,

@@ -38,6 +38,26 @@ public partial class BonusStatusService(
             c.Store.MaxRedeemPercent, settings.ExpiryEnabled, settings.BirthdayEnabled && settings.BirthdayAmount > 0);
     }
 
+    /// <summary>
+    /// Бонуспен төлеу шегі: чектің (касса) және қарыздың ең көбі қанша пайызы бонуспен жабылады. 100 — толық. Касса мен қарыз
+    /// төлеу осы дүкен мәнін оқиды (<c>Store.MaxRedeemPercent</c>), сондықтан бөлек синхрон керек емес.
+    /// </summary>
+    public async Task<BonusMetaDto> SaveRedeemAsync(SaveRedeemRequest r, CancellationToken ct = default)
+    {
+        var c = await access.ContextAsync(StaffPermissions.BonusManage, ct);
+        if (r.Percent is < 0 or > 100) throw new ValidationException(Messages.BonusRedeemPercentInvalid(Lang), "percent");
+        var percent = Math.Round(r.Percent, 2);
+        var before = c.Store.MaxRedeemPercent;
+        if (before != percent)
+        {
+            c.Store.MaxRedeemPercent = percent;
+            access.Audit(c, "bonus.redeem.settings", "store", c.Store.Id, new { MaxRedeemPercent = before }, new { MaxRedeemPercent = percent });
+            await unitOfWork.SaveChangesAsync(ct);
+            program.Forget(c.Store.Id);
+        }
+        return await MetaAsync(ct);
+    }
+
     /// <summary>Арналар: SalemBonus қосымшасы — әрқашан қосулы (клиент картасы бар), қалғаны — интеграция жоқ (§6.4).</summary>
     public static IReadOnlyList<BonusChannelDto> Channels(AppLanguage lang) =>
     [

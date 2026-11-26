@@ -15,6 +15,7 @@ export const bonusKeys = { all: ['bonus'] as const, meta: ['bonus', 'meta'] as c
 
 export const bonusApi = {
   meta: () => api<BonusMeta>(`${base}/meta`),
+  saveRedeem: (percent: number) => put<BonusMeta>('/redeem', { percent }),
   overview: (p: Params) => api<BonusOverview>(`${base}/overview${qs(p)}`),
   statistics: (p: Params) => api<BonusStatistics>(`${base}/statistics${qs(p)}`),
 
